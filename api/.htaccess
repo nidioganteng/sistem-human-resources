@@ -1,0 +1,13 @@
+# Tolak semua berkas di api/ kecuali index.php (src, config, bin tidak boleh diakses lewat web)
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(?!index\.php$).+">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^(?!index\.php$).+">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+Options -Indexes
