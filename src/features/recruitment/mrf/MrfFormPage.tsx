@@ -59,27 +59,34 @@ export default function MrfFormPage() {
 
   const onSubmit = (e: FormEvent) => { e.preventDefault(); void save(true); };
 
-  if (loading) return <div className="text-sm text-slate-500">Memuat...</div>;
+  if (loading) return <div className="text-sm text-slate-400 dark:text-slate-500">Memuat...</div>;
 
   const route = user.role === 'pic' ? 'Manajer divisi lalu CEO' : 'langsung ke CEO';
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <Link to="/mrf" className="flex w-fit items-center gap-1 text-sm text-brand-400 hover:text-brand-300">
+        <Link
+          to="/mrf"
+          className="flex w-fit items-center gap-1 text-sm text-sky-700 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
+        >
           <ChevronLeft size={15} /> Daftar MRF
         </Link>
-        <h1 className="mt-2 text-xl font-bold text-white">{editId === null ? 'Buat MRF' : 'Ubah MRF'}</h1>
-        <p className="mt-0.5 text-sm text-slate-400">Setelah diajukan, MRF diperiksa oleh {route}.</p>
+        <h1 className="mt-2 font-heading text-xl font-bold text-slate-900 dark:text-white">
+          {editId === null ? 'Buat MRF' : 'Ubah MRF'}
+        </h1>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          Setelah diajukan, MRF diperiksa oleh {route}.
+        </p>
       </div>
 
       {note && (
-        <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-300">
-          <span className="font-semibold">Catatan revisi.</span> {note}
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300">
+          <span className="font-semibold">Catatan revisi:</span> {note}
         </div>
       )}
       {error && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
           {error}
         </div>
       )}

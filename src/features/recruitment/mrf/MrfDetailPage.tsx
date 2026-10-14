@@ -8,8 +8,10 @@ import type { Mrf } from './types';
 
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div>
-    <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</dt>
-    <dd className="mt-1 whitespace-pre-line text-sm text-slate-200">{children}</dd>
+    <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+      {label}
+    </dt>
+    <dd className="mt-1 whitespace-pre-line text-sm text-slate-800 dark:text-slate-200">{children}</dd>
   </div>
 );
 
@@ -41,23 +43,31 @@ export default function MrfDetailPage() {
   if (error && !mrf) {
     return (
       <div className="space-y-3">
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>
-        <Link to="/mrf" className="flex items-center gap-1 text-sm text-brand-400 hover:text-brand-300">
+        <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
+          {error}
+        </div>
+        <Link
+          to="/mrf"
+          className="flex items-center gap-1 text-sm text-sky-700 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
+        >
           <ChevronLeft size={15} /> Daftar MRF
         </Link>
       </div>
     );
   }
-  if (!mrf) return <div className="text-sm text-slate-500">Memuat...</div>;
+  if (!mrf) return <div className="text-sm text-slate-400 dark:text-slate-500">Memuat...</div>;
 
   return (
     <div className="space-y-5">
       <div>
-        <Link to="/mrf" className="flex w-fit items-center gap-1 text-sm text-brand-400 hover:text-brand-300">
+        <Link
+          to="/mrf"
+          className="flex w-fit items-center gap-1 text-sm text-sky-700 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
+        >
           <ChevronLeft size={15} /> Daftar MRF
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-bold text-white">{mrf.position}</h1>
+          <h1 className="font-heading text-xl font-bold text-slate-900 dark:text-white">{mrf.position}</h1>
           <StatusBadge status={mrf.status} />
         </div>
         <p className="mt-1 font-mono text-xs text-slate-500">
@@ -66,7 +76,7 @@ export default function MrfDetailPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
           {error}
         </div>
       )}
@@ -84,7 +94,11 @@ export default function MrfDetailPage() {
       {mrf.canEdit && (
         <div className="card flex flex-wrap gap-2">
           <Link to={`/mrf/${mrf.id}/ubah`} className="btn-secondary">Ubah</Link>
-          <button className="btn-primary" disabled={busy} onClick={() => void run(() => submitMrf(mrf.id))}>
+          <button
+            className="btn-primary"
+            disabled={busy}
+            onClick={() => void run(() => submitMrf(mrf.id))}
+          >
             Ajukan
           </button>
           <button
@@ -99,7 +113,7 @@ export default function MrfDetailPage() {
 
       {mrf.canDecide && (
         <div className="card space-y-4">
-          <h2 className="font-semibold text-white">Keputusan Anda</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-white">Keputusan Anda</h2>
           <div>
             <label className="field-label" htmlFor="comment">Catatan (wajib jika meminta revisi)</label>
             <textarea
@@ -108,7 +122,11 @@ export default function MrfDetailPage() {
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <button className="btn-primary" disabled={busy} onClick={() => void run(() => approveMrf(mrf.id, comment))}>
+            <button
+              className="btn-primary"
+              disabled={busy}
+              onClick={() => void run(() => approveMrf(mrf.id, comment))}
+            >
               Setujui
             </button>
             <button
@@ -123,23 +141,23 @@ export default function MrfDetailPage() {
       )}
 
       <div className="card">
-        <h2 className="mb-4 font-semibold text-white">Riwayat</h2>
+        <h2 className="mb-4 font-semibold text-slate-900 dark:text-white">Riwayat</h2>
         {(mrf.history ?? []).length === 0 ? (
-          <p className="text-sm text-slate-500">Belum ada riwayat.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">Belum ada riwayat.</p>
         ) : (
-          <ol className="space-y-4 border-l-2 border-white/10 pl-5">
+          <ol className="space-y-4 border-l-2 border-slate-200 pl-5 dark:border-white/10">
             {mrf.history!.map((h, i) => (
               <li key={i} className="relative text-sm">
-                <div className="absolute -left-[21px] h-3 w-3 rounded-full border-2 border-slate-700 bg-slate-800" />
-                <div className="font-medium text-slate-200">
+                <div className="absolute -left-[21px] h-3 w-3 rounded-full border-2 border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800" />
+                <div className="font-medium text-slate-800 dark:text-slate-200">
                   {h.actionLabel} oleh {h.actorName}{' '}
-                  <span className="font-normal text-slate-500">({h.roleLabel})</span>
+                  <span className="font-normal text-slate-400 dark:text-slate-500">({h.roleLabel})</span>
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-slate-400 dark:text-slate-500">
                   {fmtDate(h.createdAt)} · menjadi &ldquo;{h.toLabel}&rdquo;
                 </div>
                 {h.comment && (
-                  <div className="mt-1.5 rounded-lg bg-white/5 px-3 py-2 text-sm text-slate-300">
+                  <div className="mt-1.5 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-white/5 dark:text-slate-300">
                     {h.comment}
                   </div>
                 )}
