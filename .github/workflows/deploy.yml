@@ -1,0 +1,68 @@
+name: Deploy Sistem HR ke Hostinger
+
+on:
+  push:
+    branches: [main]
+
+# Secrets yang dibutuhkan (Settings > Secrets and variables > Actions):
+#   SSH_PRIVATE_KEY, SSH_HOST, SSH_PORT, SSH_USER
+#   PROJECT_PATH  = folder subdomain HR di server, mis. /home/uXXXX/domains/<domain>/public_html/sistemhr
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Cek sintaks PHP
+        run: find api -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dan build frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # Backend lebih dulu supaya API baru sudah siap sebelum frontend baru tayang.
+      # config/env.php milik server tidak disentuh.
+      - name: Deploy backend (api/)
+        run: |
+          rsync -avz --delete \
+            --exclude='config/env.php' --exclude='.DS_Store' \
+            api/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_PATH }}/api/ \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa"
+
+      # --exclude '/api' dan '/.htaccess' melindungi dari --delete: keduanya bukan bagian dari dist/.
+      - name: Deploy frontend (dist/)
+        run: |
+          rsync -avz --delete \
+            --exclude='/api' --exclude='/.htaccess' \
+            dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_PATH }}/ \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa"
+
+      - name: Deploy .htaccess
+        run: |
+          rsync -avz .htaccess \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_PATH }}/.htaccess \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa"
