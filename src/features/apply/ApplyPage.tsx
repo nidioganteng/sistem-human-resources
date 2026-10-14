@@ -123,7 +123,12 @@ export default function ApplyPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
         <div className="apply-card max-w-md space-y-3 text-center">
-          <h1 className="text-lg font-bold text-slate-800">Lowongan Sudah Ditutup</h1>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+            <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h1 className="font-heading text-lg font-bold text-slate-800">Lowongan Sudah Ditutup</h1>
           <p className="text-sm text-slate-600">
             Lowongan untuk posisi <strong>{vacancy?.position}</strong> di divisi{' '}
             <strong>{vacancy?.division}</strong> sudah tidak menerima lamaran.
@@ -132,7 +137,7 @@ export default function ApplyPage() {
             Ikuti akun Instagram{' '}
             <a
               href="https://instagram.com/gaharusempanagroup"
-              className="text-brand-500 hover:underline"
+              className="text-sky-700 hover:underline"
               target="_blank"
               rel="noreferrer"
             >
@@ -149,12 +154,12 @@ export default function ApplyPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
         <div className="apply-card max-w-md space-y-3 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+            <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold text-slate-800">Lamaran Terkirim!</h1>
+          <h1 className="font-heading text-lg font-bold text-slate-800">Lamaran Terkirim!</h1>
           <p className="text-sm text-slate-600">
             Terima kasih telah melamar posisi <strong>{vacancy?.position}</strong>.
             Tim HR kami akan meninjau lamaran Anda dan mengirimkan email jika Anda lolos screening.
@@ -164,21 +169,29 @@ export default function ApplyPage() {
     );
   }
 
-  // step === 'form'
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-lg space-y-5">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 px-4 py-10">
+      <div className="mx-auto max-w-lg space-y-6">
         <div className="text-center">
-          <div className="text-sm font-semibold text-brand-500">Gaharu Sempana Group</div>
-          <h1 className="mt-1 text-xl font-bold text-slate-800">Formulir Lamaran</h1>
+          <img
+            src="/logo-gsg.png"
+            alt="Logo Gaharu Sempana Group"
+            className="mx-auto mb-3 h-12 w-12 object-contain"
+          />
+          <div className="font-heading text-xs font-semibold uppercase tracking-widest text-sky-700">
+            Gaharu Sempana Group
+          </div>
+          <h1 className="font-heading mt-1 text-2xl font-bold text-slate-900">Formulir Lamaran</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {vacancy?.position} &mdash; Divisi {vacancy?.division}
+            {vacancy?.position} &ndash; Divisi {vacancy?.division}
           </p>
         </div>
 
         <form className="apply-card space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           <div>
-            <label className="apply-label">Nama Lengkap <span className="text-red-500">*</span></label>
+            <label className="apply-label">
+              Nama Lengkap <span className="text-red-500">*</span>
+            </label>
             <input
               className="apply-input"
               value={fullName}
@@ -189,7 +202,9 @@ export default function ApplyPage() {
           </div>
 
           <div>
-            <label className="apply-label">Alamat Email <span className="text-red-500">*</span></label>
+            <label className="apply-label">
+              Alamat Email <span className="text-red-500">*</span>
+            </label>
             <input
               className="apply-input"
               type="email"
@@ -201,7 +216,9 @@ export default function ApplyPage() {
           </div>
 
           <div>
-            <label className="apply-label">Nomor HP <span className="text-red-500">*</span></label>
+            <label className="apply-label">
+              Nomor HP <span className="text-red-500">*</span>
+            </label>
             <input
               className="apply-input"
               type="tel"
@@ -213,19 +230,23 @@ export default function ApplyPage() {
           </div>
 
           <div>
-            <label className="apply-label">CV / Daftar Riwayat Hidup (PDF, maks. {MAX_MB} MB) <span className="text-red-500">*</span></label>
+            <label className="apply-label">
+              CV / Daftar Riwayat Hidup (PDF, maks. {MAX_MB} MB) <span className="text-red-500">*</span>
+            </label>
             <input
               ref={cvRef}
               type="file"
               accept="application/pdf,.pdf"
-              className="apply-input cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-600"
+              className="apply-input cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-sky-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-sky-700"
               onChange={(e) => setCv(e.target.files?.[0] ?? null)}
             />
             {fieldErrors.cv && <p className="mt-1 text-xs text-red-600">{fieldErrors.cv}</p>}
           </div>
 
           <div>
-            <label className="apply-label">Portofolio (PDF, maks. {MAX_MB} MB, opsional)</label>
+            <label className="apply-label">
+              Portofolio (PDF, maks. {MAX_MB} MB, opsional)
+            </label>
             <input
               ref={portRef}
               type="file"
@@ -239,21 +260,22 @@ export default function ApplyPage() {
           <label className="flex items-start gap-3">
             <input
               type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-500"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-700"
               checked={consent}
               onChange={(e) => setConsent(e.target.checked)}
             />
             <span className="text-xs text-slate-600">
               Saya menyetujui bahwa data dan dokumen yang saya kirimkan akan disimpan oleh Gaharu Sempana Group
               selama proses rekrutmen berlangsung, hingga maksimal 2 tahun, sesuai kebijakan penyimpanan data
-              perusahaan.{' '}
-              <span className="text-red-500">*</span>
+              perusahaan. <span className="text-red-500">*</span>
             </span>
           </label>
           {fieldErrors.consent && <p className="-mt-2 text-xs text-red-600">{fieldErrors.consent}</p>}
 
           {submitError && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{submitError}</div>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {submitError}
+            </div>
           )}
 
           <button type="submit" className="apply-btn w-full" disabled={submitting}>
