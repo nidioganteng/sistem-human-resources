@@ -1,0 +1,10 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+api/config/env.php
+storage/
+uploads/
+*.tsbuildinfo
+*.tar.gz
