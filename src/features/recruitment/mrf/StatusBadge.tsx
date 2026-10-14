@@ -1,19 +1,19 @@
 import type { MrfStatus } from './types';
 
 const STYLE: Record<MrfStatus, string> = {
-  draft:           'bg-slate-700/60 text-slate-300',
-  pending_manager: 'bg-amber-400/15 text-amber-400',
-  pending_ceo:     'bg-amber-400/15 text-amber-400',
-  revision:        'bg-orange-400/15 text-orange-400',
-  approved:        'bg-emerald-400/15 text-emerald-400',
-  cancelled:       'bg-slate-700/40 text-slate-500',
+  draft:           'bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300',
+  pending_manager: 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-400',
+  pending_ceo:     'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-400',
+  revision:        'bg-orange-100 text-orange-700 dark:bg-orange-400/15 dark:text-orange-400',
+  approved:        'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-400',
+  cancelled:       'bg-slate-100 text-slate-500 dark:bg-slate-700/40 dark:text-slate-500',
 };
 
 export const STATUS_LABEL: Record<MrfStatus, string> = {
   draft:           'Draft',
   pending_manager: 'Menunggu Manajer',
   pending_ceo:     'Menunggu CEO',
-  revision:        'Perlu revisi',
+  revision:        'Perlu Revisi',
   approved:        'Disetujui',
   cancelled:       'Dibatalkan',
 };
