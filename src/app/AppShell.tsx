@@ -144,7 +144,7 @@ export default function AppShell() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-5xl flex-1 p-4 md:p-8">
+        <main className="flex-1 p-4 md:p-6">
           <Outlet />
         </main>
       </div>
