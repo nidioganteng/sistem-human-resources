@@ -7,6 +7,9 @@ import MrfListPage from '@/features/recruitment/mrf/MrfListPage';
 import VacancyListPage from '@/features/recruitment/vacancy/VacancyListPage';
 import VacancyDetailPage from '@/features/recruitment/vacancy/VacancyDetailPage';
 import ApplyPage from '@/features/apply/ApplyPage';
+import KandidatPage from '@/features/kandidat/KandidatPage';
+import KaryawanPage from '@/features/karyawan/KaryawanPage';
+import PenggunaPage from '@/features/pengguna/PenggunaPage';
 import AppShell from './AppShell';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -15,7 +18,6 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Halaman publik -- tidak perlu login */}
       <Route path="/daftar/:token" element={<ApplyPage />} />
 
       <Route element={<ProtectedRoute />}>
@@ -27,6 +29,9 @@ export default function AppRoutes() {
           <Route path="mrf/:id/ubah" element={<MrfFormPage />} />
           <Route path="lowongan" element={<VacancyListPage />} />
           <Route path="lowongan/:id" element={<VacancyDetailPage />} />
+          <Route path="kandidat" element={<KandidatPage />} />
+          <Route path="karyawan" element={<KaryawanPage />} />
+          <Route path="pengguna" element={<PenggunaPage />} />
         </Route>
       </Route>
 
