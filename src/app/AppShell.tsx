@@ -28,29 +28,25 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     <div className="flex h-full flex-col bg-brand-950">
       <div className="flex items-center justify-between px-5 py-6">
         <div className="flex items-center gap-3">
-          <img
-            src="/logo-gsg.png"
-            alt="Logo GSG"
-            className="h-8 w-8 object-contain"
-          />
+          <img src="/logo-gsg.png" alt="Logo GSG" className="h-8 w-8 object-contain" />
           <div>
             <div className="font-heading text-sm font-bold tracking-tight text-white">
-              SISTEM HR<span className="text-brand-300">.</span>
+              SISTEM HR<span className="text-brand-400">.</span>
             </div>
-            <div className="text-[10px] text-brand-400">Gaharu Sempana Group</div>
+            <div className="text-[10px] text-zinc-500">Gaharu Sempana Group</div>
           </div>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-brand-400 transition-colors hover:bg-white/5 hover:text-white"
+            className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/5 hover:text-white"
           >
             <X size={18} />
           </button>
         )}
       </div>
 
-      <div className="mx-4 h-px bg-white/10" />
+      <div className="mx-4 h-px bg-white/8" />
 
       <nav className="flex-1 space-y-0.5 px-3 py-4">
         {menuFor(user.role).map((m) => (
@@ -62,40 +58,43 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-brand-600 text-white'
-                  : 'text-brand-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-brand-500/15 text-brand-400'
+                  : 'text-zinc-400 hover:bg-white/5 hover:text-white'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <span className={isActive ? 'text-white' : 'text-brand-400'}>
+                <span className={isActive ? 'text-brand-400' : 'text-zinc-600'}>
                   {ICON_MAP[m.icon]}
                 </span>
                 {m.label}
+                {isActive && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-400" />
+                )}
               </>
             )}
           </NavLink>
         ))}
       </nav>
 
-      <div className="mx-4 h-px bg-white/10" />
+      <div className="mx-4 h-px bg-white/8" />
 
       <div className="px-4 py-4">
         <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-zinc-900">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-white">{user.name}</div>
-            <div className="text-[11px] text-brand-400">
+            <div className="text-[11px] text-zinc-500">
               {user.roleLabel}{user.division ? ` · ${user.division}` : ''}
             </div>
           </div>
           <button
             onClick={handleLogout}
             title="Keluar"
-            className="rounded-lg p-1.5 text-brand-400 transition-colors hover:bg-white/5 hover:text-red-400"
+            className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/5 hover:text-red-400"
           >
             <LogOut size={15} />
           </button>
@@ -111,7 +110,7 @@ export default function AppShell() {
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
+    <div className="flex min-h-screen bg-zinc-50 font-sans text-slate-800">
       <aside className="hidden w-60 shrink-0 flex-col md:flex">
         <SidebarContent />
       </aside>
@@ -129,17 +128,17 @@ export default function AppShell() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+        <header className="flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3 md:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
           >
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2">
             <img src="/logo-gsg.png" alt="Logo GSG" className="h-7 w-7 object-contain" />
-            <span className="font-heading text-sm font-bold tracking-tight text-slate-900">
-              SISTEM HR<span className="text-brand-600">.</span>
+            <span className="font-heading text-sm font-bold tracking-tight text-zinc-900">
+              SISTEM HR<span className="text-brand-500">.</span>
             </span>
           </div>
         </header>
