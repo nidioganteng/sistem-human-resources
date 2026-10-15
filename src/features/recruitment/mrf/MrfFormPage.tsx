@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { canCreateMrf } from '@/auth/permissions';
+import { Alert } from '@/shared/ui/Alert';
 import { createMrf, getMrf, updateMrf } from './mrfService';
 import type { MrfInput } from './types';
 
@@ -20,7 +21,7 @@ export default function MrfFormPage() {
   const [loading, setLoading] = useState(editId !== null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  const [revisionNote, setRevisionNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (editId === null) return;
@@ -33,7 +34,7 @@ export default function MrfFormPage() {
           employmentStatus: m.employmentStatus, selectionTrack: m.selectionTrack,
         });
         const last = m.history?.filter((h) => h.action === 'revise').at(-1);
-        if (m.status === 'revision' && last?.comment) setNote(`${last.actorName}: ${last.comment}`);
+        if (m.status === 'revision' && last?.comment) setRevisionNote(`${last.actorName}: ${last.comment}`);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -59,71 +60,62 @@ export default function MrfFormPage() {
 
   const onSubmit = (e: FormEvent) => { e.preventDefault(); void save(true); };
 
-  if (loading) return <div className="text-sm text-slate-400 dark:text-slate-500">Memuat...</div>;
+  if (loading) return <div className="text-sm text-slate-400">Memuat...</div>;
 
-  const route = user.role === 'pic' ? 'Manajer divisi lalu CEO' : 'langsung ke CEO';
+  const route = user.role === 'pic' ? 'Manajer divisi, lalu CEO' : 'langsung ke CEO';
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <Link
-          to="/mrf"
-          className="flex w-fit items-center gap-1 text-sm text-sky-700 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
-        >
-          <ChevronLeft size={15} /> Daftar MRF
+        <Link to="/mrf" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700">
+          <ArrowLeft size={15} /> Daftar MRF
         </Link>
-        <h1 className="mt-2 font-heading text-xl font-bold text-slate-900 dark:text-white">
-          {editId === null ? 'Buat MRF' : 'Ubah MRF'}
-        </h1>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+        <h1 className="page-title mt-2">{editId === null ? 'Buat MRF' : 'Ubah MRF'}</h1>
+        <p className="page-subtitle mt-0.5">
           Setelah diajukan, MRF diperiksa oleh {route}.
         </p>
       </div>
 
-      {note && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300">
-          <span className="font-semibold">Catatan revisi:</span> {note}
-        </div>
+      {revisionNote && (
+        <Alert variant="warning" title="Catatan revisi">
+          {revisionNote}
+        </Alert>
       )}
-      {error && (
-        <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="error">{error}</Alert>}
 
       <div className="card grid gap-5 md:grid-cols-2">
         <div className="md:col-span-2">
-          <label className="field-label" htmlFor="position">Posisi</label>
+          <label className="field-label" htmlFor="position">Posisi *</label>
           <input id="position" required maxLength={150} className="field-input" value={form.position}
             onChange={(e) => set('position', e.target.value)} />
         </div>
         <div className="md:col-span-2">
-          <label className="field-label" htmlFor="resp">Tanggung jawab utama</label>
+          <label className="field-label" htmlFor="resp">Tanggung jawab utama *</label>
           <textarea id="resp" required rows={4} className="field-input" value={form.responsibilities}
             onChange={(e) => set('responsibilities', e.target.value)} />
         </div>
         <div>
-          <label className="field-label" htmlFor="edu">Kualifikasi: pendidikan</label>
+          <label className="field-label" htmlFor="edu">Kualifikasi: pendidikan *</label>
           <textarea id="edu" required rows={3} className="field-input" value={form.education}
             onChange={(e) => set('education', e.target.value)} />
         </div>
         <div>
-          <label className="field-label" htmlFor="skills">Kualifikasi: kemampuan</label>
+          <label className="field-label" htmlFor="skills">Kualifikasi: kemampuan *</label>
           <textarea id="skills" required rows={3} className="field-input" value={form.skills}
             onChange={(e) => set('skills', e.target.value)} />
         </div>
         <div className="md:col-span-2">
-          <label className="field-label" htmlFor="exp">Kualifikasi: pengalaman</label>
+          <label className="field-label" htmlFor="exp">Kualifikasi: pengalaman *</label>
           <textarea id="exp" required rows={2} className="field-input" value={form.experience}
             onChange={(e) => set('experience', e.target.value)} />
         </div>
         <div>
-          <label className="field-label" htmlFor="hc">Jumlah kebutuhan (orang)</label>
+          <label className="field-label" htmlFor="hc">Jumlah kebutuhan (orang) *</label>
           <input id="hc" type="number" min={1} max={100} required className="field-input"
             value={form.headcount} onChange={(e) => set('headcount', Number(e.target.value))} />
         </div>
         <div>
-          <label className="field-label" htmlFor="emp">Status kerja</label>
+          <label className="field-label" htmlFor="emp">Status kerja *</label>
           <select id="emp" className="field-input" value={form.employmentStatus}
             onChange={(e) => set('employmentStatus', e.target.value as MrfInput['employmentStatus'])}>
             <option value="PKWT">PKWT (kontrak)</option>
@@ -131,7 +123,7 @@ export default function MrfFormPage() {
           </select>
         </div>
         <div className="md:col-span-2">
-          <label className="field-label" htmlFor="track">Jalur seleksi</label>
+          <label className="field-label" htmlFor="track">Jalur seleksi *</label>
           <select id="track" className="field-input" value={form.selectionTrack}
             onChange={(e) => set('selectionTrack', e.target.value as MrfInput['selectionTrack'])}>
             <option value="normal">Normal: uji kompetensi, lalu wawancara HRD dan User</option>
@@ -155,6 +147,9 @@ export default function MrfFormPage() {
         >
           Simpan sebagai draft
         </button>
+        <Link to={editId ? `/mrf/${editId}` : '/mrf'} className="btn-secondary">
+          Batal
+        </Link>
       </div>
     </form>
   );
