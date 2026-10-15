@@ -62,14 +62,14 @@ export default function LoginPage() {
               className="h-12 w-12 object-contain drop-shadow-md"
             />
             <h1 className="text-3xl font-black tracking-tight text-white">
-              SISTEM HR<span className="text-[#158ed4]">.</span>
+              SIMANSA<span className="text-[#158ed4]">.</span>
             </h1>
           </div>
 
           <h2 className="mb-6 text-5xl font-bold leading-[1.1] tracking-tight text-white lg:text-6xl">
-            Human <br />
+            Human Resource<br />
             <span className="bg-gradient-to-r from-[#158ed4] to-cyan-400 bg-clip-text text-transparent">
-              Resource Management
+              Management
             </span>
           </h2>
           <p className="max-w-md border-l-4 border-[#158ed4] pl-4 text-lg leading-relaxed text-slate-300">
