@@ -79,21 +79,50 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            {fmtGreeting()}, <span className="text-brand-600">{user.name.split(' ')[0]}</span>
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {fmtToday()} &nbsp;·&nbsp; {user.roleLabel}{user.division ? ` · ${user.division}` : ''}
-          </p>
+      {/* ── Hero banner ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 px-7 py-7">
+        {/* dekorasi lingkaran */}
+        <span className="pointer-events-none absolute -right-10 -top-10 h-52 w-52 rounded-full bg-white/5" />
+        <span className="pointer-events-none absolute -bottom-8 right-24 h-36 w-36 rounded-full bg-white/5" />
+        <span className="pointer-events-none absolute right-10 top-8 h-24 w-24 rounded-full bg-white/10" />
+        <span className="pointer-events-none absolute right-36 -bottom-4 h-16 w-16 rounded-full bg-white/10" />
+
+        {/* ikon dekoratif kanan */}
+        <div className="pointer-events-none absolute right-8 top-1/2 -translate-y-1/2 hidden sm:flex flex-col items-center gap-3 opacity-20">
+          <FileText size={48} className="text-white" strokeWidth={1.2} />
         </div>
-        {canCreateMrf(user.role) && (
-          <Link to="/mrf/baru" className="btn-primary">
-            <Plus size={16} /> Buat MRF
-          </Link>
-        )}
+
+        <div className="relative max-w-lg">
+          <p className="text-sm font-medium text-brand-200">{fmtToday()}</p>
+          <h1 className="mt-1 text-2xl font-bold text-white">
+            {fmtGreeting()}, {user.name.split(' ')[0]}!
+          </h1>
+          <p className="mt-1.5 text-sm text-brand-200 leading-relaxed">
+            {!loading && !err && action.length > 0
+              ? `Anda memiliki ${action.length} MRF yang menunggu tindakan hari ini.`
+              : !loading && !err
+              ? 'Semua MRF sudah ditindak lanjuti. Kerja bagus!'
+              : `${user.roleLabel}${user.division ? ` · ${user.division}` : ''}`}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {canCreateMrf(user.role) && (
+              <Link
+                to="/mrf/baru"
+                className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50"
+              >
+                <Plus size={15} /> Buat MRF
+              </Link>
+            )}
+            {action.length > 0 && (
+              <Link
+                to="/mrf?filter=action"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+              >
+                Tinjau Sekarang <ArrowRight size={14} />
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── Stat cards ── */}
