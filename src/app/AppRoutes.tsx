@@ -11,6 +11,11 @@ import FormPelamarPage from '@/features/form-pelamar/FormPelamarPage';
 import KandidatPage from '@/features/kandidat/KandidatPage';
 import KaryawanPage from '@/features/karyawan/KaryawanPage';
 import PenggunaPage from '@/features/pengguna/PenggunaPage';
+import OlListPage from '@/features/recruitment/ol/OlListPage';
+import OlDetailPage from '@/features/recruitment/ol/OlDetailPage';
+import OlResponsePage from '@/features/apply/OlResponsePage';
+import EmployeeDetailPage from '@/features/karyawan/EmployeeDetailPage';
+import OnboardingPage from '@/features/onboarding/OnboardingPage';
 import AppShell from './AppShell';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -21,6 +26,8 @@ export default function AppRoutes() {
 
       <Route path="/daftar/:token" element={<ApplyPage />} />
       <Route path="/form-pelamar/:token" element={<FormPelamarPage />} />
+      <Route path="/ol/:token" element={<OlResponsePage />} />
+      <Route path="/onboarding/:token" element={<OnboardingPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
@@ -33,7 +40,10 @@ export default function AppRoutes() {
           <Route path="lowongan/:id" element={<VacancyDetailPage />} />
           <Route path="kandidat" element={<KandidatPage />} />
           <Route path="karyawan" element={<KaryawanPage />} />
+          <Route path="karyawan/:id" element={<EmployeeDetailPage />} />
           <Route path="pengguna" element={<PenggunaPage />} />
+          <Route path="offering-letters" element={<OlListPage />} />
+          <Route path="offering-letters/:id" element={<OlDetailPage />} />
         </Route>
       </Route>
 

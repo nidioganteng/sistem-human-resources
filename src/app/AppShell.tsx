@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  Briefcase, FileText, Home, LogOut, Menu, Moon, Shield, Sun, UserCheck, Users, X,
+  Briefcase, FileText, Home, LogOut, Mail, Menu, Moon, Shield, Sun, UserCheck, Users, X,
 } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useTheme } from '@/shared/ThemeContext';
@@ -14,6 +14,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   'users':      <Users size={18} />,
   'user-check': <UserCheck size={18} />,
   'shield':     <Shield size={18} />,
+  'mail':       <Mail size={18} />,
 };
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
