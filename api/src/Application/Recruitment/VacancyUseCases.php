@@ -33,8 +33,8 @@ final class VacancyUseCases
     /** @return array<int,array<string,mixed>> */
     public function list(User $actor): array
     {
-        if ($actor->role !== Role::Hr) {
-            throw new NotAllowed('Hanya HR yang dapat melihat daftar lowongan.');
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            throw new NotAllowed('Anda tidak memiliki akses melihat daftar lowongan.');
         }
 
         return array_map(
@@ -46,8 +46,8 @@ final class VacancyUseCases
     /** @return array<string,mixed> */
     public function get(User $actor, int $id): array
     {
-        if ($actor->role !== Role::Hr) {
-            throw new NotAllowed('Hanya HR yang dapat melihat lowongan.');
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            throw new NotAllowed('Anda tidak memiliki akses melihat lowongan.');
         }
 
         $row = $this->vacancies->findWithCounts($id);

@@ -132,8 +132,8 @@ final class ApplicantUseCases
     /** @return array<int,array<string,mixed>> */
     public function listByVacancy(User $actor, int $vacancyId): array
     {
-        if ($actor->role !== Role::Hr) {
-            throw new NotAllowed('Hanya HR yang dapat melihat daftar pelamar.');
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            throw new NotAllowed('Anda tidak memiliki akses melihat daftar pelamar.');
         }
 
         $vacancy = $this->vacancies->find($vacancyId);
@@ -145,6 +145,40 @@ final class ApplicantUseCases
             static fn (Applicant $a) => ApplicantView::from($a),
             $this->applicants->findByVacancy($vacancyId),
         );
+    }
+
+    /**
+     * Daftar kandidat yang sudah masuk pipeline seleksi (lintas lowongan).
+     * HR dan CEO melihat semua. Manajer hanya divisinya sendiri.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function listCandidates(User $actor): array
+    {
+        $allowed = [Role::Hr, Role::SuperAdmin, Role::Manajer];
+        if (!in_array($actor->role, $allowed, true)) {
+            throw new NotAllowed('Anda tidak memiliki akses melihat daftar kandidat.');
+        }
+
+        $statuses = [
+            'shortlisted', 'selection', 'offer_pending',
+            'offered', 'accepted', 'declined', 'hired', 'not_selected',
+        ];
+
+        $division = ($actor->role === Role::Manajer) ? $actor->division : null;
+
+        $rows = $this->applicants->findByStatuses($statuses, $division);
+
+        return array_map(function (array $row) {
+            $a     = $row['applicant'];
+            $track = $this->resolveSelectionTrack($a);
+            $view  = ApplicantView::from($a, $track);
+
+            $view['vacancyPosition'] = $row['vacancyPosition'];
+            $view['vacancyDivision'] = $row['vacancyDivision'];
+
+            return $view;
+        }, $rows);
     }
 
     /**
