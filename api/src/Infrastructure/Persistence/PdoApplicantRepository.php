@@ -167,6 +167,44 @@ final class PdoApplicantRepository implements ApplicantRepository
         ];
     }
 
+    public function saveSelectionRecord(
+        int $applicantId,
+        string $stage,
+        string $result,
+        ?string $notes,
+        int $recordedBy,
+    ): void {
+        $now = (new DateTimeImmutable())->format(self::FMT);
+        $st  = $this->pdo->prepare(
+            'INSERT INTO applicant_selections (applicant_id, stage, result, notes, recorded_by, recorded_at)
+             VALUES (?, ?, ?, ?, ?, ?)',
+        );
+        $st->execute([$applicantId, $stage, $result, $notes, $recordedBy, $now]);
+    }
+
+    /** @return array<int,array{id:int,stage:string,result:string,notes:string|null,recordedAt:string}> */
+    public function findSelectionRecords(int $applicantId): array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT id, stage, result, notes, recorded_at
+             FROM applicant_selections
+             WHERE applicant_id = ?
+             ORDER BY recorded_at ASC',
+        );
+        $st->execute([$applicantId]);
+
+        return array_map(
+            static fn (array $r) => [
+                'id'         => (int) $r['id'],
+                'stage'      => (string) $r['stage'],
+                'result'     => (string) $r['result'],
+                'notes'      => isset($r['notes']) ? (string) $r['notes'] : null,
+                'recordedAt' => (string) $r['recorded_at'],
+            ],
+            $st->fetchAll(PDO::FETCH_ASSOC),
+        );
+    }
+
     /** @param array<string,mixed> $r */
     private function hydrate(array $r): Applicant
     {

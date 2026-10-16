@@ -85,4 +85,54 @@ final class ApplicantController
 
         return Response::json(['success' => true]);
     }
+
+    /** POST /applicants/{id}/shortlist */
+    /** @param array<string,string> $p */
+    public function shortlist(Request $req, array $p): Response
+    {
+        $data = $this->applicants->shortlist($req->requireUser(), (int) $p['id']);
+
+        return Response::json($data);
+    }
+
+    /** POST /applicants/{id}/call-selection */
+    /** @param array<string,string> $p */
+    public function callToSelection(Request $req, array $p): Response
+    {
+        $data = $this->applicants->callToSelection($req->requireUser(), (int) $p['id']);
+
+        return Response::json($data);
+    }
+
+    /** POST /applicants/{id}/record-selection */
+    /** @param array<string,string> $p */
+    public function recordSelection(Request $req, array $p): Response
+    {
+        $stage  = isset($req->body['stage'])  ? (string) $req->body['stage']  : '';
+        $result = isset($req->body['result']) ? (string) $req->body['result'] : '';
+        $notes  = isset($req->body['notes'])  ? (string) $req->body['notes']  : null;
+
+        if ($notes !== null && trim($notes) === '') {
+            $notes = null;
+        }
+
+        $data = $this->applicants->recordSelectionResult(
+            $req->requireUser(),
+            (int) $p['id'],
+            $stage,
+            $result,
+            $notes,
+        );
+
+        return Response::json($data);
+    }
+
+    /** GET /applicants/{id}/selections */
+    /** @param array<string,string> $p */
+    public function listSelections(Request $req, array $p): Response
+    {
+        $records = $this->applicants->getSelectionRecords($req->requireUser(), (int) $p['id']);
+
+        return Response::json(['items' => $records]);
+    }
 }
