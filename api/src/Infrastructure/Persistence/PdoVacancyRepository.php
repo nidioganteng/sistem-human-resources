@@ -132,6 +132,19 @@ final class PdoVacancyRepository implements VacancyRepository
         return $st->fetch() !== false;
     }
 
+    public function countApplicants(int $vacancyId): int
+    {
+        $st = $this->pdo->prepare('SELECT COUNT(*) FROM applicants WHERE vacancy_id = ?');
+        $st->execute([$vacancyId]);
+
+        return (int) $st->fetchColumn();
+    }
+
+    public function delete(int $id): void
+    {
+        $this->pdo->prepare('DELETE FROM vacancies WHERE id = ?')->execute([$id]);
+    }
+
     /** @param array<string,mixed> $r */
     private function hydrate(array $r): Vacancy
     {
