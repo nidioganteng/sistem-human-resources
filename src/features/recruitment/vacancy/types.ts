@@ -102,6 +102,11 @@ export interface ApplicantFormDetail {
   submittedAt: string;
 }
 
+export interface CandidateItem extends Applicant {
+  vacancyPosition: string;
+  vacancyDivision: string;
+}
+
 export const APPLICANT_STATUS_LABELS: Record<ApplicantStatus, string> = {
   new: 'Baru',
   screen_rejected: 'Ditolak Screening',

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ClipboardList, Copy, Download, FileText, ListChecks, Users } from 'lucide-react';
 import { Badge } from '@/shared/ui/Badge';
 import { Alert } from '@/shared/ui/Alert';
@@ -27,6 +27,8 @@ import { ApiError, apiFetchBlob } from '@/services/api';
 import { FormPelamarModal } from './FormPelamarModal';
 import { exportFormPelamarDocx } from './exportFormPelamar';
 import { useAuth } from '@/auth/AuthContext';
+import { createOl, listOls } from '@/features/recruitment/ol/olService';
+import type { OfferingLetter } from '@/features/recruitment/ol/types';
 
 const APPLICANT_BADGE: Partial<Record<string, 'default' | 'green' | 'red' | 'amber'>> = {
   new:            'amber',
@@ -55,6 +57,7 @@ const RESULT_LABELS: Record<string, string> = {
 export default function VacancyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [vacancy, setVacancy] = useState<Vacancy | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +88,17 @@ export default function VacancyDetailPage() {
   const [exportingDocx, setExportingDocx] = useState(false);
   const [shortlisting, setShortlisting] = useState(false);
 
+  // State untuk OL
+  const [olMap, setOlMap] = useState<Record<number, OfferingLetter>>({});
+  const [showOlModal, setShowOlModal] = useState(false);
+  const [olApplicant, setOlApplicant] = useState<Applicant | null>(null);
+  const [olPosition, setOlPosition] = useState('');
+  const [olSalary, setOlSalary] = useState('');
+  const [olStartDate, setOlStartDate] = useState('');
+  const [olBody, setOlBody] = useState('');
+  const [creatingOl, setCreatingOl] = useState(false);
+  const [olError, setOlError] = useState('');
+
   // State untuk seleksi
   const [selectionApplicant, setSelectionApplicant] = useState<Applicant | null>(null);
   const [selectionRecords, setSelectionRecords] = useState<SelectionRecord[]>([]);
@@ -104,6 +118,19 @@ export default function VacancyDetailPage() {
       const [vac, appRes] = await Promise.all([getVacancy(vacancyId), listApplicants(vacancyId)]);
       setVacancy(vac);
       setApplicants(appRes.items);
+      // HR: buat peta applicantId -> OL agar bisa tampilkan tombol Lihat OL
+      if (currentUser?.role === 'hr') {
+        try {
+          const olRes = await listOls();
+          const map: Record<number, OfferingLetter> = {};
+          for (const ol of olRes.items) {
+            map[ol.applicantId] = ol;
+          }
+          setOlMap(map);
+        } catch {
+          // OL map gagal dimuat, tombol tetap bisa muncul via fallback
+        }
+      }
     } catch {
       setError('Gagal memuat data.');
     } finally {
@@ -265,6 +292,37 @@ export default function VacancyDetailPage() {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal memanggil ke seleksi.' });
     } finally {
       setBusyCall(null);
+    }
+  };
+
+  const handleOpenOlModal = (applicant: Applicant) => {
+    setOlApplicant(applicant);
+    setOlPosition(vacancy?.position ?? '');
+    setOlSalary('');
+    setOlStartDate('');
+    setOlBody('');
+    setOlError('');
+    setShowOlModal(true);
+  };
+
+  const handleCreateOl = async () => {
+    if (!olApplicant) return;
+    setCreatingOl(true);
+    setOlError('');
+    try {
+      const ol = await createOl({
+        applicantId: olApplicant.id,
+        position: olPosition.trim(),
+        salary: Number(olSalary),
+        startDate: olStartDate || undefined,
+        body: olBody.trim(),
+      });
+      setShowOlModal(false);
+      navigate(`/offering-letters/${ol.id}`);
+    } catch (e) {
+      setOlError(e instanceof ApiError ? e.message : 'Gagal membuat Offering Letter.');
+    } finally {
+      setCreatingOl(false);
     }
   };
 
@@ -653,8 +711,30 @@ export default function VacancyDetailPage() {
                             <ListChecks size={13} /> Catat Hasil
                           </button>
                         )}
-                        {a.status === 'offer_pending' && (
-                          <Badge variant="default">Siap OL</Badge>
+                        {a.status === 'offer_pending' && currentUser?.role === 'hr' && (
+                          olMap[a.id] ? (
+                            <Link
+                              to={`/offering-letters/${olMap[a.id].id}`}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                            >
+                              Lihat OL
+                            </Link>
+                          ) : (
+                            <button
+                              className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                              onClick={() => handleOpenOlModal(a)}
+                            >
+                              Buat OL
+                            </button>
+                          )
+                        )}
+                        {a.status === 'offer_pending' && currentUser?.role === 'super_admin' && (
+                          <Link
+                            to="/offering-letters"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                          >
+                            Cek OL
+                          </Link>
                         )}
                         {a.status === 'not_selected' && (
                           <span className="text-xs text-slate-400">Tidak dipilih</span>
@@ -1018,6 +1098,66 @@ export default function VacancyDetailPage() {
               onClick={() => confirmReject && void handleReject(confirmReject)}
             >
               {busy === confirmReject?.id ? 'Menolak...' : 'Ya, Tolak Lamaran'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal buat OL */}
+      <Modal
+        open={showOlModal}
+        onClose={() => setShowOlModal(false)}
+        title={`Buat Offering Letter - ${olApplicant?.fullName ?? ''}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          {olError && <Alert variant="error">{olError}</Alert>}
+          <div>
+            <label className="field-label">Posisi</label>
+            <input
+              className="field-input"
+              type="text"
+              value={olPosition}
+              onChange={(e) => setOlPosition(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="field-label">Gaji (Rp)</label>
+            <input
+              className="field-input"
+              type="number"
+              min={0}
+              placeholder="Contoh: 5000000"
+              value={olSalary}
+              onChange={(e) => setOlSalary(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="field-label">Tanggal Mulai (opsional)</label>
+            <input
+              className="field-input"
+              type="date"
+              value={olStartDate}
+              onChange={(e) => setOlStartDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="field-label">Isi Surat</label>
+            <textarea
+              className="field-input min-h-[140px] resize-y"
+              placeholder="Tuliskan isi Offering Letter di sini..."
+              value={olBody}
+              onChange={(e) => setOlBody(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+            <button className="btn-secondary" onClick={() => setShowOlModal(false)}>Batal</button>
+            <button
+              className="btn-primary"
+              disabled={creatingOl}
+              onClick={() => void handleCreateOl()}
+            >
+              {creatingOl ? 'Membuat...' : 'Buat OL'}
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { apiFetch, apiFetchBlob, post } from '@/services/api';
-import type { Applicant, ApplicantFormDetail, SelectionRecord, Vacancy } from './types';
+import type { Applicant, ApplicantFormDetail, CandidateItem, SelectionRecord, Vacancy } from './types';
 
 export const listVacancies = (): Promise<{ items: Vacancy[] }> =>
   apiFetch('/vacancies');
@@ -67,3 +67,6 @@ export const recordSelectionResult = (
 
 export const getSelectionRecords = (id: number): Promise<{ items: SelectionRecord[] }> =>
   apiFetch(`/applicants/${id}/selections`);
+
+export const listCandidates = (): Promise<{ items: CandidateItem[] }> =>
+  apiFetch('/candidates');
