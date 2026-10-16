@@ -7,6 +7,7 @@ import MrfListPage from '@/features/recruitment/mrf/MrfListPage';
 import VacancyListPage from '@/features/recruitment/vacancy/VacancyListPage';
 import VacancyDetailPage from '@/features/recruitment/vacancy/VacancyDetailPage';
 import ApplyPage from '@/features/apply/ApplyPage';
+import FormPelamarPage from '@/features/form-pelamar/FormPelamarPage';
 import KandidatPage from '@/features/kandidat/KandidatPage';
 import KaryawanPage from '@/features/karyawan/KaryawanPage';
 import PenggunaPage from '@/features/pengguna/PenggunaPage';
@@ -19,6 +20,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route path="/daftar/:token" element={<ApplyPage />} />
+      <Route path="/form-pelamar/:token" element={<FormPelamarPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
