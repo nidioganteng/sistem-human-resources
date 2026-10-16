@@ -86,6 +86,75 @@ final class Applicant
         $this->updatedAt  = new DateTimeImmutable();
     }
 
+    /** CEO (super_admin) memberi shortlist pada pelamar yang sudah mengisi Form Pelamar. */
+    public function shortlist(User $actor): void
+    {
+        if ($actor->role !== Role::SuperAdmin) {
+            throw new NotAllowed('Hanya CEO yang dapat melakukan shortlist kandidat.');
+        }
+        if ($this->status !== ApplicantStatus::FormSubmitted) {
+            throw new DomainRuleViolation('Shortlist hanya dapat dilakukan pada pelamar berstatus Form Terisi.');
+        }
+
+        $this->status    = ApplicantStatus::Shortlisted;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** HR atau CEO memanggil kandidat ke tahap seleksi. */
+    public function callToSelection(User $actor): void
+    {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            throw new NotAllowed('Hanya HR atau CEO yang dapat memanggil kandidat ke seleksi.');
+        }
+        if ($this->status !== ApplicantStatus::Shortlisted) {
+            throw new DomainRuleViolation('Pemanggilan seleksi hanya dapat dilakukan pada kandidat berstatus Shortlist.');
+        }
+
+        $this->status    = ApplicantStatus::Selection;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /**
+     * HR atau CEO mencatat hasil satu tahap seleksi.
+     * Jika gagal, status langsung berubah ke not_selected.
+     * Jika lulus, status tetap selection; use case yang menentukan apakah lanjut ke offer_pending.
+     */
+    public function recordSelectionResult(User $actor, string $stage, string $result): void
+    {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            throw new NotAllowed('Hanya HR atau CEO yang dapat mencatat hasil seleksi.');
+        }
+        if ($this->status !== ApplicantStatus::Selection) {
+            throw new DomainRuleViolation('Pencatatan hasil seleksi hanya dapat dilakukan pada kandidat berstatus Seleksi.');
+        }
+        if (!in_array($stage, ['competency_test', 'interview'], true)) {
+            throw new DomainRuleViolation('Tahap seleksi tidak valid.');
+        }
+        if (!in_array($result, ['pass', 'fail'], true)) {
+            throw new DomainRuleViolation('Hasil seleksi tidak valid.');
+        }
+
+        if ($result === 'fail') {
+            $this->status = ApplicantStatus::NotSelected;
+        }
+
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /**
+     * Dipanggil use case setelah memastikan kondisi lulus + track terpenuhi untuk offer.
+     * Hanya boleh dipanggil ketika status masih selection (sebelum save).
+     */
+    public function advanceToOffer(): void
+    {
+        if ($this->status !== ApplicantStatus::Selection) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus Seleksi yang dapat dilanjutkan ke Penawaran.');
+        }
+
+        $this->status    = ApplicantStatus::OfferPending;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     /** HR menyetujui pelamar dan mengirim tautan Form Pelamar. */
     public function approvePending(User $hr): void
     {

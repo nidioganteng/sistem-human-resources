@@ -53,4 +53,20 @@ interface ApplicantRepository
      * @return array{data:string,expected_salary:float,photo_path:string|null,signature_path:string|null,submitted_at:string}|null
      */
     public function findFormData(int $applicantId): ?array;
+
+    /** Simpan satu catatan hasil tahap seleksi ke applicant_selections. */
+    public function saveSelectionRecord(
+        int $applicantId,
+        string $stage,
+        string $result,
+        ?string $notes,
+        int $recordedBy,
+    ): void;
+
+    /**
+     * Ambil semua catatan seleksi milik satu pelamar, urut dari terlama ke terbaru.
+     *
+     * @return array<int,array{id:int,stage:string,result:string,notes:string|null,recordedAt:string}>
+     */
+    public function findSelectionRecords(int $applicantId): array;
 }
