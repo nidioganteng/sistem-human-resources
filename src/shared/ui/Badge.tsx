@@ -7,12 +7,12 @@ const STATUS_MAP: Record<MrfStatus, {
   text: string;
   ring: string;
 }> = {
-  draft:           { label: 'Draft',             dot: 'bg-slate-400',  bg: 'bg-slate-100',  text: 'text-slate-600',  ring: 'ring-slate-200'  },
-  pending_manager: { label: 'Menunggu Manajer',   dot: 'bg-amber-400',  bg: 'bg-amber-50',   text: 'text-amber-800',  ring: 'ring-amber-200'  },
-  pending_ceo:     { label: 'Menunggu CEO',        dot: 'bg-amber-400',  bg: 'bg-amber-50',   text: 'text-amber-800',  ring: 'ring-amber-200'  },
-  revision:        { label: 'Perlu Revisi',        dot: 'bg-orange-400', bg: 'bg-orange-50',  text: 'text-orange-800', ring: 'ring-orange-200' },
-  approved:        { label: 'Disetujui',           dot: 'bg-emerald-400',bg: 'bg-emerald-50', text: 'text-emerald-800',ring: 'ring-emerald-200'},
-  cancelled:       { label: 'Dibatalkan',          dot: 'bg-slate-300',  bg: 'bg-slate-50',   text: 'text-slate-500',  ring: 'ring-slate-200'  },
+  draft:           { label: 'Draft',             dot: 'bg-slate-400',  bg: 'bg-slate-100 dark:bg-slate-700/50',  text: 'text-slate-600 dark:text-slate-400',  ring: 'ring-slate-200 dark:ring-slate-600'  },
+  pending_manager: { label: 'Menunggu Manajer',   dot: 'bg-amber-400',  bg: 'bg-amber-50 dark:bg-amber-900/30',   text: 'text-amber-800 dark:text-amber-400',  ring: 'ring-amber-200 dark:ring-amber-700'  },
+  pending_ceo:     { label: 'Menunggu CEO',        dot: 'bg-amber-400',  bg: 'bg-amber-50 dark:bg-amber-900/30',   text: 'text-amber-800 dark:text-amber-400',  ring: 'ring-amber-200 dark:ring-amber-700'  },
+  revision:        { label: 'Perlu Revisi',        dot: 'bg-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/30',  text: 'text-orange-800 dark:text-orange-400', ring: 'ring-orange-200 dark:ring-orange-700' },
+  approved:        { label: 'Disetujui',           dot: 'bg-emerald-400',bg: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-800 dark:text-emerald-400',ring: 'ring-emerald-200 dark:ring-emerald-700'},
+  cancelled:       { label: 'Dibatalkan',          dot: 'bg-slate-300',  bg: 'bg-slate-50 dark:bg-slate-700/30',   text: 'text-slate-500 dark:text-slate-500',  ring: 'ring-slate-200 dark:ring-slate-600'  },
 };
 
 interface BadgeProps {
@@ -50,10 +50,10 @@ interface GenericBadgeProps {
 
 export function Badge({ children, variant = 'default' }: GenericBadgeProps) {
   const styles = {
-    default: 'bg-slate-100 text-slate-600 ring-slate-200',
-    green:   'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    red:     'bg-red-50 text-red-700 ring-red-200',
-    amber:   'bg-amber-50 text-amber-700 ring-amber-200',
+    default: 'bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-700/50 dark:text-slate-400 dark:ring-slate-600',
+    green:   'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-700',
+    red:     'bg-red-50 text-red-700 ring-red-200 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-700',
+    amber:   'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-700',
   };
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${styles[variant]}`}>
