@@ -227,8 +227,10 @@ final class VacancyUseCases
             $this->applicants->delete((int) $applicant->id());
         }
 
-        // Hapus lowongan
+        // Hapus lowongan dan MRF terkait
+        $mrfId = $vacancy->mrfId();
         $this->vacancies->delete($id);
+        $this->mrfs->delete($mrfId);
 
         exit();
     }

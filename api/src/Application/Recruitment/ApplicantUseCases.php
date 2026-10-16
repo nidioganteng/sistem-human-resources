@@ -51,6 +51,29 @@ final class ApplicantUseCases
             throw new NotFound('Pelamar tidak ditemukan.');
         }
 
+        if ($type === 'photo' || $type === 'signature') {
+            $formData = $this->applicants->findFormData($id);
+            if ($formData === null) {
+                throw new NotFound('Form Pelamar belum disubmit.');
+            }
+
+            $relativePath = $type === 'photo'
+                ? ($formData['photo_path'] ?? '')
+                : ($formData['signature_path'] ?? '');
+
+            if ($relativePath === '') {
+                throw new NotFound('Berkas tidak tersedia.');
+            }
+
+            $fullPath = rtrim(STORAGE_PATH, '/') . '/' . $relativePath;
+
+            if (!is_file($fullPath)) {
+                throw new NotFound('Berkas tidak ditemukan di server.');
+            }
+
+            return $fullPath;
+        }
+
         $relativePath = match ($type) {
             'cv'        => $applicant->cvPath(),
             'portfolio' => $applicant->portfolioPath() ?? '',
@@ -68,6 +91,40 @@ final class ApplicantUseCases
         }
 
         return $fullPath;
+    }
+
+    /**
+     * Ambil isi Form Pelamar yang sudah disubmit pelamar.
+     * Hanya bisa diakses oleh hr, super_admin, dan manajer.
+     *
+     * @return array<string,mixed>
+     */
+    public function getFormData(User $actor, int $id): array
+    {
+        $allowed = [Role::Hr, Role::SuperAdmin, Role::Manajer];
+        if (!in_array($actor->role, $allowed, true)) {
+            throw new NotAllowed('Anda tidak memiliki akses untuk melihat Form Pelamar.');
+        }
+
+        $applicant = $this->applicants->find($id);
+        if ($applicant === null) {
+            throw new NotFound('Pelamar tidak ditemukan.');
+        }
+
+        $formData = $this->applicants->findFormData($id);
+        if ($formData === null) {
+            throw new NotFound('Form Pelamar belum disubmit.');
+        }
+
+        $decoded = json_decode($formData['data'], true);
+
+        return [
+            'formData'       => $decoded,
+            'expectedSalary' => $formData['expected_salary'],
+            'photoPath'      => $formData['photo_path'],
+            'signaturePath'  => $formData['signature_path'],
+            'submittedAt'    => $formData['submitted_at'],
+        ];
     }
 
     /** @return array<int,array<string,mixed>> */

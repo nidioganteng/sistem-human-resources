@@ -113,6 +113,12 @@ final class PdoMrfRepository implements MrfRepository
         return array_map(fn (array $r) => $this->hydrate($r, []), $rows);
     }
 
+    public function delete(int $id): void
+    {
+        $this->pdo->prepare('DELETE FROM mrf_approvals WHERE mrf_id = ?')->execute([$id]);
+        $this->pdo->prepare('DELETE FROM mrfs WHERE id = ?')->execute([$id]);
+    }
+
     /**
      * @param array<string,mixed>  $r
      * @param ApprovalEntry[]      $history

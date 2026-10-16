@@ -58,6 +58,15 @@ final class ApplicantController
         exit();
     }
 
+    /** GET /applicants/{id}/form-data */
+    /** @param array<string,string> $p */
+    public function showFormData(Request $req, array $p): Response
+    {
+        $data = $this->applicants->getFormData($req->requireUser(), (int) $p['id']);
+
+        return Response::json($data);
+    }
+
     /** POST /applicants/{id}/approve */
     /** @param array<string,string> $p */
     public function approve(Request $req, array $p): Response

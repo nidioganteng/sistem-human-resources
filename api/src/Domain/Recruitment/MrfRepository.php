@@ -13,4 +13,7 @@ interface MrfRepository
 
     /** Tanpa riwayat, terbaru dulu. Filter akses dilakukan di use case. */
     public function findAll(): array;
+
+    /** Hapus MRF beserta seluruh riwayat persetujuannya. */
+    public function delete(int $id): void;
 }
