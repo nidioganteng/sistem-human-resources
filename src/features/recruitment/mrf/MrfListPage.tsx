@@ -80,7 +80,7 @@ export default function MrfListPage() {
           <p className="page-subtitle mt-0.5">
             {user.role === 'hr'
               ? 'MRF yang sudah disetujui CEO dan siap dibuatkan lowongan.'
-              : 'Permintaan tenaga kerja divisi{user.division ? ` ${user.division}` : ""}.'}
+              : `Permintaan tenaga kerja${user.division ? ` divisi ${user.division}` : ''}.`}
           </p>
         </div>
         {canCreateMrf(user.role) && (
