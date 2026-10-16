@@ -37,9 +37,11 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/vacancies/{id}/close', [$vac, 'close'], [$auth]);
 
     $app = $c->get(ApplicantController::class);
-    $r->add('GET',  '/vacancies/{id}/applicants', [$app, 'index'],   [$auth]);
-    $r->add('POST', '/applicants/{id}/approve',   [$app, 'approve'], [$auth]);
-    $r->add('POST', '/applicants/{id}/reject',    [$app, 'reject'],  [$auth]);
+    $r->add('GET',  '/vacancies/{id}/applicants',      [$app, 'index'],     [$auth]);
+    $r->add('GET',  '/applicants/{id}',                [$app, 'show'],      [$auth]);
+    $r->add('GET',  '/applicants/{id}/file/{type}',    [$app, 'serveFile'], [$auth]);
+    $r->add('POST', '/applicants/{id}/approve',        [$app, 'approve'],   [$auth]);
+    $r->add('POST', '/applicants/{id}/reject',         [$app, 'reject'],    [$auth]);
 
     // Endpoint publik (tanpa middleware auth): pendaftaran pelamar
     $pub = $c->get(PublicApplyController::class);

@@ -20,6 +20,7 @@ final class Applicant
         private string $phone,
         private string $cvPath,
         private ?string $portfolioPath,
+        private ?string $message,
         private DateTimeImmutable $consentAt,
         private ApplicantStatus $status,
         private ?int $screenedBy,
@@ -34,12 +35,13 @@ final class Applicant
         string $phone,
         string $cvPath,
         ?string $portfolioPath,
+        ?string $message,
     ): self {
         $now = new DateTimeImmutable();
 
         return new self(
             null, $vacancyId, $fullName, $email, $phone,
-            $cvPath, $portfolioPath, $now,
+            $cvPath, $portfolioPath, $message, $now,
             ApplicantStatus::New, null, $now, $now,
         );
     }
@@ -52,6 +54,7 @@ final class Applicant
         string $phone,
         string $cvPath,
         ?string $portfolioPath,
+        ?string $message,
         DateTimeImmutable $consentAt,
         ApplicantStatus $status,
         ?int $screenedBy,
@@ -60,7 +63,7 @@ final class Applicant
     ): self {
         return new self(
             $id, $vacancyId, $fullName, $email, $phone,
-            $cvPath, $portfolioPath, $consentAt,
+            $cvPath, $portfolioPath, $message, $consentAt,
             $status, $screenedBy, $createdAt, $updatedAt,
         );
     }
@@ -107,6 +110,7 @@ final class Applicant
     public function phone(): string { return $this->phone; }
     public function cvPath(): string { return $this->cvPath; }
     public function portfolioPath(): ?string { return $this->portfolioPath; }
+    public function message(): ?string { return $this->message; }
     public function consentAt(): DateTimeImmutable { return $this->consentAt; }
     public function status(): ApplicantStatus { return $this->status; }
     public function screenedBy(): ?int { return $this->screenedBy; }

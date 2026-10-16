@@ -12,13 +12,16 @@ final class ApplicantView
     public static function from(Applicant $a): array
     {
         return [
-            'id'        => $a->id(),
-            'vacancyId' => $a->vacancyId(),
-            'fullName'  => $a->fullName(),
-            'email'     => $a->email(),
-            'phone'     => $a->phone(),
-            'status'    => $a->status()->value,
-            'createdAt' => $a->createdAt()->format(DATE_ATOM),
+            'id'           => $a->id(),
+            'vacancyId'    => $a->vacancyId(),
+            'fullName'     => $a->fullName(),
+            'email'        => $a->email(),
+            'phone'        => $a->phone(),
+            'status'       => $a->status()->value,
+            'hasCv'        => $a->cvPath() !== '',
+            'hasPortfolio' => $a->portfolioPath() !== null,
+            'message'      => $a->message(),
+            'createdAt'    => $a->createdAt()->format(DATE_ATOM),
         ];
     }
 }

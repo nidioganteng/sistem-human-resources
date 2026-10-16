@@ -21,13 +21,13 @@ final class PdoApplicantRepository implements ApplicantRepository
         if ($a->id() === null) {
             $st = $this->pdo->prepare(
                 'INSERT INTO applicants
-                    (vacancy_id, full_name, email, phone, cv_path, portfolio_path,
+                    (vacancy_id, full_name, email, phone, cv_path, portfolio_path, message,
                      consent_at, status, screened_by, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             );
             $st->execute([
                 $a->vacancyId(), $a->fullName(), $a->email(), $a->phone(),
-                $a->cvPath(), $a->portfolioPath(),
+                $a->cvPath(), $a->portfolioPath(), $a->message(),
                 $a->consentAt()->format(self::FMT),
                 $a->status()->value,
                 $a->screenedBy(),
@@ -104,6 +104,7 @@ final class PdoApplicantRepository implements ApplicantRepository
             (string) $r['phone'],
             (string) $r['cv_path'],
             $r['portfolio_path'] !== null ? (string) $r['portfolio_path'] : null,
+            $r['message'] !== null ? (string) $r['message'] : null,
             new DateTimeImmutable((string) $r['consent_at']),
             ApplicantStatus::from((string) $r['status']),
             $r['screened_by'] !== null ? (int) $r['screened_by'] : null,

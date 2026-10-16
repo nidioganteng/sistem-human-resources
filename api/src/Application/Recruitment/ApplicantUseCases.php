@@ -28,6 +28,48 @@ final class ApplicantUseCases
         private Mailer $mailer,
     ) {}
 
+    /** @return array<string,mixed> */
+    public function getForHr(User $actor, int $id): array
+    {
+        $applicant = $this->load($actor, $id);
+
+        return ApplicantView::from($applicant);
+    }
+
+    /**
+     * Mengembalikan jalur absolut berkas milik pelamar.
+     * Hanya dipanggil dari controller file-serving, tidak pernah dikirim ke browser.
+     */
+    public function resolveFilePath(User $actor, int $id, string $type): string
+    {
+        if ($actor->role !== Role::Hr) {
+            throw new NotAllowed('Hanya HR yang dapat mengakses berkas pelamar.');
+        }
+
+        $applicant = $this->applicants->find($id);
+        if ($applicant === null) {
+            throw new NotFound('Pelamar tidak ditemukan.');
+        }
+
+        $relativePath = match ($type) {
+            'cv'        => $applicant->cvPath(),
+            'portfolio' => $applicant->portfolioPath() ?? '',
+            default     => '',
+        };
+
+        if ($relativePath === '') {
+            throw new NotFound('Berkas tidak tersedia.');
+        }
+
+        $fullPath = rtrim(STORAGE_PATH, '/') . '/' . $relativePath;
+
+        if (!is_file($fullPath)) {
+            throw new NotFound('Berkas tidak ditemukan di server.');
+        }
+
+        return $fullPath;
+    }
+
     /** @return array<int,array<string,mixed>> */
     public function listByVacancy(User $actor, int $vacancyId): array
     {
@@ -59,6 +101,7 @@ final class ApplicantUseCases
         string $phone,
         string $cvPath,
         ?string $portfolioPath,
+        ?string $message = null,
     ): array {
         $vacancy = $this->vacancies->findByToken($token);
         if ($vacancy === null || !$vacancy->isOpen()) {
@@ -85,6 +128,7 @@ final class ApplicantUseCases
             $phone,
             $cvPath,
             $portfolioPath,
+            $message,
         );
         $this->applicants->save($applicant);
 

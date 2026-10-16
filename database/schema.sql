@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS applicants (
     phone          VARCHAR(30) NOT NULL,
     cv_path        VARCHAR(255) NOT NULL,                  -- PDF maks. 2 MB, disimpan di luar public_html
     portfolio_path VARCHAR(255) NULL,
+    message        TEXT NULL,                              -- pesan opsional dari pelamar (mis. link web portofolio)
     consent_at     DATETIME NOT NULL,                      -- persetujuan penyimpanan data
     status         ENUM('new','screen_rejected','form_pending','form_submitted','shortlisted','not_selected',
                         'selection','offer_pending','offered','accepted','declined','expired','hired') NOT NULL DEFAULT 'new',
