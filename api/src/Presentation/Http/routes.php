@@ -5,8 +5,12 @@ use App\Infrastructure\Container;
 use App\Presentation\Http\Controllers\ApplicantController;
 use App\Presentation\Http\Controllers\ApplicantFormController;
 use App\Presentation\Http\Controllers\AuthController;
+use App\Presentation\Http\Controllers\EmployeeController;
 use App\Presentation\Http\Controllers\MrfController;
+use App\Presentation\Http\Controllers\OfferingLetterController;
 use App\Presentation\Http\Controllers\PublicApplyController;
+use App\Presentation\Http\Controllers\PublicOnboardingController;
+use App\Presentation\Http\Controllers\PublicOlController;
 use App\Presentation\Http\Controllers\VacancyController;
 use App\Presentation\Http\Middleware\Authenticate;
 use App\Presentation\Http\Response;
@@ -41,6 +45,7 @@ return static function (Router $r, Container $c): void {
     $r->add('GET',  '/vacancies/{id}/archive-download',    [$vac, 'downloadArchive'], [$auth]);
 
     $app = $c->get(ApplicantController::class);
+    $r->add('GET',  '/candidates',               [$app, 'candidates'],   [$auth]);
     $r->add('GET',  '/vacancies/{id}/applicants',      [$app, 'index'],     [$auth]);
     $r->add('GET',  '/applicants/{id}',                [$app, 'show'],      [$auth]);
     $r->add('GET',  '/applicants/{id}/file/{type}',    [$app, 'serveFile'],    [$auth]);
@@ -52,6 +57,25 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/applicants/{id}/record-selection', [$app, 'recordSelection'], [$auth]);
     $r->add('GET',  '/applicants/{id}/selections',     [$app, 'listSelections'],  [$auth]);
 
+    $ol = $c->get(OfferingLetterController::class);
+    $r->add('GET',  '/offering-letters',                  [$ol, 'list'],    [$auth]);
+    $r->add('POST', '/offering-letters',                  [$ol, 'store'],   [$auth]);
+    $r->add('GET',  '/offering-letters/{id}',             [$ol, 'show'],    [$auth]);
+    $r->add('PUT',  '/offering-letters/{id}',             [$ol, 'update'],  [$auth]);
+    $r->add('POST', '/offering-letters/{id}/submit',      [$ol, 'submit'],  [$auth]);
+    $r->add('POST', '/offering-letters/{id}/approve',     [$ol, 'approve'], [$auth]);
+    $r->add('POST', '/offering-letters/{id}/revise',      [$ol, 'revise'],  [$auth]);
+    $r->add('POST', '/offering-letters/{id}/send',        [$ol, 'send'],    [$auth]);
+
+    $emp = $c->get(EmployeeController::class);
+    $r->add('GET',  '/employees',                           [$emp, 'index'],          [$auth]);
+    $r->add('POST', '/employees',                           [$emp, 'store'],          [$auth]);
+    $r->add('GET',  '/employees/{id}',                      [$emp, 'show'],           [$auth]);
+    $r->add('PUT',  '/employees/{id}',                      [$emp, 'update'],         [$auth]);
+    $r->add('POST', '/employees/{id}/generate-link',        [$emp, 'generateLink'],   [$auth]);
+    $r->add('POST', '/employees/{id}/validate',             [$emp, 'validate'],       [$auth]);
+    $r->add('GET',  '/employees/{id}/documents/{docType}',  [$emp, 'serveDocument'],  [$auth]);
+
     // Endpoint publik (tanpa middleware auth): pendaftaran pelamar
     $pub = $c->get(PublicApplyController::class);
     $r->add('GET',  '/apply/{token}', [$pub, 'show']);
@@ -61,4 +85,15 @@ return static function (Router $r, Container $c): void {
     $form = $c->get(ApplicantFormController::class);
     $r->add('GET',  '/form-pelamar/{token}', [$form, 'show']);
     $r->add('POST', '/form-pelamar/{token}', [$form, 'store']);
+
+    // Endpoint publik (tanpa middleware auth): Offering Letter kandidat
+    $pubOl = $c->get(PublicOlController::class);
+    $r->add('GET',  '/ol/{token}',         [$pubOl, 'show']);
+    $r->add('POST', '/ol/{token}/respond', [$pubOl, 'respond']);
+
+    // Endpoint publik (tanpa middleware auth): onboarding karyawan mandiri
+    $onb = $c->get(PublicOnboardingController::class);
+    $r->add('GET',  '/onboarding/{token}',        [$onb, 'show']);
+    $r->add('POST', '/onboarding/{token}',        [$onb, 'submit']);
+    $r->add('POST', '/onboarding/{token}/upload', [$onb, 'upload']);
 };
