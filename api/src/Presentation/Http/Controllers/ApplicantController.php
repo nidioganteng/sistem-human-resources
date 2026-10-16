@@ -11,6 +11,15 @@ final class ApplicantController
 {
     public function __construct(private ApplicantUseCases $applicants) {}
 
+    /** GET /candidates */
+    /** @param array<string,string> $p */
+    public function candidates(Request $req, array $p): Response
+    {
+        $items = $this->applicants->listCandidates($req->requireUser());
+
+        return Response::json(['items' => $items]);
+    }
+
     /** GET /vacancies/{id}/applicants */
     /** @param array<string,string> $p */
     public function index(Request $req, array $p): Response
