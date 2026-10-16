@@ -205,6 +205,45 @@ final class PdoApplicantRepository implements ApplicantRepository
         );
     }
 
+    /**
+     * @param string[]  $statuses
+     * @return array<int,array{applicant:Applicant,vacancyPosition:string,vacancyDivision:string,mrfId:int}>
+     */
+    public function findByStatuses(array $statuses, ?string $division = null): array
+    {
+        if (count($statuses) === 0) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($statuses), '?'));
+        $params       = $statuses;
+
+        $sql = "SELECT a.*, v.position AS vacancy_position, v.division AS vacancy_division, v.mrf_id
+                FROM applicants a
+                JOIN vacancies v ON v.id = a.vacancy_id
+                WHERE a.status IN ({$placeholders})";
+
+        if ($division !== null) {
+            $sql     .= ' AND v.division = ?';
+            $params[] = $division;
+        }
+
+        $sql .= ' ORDER BY a.updated_at DESC';
+
+        $st = $this->pdo->prepare($sql);
+        $st->execute($params);
+
+        return array_map(
+            fn (array $r) => [
+                'applicant'       => $this->hydrate($r),
+                'vacancyPosition' => (string) $r['vacancy_position'],
+                'vacancyDivision' => (string) $r['vacancy_division'],
+                'mrfId'           => (int) $r['mrf_id'],
+            ],
+            $st->fetchAll(PDO::FETCH_ASSOC),
+        );
+    }
+
     /** @param array<string,mixed> $r */
     private function hydrate(array $r): Applicant
     {

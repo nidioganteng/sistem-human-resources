@@ -14,6 +14,7 @@ final class User
         public readonly ?string $division,
         public readonly ?DivisionType $divisionType,
         public readonly bool $isActive,
+        public readonly ?string $signaturePath = null,
     ) {}
 
     public function hasRole(Role ...$roles): bool

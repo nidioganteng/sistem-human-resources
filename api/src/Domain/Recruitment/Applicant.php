@@ -155,6 +155,39 @@ final class Applicant
         $this->updatedAt = new DateTimeImmutable();
     }
 
+    /** Dipanggil use case saat HR mengirim Offering Letter ke kandidat. */
+    public function advanceToOffered(): void
+    {
+        if ($this->status !== ApplicantStatus::OfferPending) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus offer_pending yang dapat dilanjutkan ke Offered.');
+        }
+
+        $this->status    = ApplicantStatus::Offered;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** Kandidat menerima penawaran. */
+    public function acceptOffer(): void
+    {
+        if ($this->status !== ApplicantStatus::Offered) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus offered yang dapat menerima penawaran.');
+        }
+
+        $this->status    = ApplicantStatus::Accepted;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** Kandidat menolak penawaran. */
+    public function declineOffer(): void
+    {
+        if ($this->status !== ApplicantStatus::Offered) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus offered yang dapat menolak penawaran.');
+        }
+
+        $this->status    = ApplicantStatus::Declined;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     /** HR menyetujui pelamar dan mengirim tautan Form Pelamar. */
     public function approvePending(User $hr): void
     {

@@ -69,4 +69,13 @@ interface ApplicantRepository
      * @return array<int,array{id:int,stage:string,result:string,notes:string|null,recordedAt:string}>
      */
     public function findSelectionRecords(int $applicantId): array;
+
+    /**
+     * Ambil semua pelamar dengan status tertentu, sertakan info lowongan (position, division).
+     * Opsional filter berdasarkan divisi untuk peran Manajer.
+     *
+     * @param string[]      $statuses
+     * @return array<int,array{applicant:Applicant,vacancyPosition:string,vacancyDivision:string,mrfId:int}>
+     */
+    public function findByStatuses(array $statuses, ?string $division = null): array;
 }
