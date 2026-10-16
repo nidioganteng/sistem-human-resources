@@ -16,6 +16,7 @@ use App\Domain\Recruitment\ApplicantRepository;
 use App\Domain\Recruitment\MrfRepository;
 use App\Domain\Recruitment\VacancyRepository;
 use App\Infrastructure\Mail\LogMailer;
+use App\Infrastructure\Mail\SmtpMailer;
 use App\Infrastructure\Persistence\Database;
 use App\Infrastructure\Persistence\PdoApplicantRepository;
 use App\Infrastructure\Persistence\PdoMrfRepository;
@@ -25,6 +26,7 @@ use App\Infrastructure\Security\JwtTokenService;
 use App\Infrastructure\Security\NativePasswordHasher;
 use App\Infrastructure\Storage\LocalFileStorage;
 use App\Presentation\Http\Controllers\ApplicantController;
+use App\Presentation\Http\Controllers\ApplicantFormController;
 use App\Presentation\Http\Controllers\AuthController;
 use App\Presentation\Http\Controllers\MrfController;
 use App\Presentation\Http\Controllers\PublicApplyController;
@@ -51,7 +53,9 @@ final class Wiring
             JWT_SECRET,
             defined('JWT_TTL_SECONDS') ? (int) JWT_TTL_SECONDS : 28800
         ));
-        $c->set(Mailer::class,      static fn () => new LogMailer());
+        $c->set(Mailer::class, static fn () => (defined('APP_ENV') && APP_ENV === 'local')
+            ? new LogMailer()
+            : new SmtpMailer());
         $c->set(FileStorage::class, static fn () => new LocalFileStorage());
 
         $c->set(Login::class, static fn (Container $c) => new Login(
@@ -76,6 +80,9 @@ final class Wiring
         $c->set(ApplicantController::class, static fn (Container $c) => new ApplicantController($c->get(ApplicantUseCases::class)));
         $c->set(PublicApplyController::class, static fn (Container $c) => new PublicApplyController(
             $c->get(VacancyUseCases::class), $c->get(ApplicantUseCases::class), $c->get(FileStorage::class)
+        ));
+        $c->set(ApplicantFormController::class, static fn (Container $c) => new ApplicantFormController(
+            $c->get(ApplicantRepository::class), $c->get(VacancyRepository::class), $c->get(FileStorage::class)
         ));
 
         return $c;
