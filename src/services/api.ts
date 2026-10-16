@@ -41,3 +41,15 @@ export const post = <T,>(path: string, body?: unknown): Promise<T> =>
 
 export const put = <T,>(path: string, body: unknown): Promise<T> =>
   apiFetch<T>(path, { method: 'PUT', body: JSON.stringify(body) });
+
+/** Fetch berkas sebagai Blob (untuk PDF viewer / download). */
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const token = getToken();
+  const res = await fetch(`${BASE_URL}/api${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    throw new ApiError('Gagal mengambil berkas.', res.status);
+  }
+  return res.blob();
+}

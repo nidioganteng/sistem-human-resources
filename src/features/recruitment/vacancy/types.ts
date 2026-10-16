@@ -36,6 +36,9 @@ export interface Applicant {
   email: string;
   phone: string;
   status: ApplicantStatus;
+  hasCv: boolean;
+  hasPortfolio: boolean;
+  message: string | null;
   createdAt: string;
 }
 

@@ -1,4 +1,4 @@
-import { apiFetch, post } from '@/services/api';
+import { apiFetch, apiFetchBlob, post } from '@/services/api';
 import type { Applicant, Vacancy } from './types';
 
 export const listVacancies = (): Promise<{ items: Vacancy[] }> =>
@@ -15,6 +15,16 @@ export const closeVacancy = (id: number): Promise<Vacancy> =>
 
 export const listApplicants = (vacancyId: number): Promise<{ items: Applicant[] }> =>
   apiFetch(`/vacancies/${vacancyId}/applicants`);
+
+export const getApplicant = (id: number): Promise<Applicant> =>
+  apiFetch(`/applicants/${id}`);
+
+export const openApplicantFile = async (id: number, type: 'cv' | 'portfolio'): Promise<void> => {
+  const blob = await apiFetchBlob(`/applicants/${id}/file/${type}`);
+  const url  = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+};
 
 export const approveApplicant = (id: number, appBaseUrl: string): Promise<{ success: boolean }> =>
   post(`/applicants/${id}/approve`, { appBaseUrl });

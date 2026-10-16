@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Copy, Users } from 'lucide-react';
+import { ArrowLeft, Copy, Download, FileText, Users } from 'lucide-react';
 import { Badge } from '@/shared/ui/Badge';
 import { Alert } from '@/shared/ui/Alert';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { Modal } from '@/shared/ui/Modal';
+import { FileViewerModal } from '@/shared/ui/FileViewerModal';
 import {
   approveApplicant,
   closeVacancy,
@@ -14,7 +15,7 @@ import {
 } from './vacancyService';
 import { APPLICANT_STATUS_LABELS } from './types';
 import type { Applicant, Vacancy } from './types';
-import { ApiError } from '@/services/api';
+import { ApiError, apiFetchBlob } from '@/services/api';
 
 const APPLICANT_BADGE: Partial<Record<string, 'default' | 'green' | 'red' | 'amber'>> = {
   new:            'amber',
@@ -38,6 +39,10 @@ export default function VacancyDetailPage() {
   const [actionMsg, setActionMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [selected, setSelected] = useState<Applicant | null>(null);
+  const [fileLoading, setFileLoading] = useState<'cv' | 'portfolio' | null>(null);
+  const [viewer, setViewer] = useState<{ blobUrl: string; title: string; filename: string } | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   const vacancyId = Number(id);
 
@@ -71,6 +76,7 @@ export default function VacancyDetailPage() {
     try {
       await approveApplicant(applicant.id, window.location.origin);
       setActionMsg({ type: 'ok', text: `Email tautan Form Pelamar telah dikirim ke ${applicant.email}.` });
+      setSelected(null);
       await load();
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal menyetujui.' });
@@ -86,11 +92,41 @@ export default function VacancyDetailPage() {
     try {
       await rejectApplicant(applicant.id);
       setActionMsg({ type: 'ok', text: `Lamaran ${applicant.fullName} ditolak. Email penolakan dikirim.` });
+      setSelected(null);
       await load();
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal menolak.' });
     } finally {
       setBusy(null);
+    }
+  };
+
+  const closeViewer = () => {
+    setViewer(null);
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  };
+
+  const handleOpenFile = async (type: 'cv' | 'portfolio') => {
+    if (!selected) return;
+    setFileLoading(type);
+    try {
+      const blob    = await apiFetchBlob(`/applicants/${selected.id}/file/${type}`);
+      const url     = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
+      const label   = type === 'cv' ? 'CV' : 'Portofolio';
+      const ext     = blob.type === 'application/pdf' ? 'pdf' : 'bin';
+      setViewer({
+        blobUrl:  url,
+        title:    `${label} - ${selected.fullName}`,
+        filename: `${type}-${selected.fullName.replace(/\s+/g, '_')}.${ext}`,
+      });
+    } catch {
+      setActionMsg({ type: 'err', text: 'Gagal membuka berkas. Coba lagi.' });
+    } finally {
+      setFileLoading(null);
     }
   };
 
@@ -186,34 +222,25 @@ export default function VacancyDetailPage() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
                   {newApplicants.map((a) => (
-                    <tr key={a.id} className="transition-colors hover:bg-slate-50">
-                      <td className="td font-medium text-slate-900">{a.fullName}</td>
-                      <td className="td text-slate-500">{a.email}</td>
-                      <td className="td text-slate-500">{a.phone}</td>
-                      <td className="td text-xs text-slate-400">
+                    <tr
+                      key={a.id}
+                      className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-[#1a2030]"
+                      onClick={() => setSelected(a)}
+                    >
+                      <td className="td font-medium text-slate-900 dark:text-white">{a.fullName}</td>
+                      <td className="td text-slate-500 dark:text-slate-400">{a.email}</td>
+                      <td className="td text-slate-500 dark:text-slate-400">{a.phone}</td>
+                      <td className="td text-xs text-slate-400 dark:text-slate-500">
                         {new Date(a.createdAt).toLocaleDateString('id-ID', {
                           day: '2-digit', month: 'short', year: 'numeric',
                         })}
                       </td>
                       <td className="td text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            className="btn-primary !py-1.5 text-xs"
-                            disabled={busy === a.id}
-                            onClick={() => void handleApprove(a)}
-                          >
-                            {busy === a.id ? '...' : 'Setujui'}
-                          </button>
-                          <button
-                            className="btn-danger !py-1.5 text-xs"
-                            disabled={busy === a.id}
-                            onClick={() => void handleReject(a)}
-                          >
-                            {busy === a.id ? '...' : 'Tolak'}
-                          </button>
-                        </div>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400">
+                          <FileText size={13} /> Lihat Berkas
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -255,6 +282,121 @@ export default function VacancyDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Modal detail pelamar */}
+      <Modal
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title="Detail Pelamar"
+        size="md"
+      >
+        {selected && (
+          <div className="space-y-5">
+            {/* Info dasar */}
+            <div className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 dark:bg-[#0c1018]">
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-500">Nama Lengkap</p>
+                <p className="mt-0.5 font-semibold text-slate-900 dark:text-white">{selected.fullName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-500">Tanggal Daftar</p>
+                <p className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                  {new Date(selected.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-500">Email</p>
+                <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{selected.email}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-500">Nomor HP</p>
+                <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{selected.phone}</p>
+              </div>
+            </div>
+
+            {/* Pesan dari pelamar */}
+            {selected.message && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-[#1c2333] dark:bg-[#0c1018]">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pesan dari Pelamar</p>
+                <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{selected.message}</p>
+              </div>
+            )}
+
+            {/* Berkas */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Berkas Lamaran</p>
+              <div className="flex flex-col gap-2">
+                {selected.hasCv && (
+                  <button
+                    onClick={() => void handleOpenFile('cv')}
+                    disabled={fileLoading === 'cv'}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-[#1c2333] dark:bg-[#0f1520] dark:text-slate-200 dark:hover:bg-[#1a2030]"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500 dark:bg-red-900/20">
+                      <FileText size={18} />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block">Curriculum Vitae (CV)</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">PDF</span>
+                    </span>
+                    <Download size={15} className="text-slate-400" />
+                    {fileLoading === 'cv' && <span className="text-xs text-slate-400">Membuka...</span>}
+                  </button>
+                )}
+                {selected.hasPortfolio && (
+                  <button
+                    onClick={() => void handleOpenFile('portfolio')}
+                    disabled={fileLoading === 'portfolio'}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-[#1c2333] dark:bg-[#0f1520] dark:text-slate-200 dark:hover:bg-[#1a2030]"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500 dark:bg-blue-900/20">
+                      <FileText size={18} />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <span className="block">Portofolio</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">PDF</span>
+                    </span>
+                    <Download size={15} className="text-slate-400" />
+                    {fileLoading === 'portfolio' && <span className="text-xs text-slate-400">Membuka...</span>}
+                  </button>
+                )}
+                {!selected.hasCv && !selected.hasPortfolio && (
+                  <p className="text-sm text-slate-400 dark:text-slate-500">Tidak ada berkas tersedia.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Tombol aksi */}
+            {selected.status === 'new' && (
+              <div className="flex gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+                <button
+                  className="btn-danger flex-1"
+                  disabled={busy === selected.id}
+                  onClick={() => void handleReject(selected)}
+                >
+                  {busy === selected.id ? '...' : 'Tolak Lamaran'}
+                </button>
+                <button
+                  className="btn-primary flex-1"
+                  disabled={busy === selected.id}
+                  onClick={() => void handleApprove(selected)}
+                >
+                  {busy === selected.id ? '...' : 'Setujui & Kirim Form'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      <FileViewerModal
+        open={viewer !== null}
+        onClose={closeViewer}
+        blobUrl={viewer?.blobUrl ?? null}
+        title={viewer?.title ?? ''}
+        filename={viewer?.filename}
+        loading={false}
+      />
 
       <Modal
         open={confirmClose}
