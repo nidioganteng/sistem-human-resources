@@ -1,10 +1,9 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
-// Dark mode dihapus -- aplikasi selalu light mode.
-// File ini dipertahankan agar import lama tidak perlu diubah sekaligus.
+type Theme = 'light' | 'dark';
 
 interface ThemeContextValue {
-  theme: 'light';
+  theme: Theme;
   toggle: () => void;
 }
 
@@ -13,9 +12,37 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggle: () => undefined,
 });
 
+function getInitialTheme(): Theme {
+  const stored = localStorage.getItem('theme');
+  if (stored === 'dark' || stored === 'light') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  if (theme === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const t = getInitialTheme();
+    applyTheme(t);
+    return t;
+  });
+
+  useEffect(() => {
+    applyTheme(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggle = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+
   return (
-    <ThemeContext.Provider value={{ theme: 'light', toggle: () => undefined }}>
+    <ThemeContext.Provider value={{ theme, toggle }}>
       {children}
     </ThemeContext.Provider>
   );
