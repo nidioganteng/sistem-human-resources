@@ -80,6 +80,8 @@ final class PdoApplicantRepository implements ApplicantRepository
 
     public function delete(int $id): void
     {
+        $this->pdo->prepare('DELETE FROM applicant_forms WHERE applicant_id = ?')->execute([$id]);
+        $this->pdo->prepare('DELETE FROM offering_letters WHERE applicant_id = ?')->execute([$id]);
         $this->pdo->prepare('DELETE FROM applicants WHERE id = ?')->execute([$id]);
     }
 
@@ -91,6 +93,78 @@ final class PdoApplicantRepository implements ApplicantRepository
              ON DUPLICATE KEY UPDATE token = VALUES(token), expires_at = VALUES(expires_at)',
         );
         $st->execute([$applicantId, $token, $expiresAt->format(self::FMT)]);
+    }
+
+    /**
+     * @return array{applicant_id:int,expires_at:string,submitted_at:string|null}|null
+     */
+    public function findFormByToken(string $token): ?array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT applicant_id, expires_at, submitted_at
+             FROM applicant_forms WHERE token = ? LIMIT 1',
+        );
+        $st->execute([$token]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'applicant_id' => (int) $row['applicant_id'],
+            'expires_at'   => (string) $row['expires_at'],
+            'submitted_at' => isset($row['submitted_at']) ? (string) $row['submitted_at'] : null,
+        ];
+    }
+
+    public function submitForm(
+        int $applicantId,
+        string $data,
+        float $expectedSalary,
+        ?string $photoPath,
+        ?string $signaturePath,
+    ): void {
+        $now = (new DateTimeImmutable())->format(self::FMT);
+
+        $st = $this->pdo->prepare(
+            'UPDATE applicant_forms
+             SET submitted_at = ?, data = ?, expected_salary = ?, photo_path = ?, signature_path = ?
+             WHERE applicant_id = ?',
+        );
+        $st->execute([$now, $data, $expectedSalary, $photoPath, $signaturePath, $applicantId]);
+
+        $st2 = $this->pdo->prepare(
+            'UPDATE applicants SET status = ?, updated_at = ? WHERE id = ?',
+        );
+        $st2->execute([ApplicantStatus::FormSubmitted->value, $now, $applicantId]);
+    }
+
+    /**
+     * @return array{data:string,expected_salary:float,photo_path:string|null,signature_path:string|null,submitted_at:string}|null
+     */
+    public function findFormData(int $applicantId): ?array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT data, expected_salary, photo_path, signature_path, submitted_at
+             FROM applicant_forms
+             WHERE applicant_id = ? AND submitted_at IS NOT NULL
+             LIMIT 1',
+        );
+        $st->execute([$applicantId]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'data'            => (string) $row['data'],
+            'expected_salary' => (float) $row['expected_salary'],
+            'photo_path'      => isset($row['photo_path']) ? (string) $row['photo_path'] : null,
+            'signature_path'  => isset($row['signature_path']) ? (string) $row['signature_path'] : null,
+            'submitted_at'    => (string) $row['submitted_at'],
+        ];
     }
 
     /** @param array<string,mixed> $r */

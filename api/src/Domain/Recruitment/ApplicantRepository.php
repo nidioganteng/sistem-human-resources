@@ -23,4 +23,34 @@ interface ApplicantRepository
      * Dipanggil use case setelah approvePending berhasil.
      */
     public function saveFormToken(int $applicantId, string $token, DateTimeImmutable $expiresAt): void;
+
+    /**
+     * Cari baris applicant_forms berdasarkan token.
+     * Mengembalikan array dengan key: applicant_id, expires_at, submitted_at.
+     * Mengembalikan null jika tidak ditemukan.
+     *
+     * @return array{applicant_id:int,expires_at:string,submitted_at:string|null}|null
+     */
+    public function findFormByToken(string $token): ?array;
+
+    /**
+     * Simpan data Form Pelamar yang sudah disubmit.
+     * Set submitted_at, data JSON, expected_salary, photo_path, signature_path.
+     * Juga update status applicants ke 'form_submitted'.
+     */
+    public function submitForm(
+        int $applicantId,
+        string $data,
+        float $expectedSalary,
+        ?string $photoPath,
+        ?string $signaturePath,
+    ): void;
+
+    /**
+     * Ambil isi Form Pelamar yang sudah disubmit.
+     * Mengembalikan null jika belum ada form atau belum disubmit.
+     *
+     * @return array{data:string,expected_salary:float,photo_path:string|null,signature_path:string|null,submitted_at:string}|null
+     */
+    public function findFormData(int $applicantId): ?array;
 }

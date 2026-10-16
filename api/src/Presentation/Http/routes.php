@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use App\Infrastructure\Container;
 use App\Presentation\Http\Controllers\ApplicantController;
+use App\Presentation\Http\Controllers\ApplicantFormController;
 use App\Presentation\Http\Controllers\AuthController;
 use App\Presentation\Http\Controllers\MrfController;
 use App\Presentation\Http\Controllers\PublicApplyController;
@@ -42,12 +43,18 @@ return static function (Router $r, Container $c): void {
     $app = $c->get(ApplicantController::class);
     $r->add('GET',  '/vacancies/{id}/applicants',      [$app, 'index'],     [$auth]);
     $r->add('GET',  '/applicants/{id}',                [$app, 'show'],      [$auth]);
-    $r->add('GET',  '/applicants/{id}/file/{type}',    [$app, 'serveFile'], [$auth]);
-    $r->add('POST', '/applicants/{id}/approve',        [$app, 'approve'],   [$auth]);
-    $r->add('POST', '/applicants/{id}/reject',         [$app, 'reject'],    [$auth]);
+    $r->add('GET',  '/applicants/{id}/file/{type}',    [$app, 'serveFile'],    [$auth]);
+    $r->add('GET',  '/applicants/{id}/form-data',      [$app, 'showFormData'], [$auth]);
+    $r->add('POST', '/applicants/{id}/approve',        [$app, 'approve'],      [$auth]);
+    $r->add('POST', '/applicants/{id}/reject',         [$app, 'reject'],       [$auth]);
 
     // Endpoint publik (tanpa middleware auth): pendaftaran pelamar
     $pub = $c->get(PublicApplyController::class);
     $r->add('GET',  '/apply/{token}', [$pub, 'show']);
     $r->add('POST', '/apply/{token}', [$pub, 'store']);
+
+    // Endpoint publik (tanpa middleware auth): Form Pelamar digital
+    $form = $c->get(ApplicantFormController::class);
+    $r->add('GET',  '/form-pelamar/{token}', [$form, 'show']);
+    $r->add('POST', '/form-pelamar/{token}', [$form, 'store']);
 };
