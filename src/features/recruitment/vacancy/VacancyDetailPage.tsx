@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ClipboardList, Copy, Download, FileText, Users } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Copy, Download, FileText, ListChecks, Users } from 'lucide-react';
 import { Badge } from '@/shared/ui/Badge';
 import { Alert } from '@/shared/ui/Alert';
 import { EmptyState } from '@/shared/ui/EmptyState';
@@ -9,19 +9,24 @@ import { FileViewerModal } from '@/shared/ui/FileViewerModal';
 import {
   approveApplicant,
   archiveVacancy,
+  callToSelection,
   closeVacancy,
   downloadAndDeleteVacancy,
   getApplicantFormData,
+  getSelectionRecords,
   getVacancy,
   listApplicants,
+  recordSelectionResult,
   rejectApplicant,
   reopenVacancy,
+  shortlistApplicant,
 } from './vacancyService';
 import { APPLICANT_STATUS_LABELS } from './types';
-import type { Applicant, ApplicantFormDetail, Vacancy } from './types';
+import type { Applicant, ApplicantFormDetail, SelectionRecord, Vacancy } from './types';
 import { ApiError, apiFetchBlob } from '@/services/api';
 import { FormPelamarModal } from './FormPelamarModal';
 import { exportFormPelamarDocx } from './exportFormPelamar';
+import { useAuth } from '@/auth/AuthContext';
 
 const APPLICANT_BADGE: Partial<Record<string, 'default' | 'green' | 'red' | 'amber'>> = {
   new:            'amber',
@@ -29,14 +34,27 @@ const APPLICANT_BADGE: Partial<Record<string, 'default' | 'green' | 'red' | 'amb
   form_pending:   'amber',
   form_submitted: 'amber',
   shortlisted:    'green',
+  selection:      'green',
+  offer_pending:  'default',
   hired:          'green',
   not_selected:   'red',
   declined:       'red',
   expired:        'red',
 };
 
+const STAGE_LABELS: Record<string, string> = {
+  competency_test: 'Tes Kompetensi',
+  interview:       'Wawancara',
+};
+
+const RESULT_LABELS: Record<string, string> = {
+  pass: 'Lulus',
+  fail: 'Tidak Lulus',
+};
+
 export default function VacancyDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user: currentUser } = useAuth();
   const [vacancy, setVacancy] = useState<Vacancy | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +83,18 @@ export default function VacancyDetailPage() {
   const [formViewer, setFormViewer] = useState<{ blobUrl: string; title: string; filename: string } | null>(null);
   const formViewerRef = useRef<string | null>(null);
   const [exportingDocx, setExportingDocx] = useState(false);
+  const [shortlisting, setShortlisting] = useState(false);
+
+  // State untuk seleksi
+  const [selectionApplicant, setSelectionApplicant] = useState<Applicant | null>(null);
+  const [selectionRecords, setSelectionRecords] = useState<SelectionRecord[]>([]);
+  const [selectionLoading, setSelectionLoading] = useState(false);
+  const [selectionError, setSelectionError] = useState('');
+  const [selectionStage, setSelectionStage] = useState<'competency_test' | 'interview'>('competency_test');
+  const [selectionResult, setSelectionResult] = useState<'pass' | 'fail'>('pass');
+  const [selectionNotes, setSelectionNotes] = useState('');
+  const [savingSelection, setSavingSelection] = useState(false);
+  const [busyCall, setBusyCall] = useState<number | null>(null);
 
   const vacancyId = Number(id);
 
@@ -208,6 +238,87 @@ export default function VacancyDetailPage() {
     }
   };
 
+  const handleShortlist = async () => {
+    if (!formApplicant) return;
+    setShortlisting(true);
+    setActionMsg(null);
+    try {
+      await shortlistApplicant(formApplicant.id);
+      setActionMsg({ type: 'ok', text: `${formApplicant.fullName} berhasil di-shortlist.` });
+      closeFormModal();
+      await load();
+    } catch (e) {
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal melakukan shortlist.' });
+    } finally {
+      setShortlisting(false);
+    }
+  };
+
+  const handleCallToSelection = async (applicant: Applicant) => {
+    setBusyCall(applicant.id);
+    setActionMsg(null);
+    try {
+      await callToSelection(applicant.id);
+      setActionMsg({ type: 'ok', text: `${applicant.fullName} dipanggil ke tahap seleksi.` });
+      await load();
+    } catch (e) {
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal memanggil ke seleksi.' });
+    } finally {
+      setBusyCall(null);
+    }
+  };
+
+  const handleOpenSelectionModal = async (applicant: Applicant) => {
+    setSelectionApplicant(applicant);
+    setSelectionRecords([]);
+    setSelectionError('');
+    setSelectionStage('competency_test');
+    setSelectionResult('pass');
+    setSelectionNotes('');
+    setSelectionLoading(true);
+    try {
+      const res = await getSelectionRecords(applicant.id);
+      setSelectionRecords(res.items);
+    } catch (e) {
+      setSelectionError(e instanceof ApiError ? e.message : 'Gagal memuat riwayat seleksi.');
+    } finally {
+      setSelectionLoading(false);
+    }
+  };
+
+  const handleSaveSelection = async () => {
+    if (!selectionApplicant) return;
+    setSavingSelection(true);
+    setSelectionError('');
+    try {
+      const updated = await recordSelectionResult(
+        selectionApplicant.id,
+        selectionStage,
+        selectionResult,
+        selectionNotes.trim() || undefined,
+      );
+      setSelectionNotes('');
+      // Muat ulang riwayat dan daftar pelamar
+      const [res] = await Promise.all([
+        getSelectionRecords(selectionApplicant.id),
+        load(),
+      ]);
+      setSelectionRecords(res.items);
+      // Jika kandidat sudah pindah status (not_selected/offer_pending), tutup modal
+      if (updated.status !== 'selection') {
+        setSelectionApplicant(null);
+        setActionMsg({ type: 'ok', text: `Hasil seleksi ${selectionApplicant.fullName} disimpan.` });
+      } else {
+        // Update objek selectionApplicant agar tombol aksi tetap konsisten
+        setSelectionApplicant(updated);
+      }
+    } catch (e) {
+      setSelectionError(e instanceof ApiError ? e.message : 'Gagal menyimpan hasil seleksi.');
+    } finally {
+      setSavingSelection(false);
+    }
+  };
+
   const handleOpenFile = async (type: 'cv' | 'portfolio') => {
     if (!selected) return;
     setFileLoading(type);
@@ -290,9 +401,14 @@ export default function VacancyDetailPage() {
   if (error) return <Alert variant="error">{error}</Alert>;
   if (!vacancy) return null;
 
+  const selectionStatuses = new Set(['shortlisted', 'selection', 'offer_pending', 'not_selected', 'offered', 'accepted', 'declined', 'hired']);
+
   const newApplicants            = applicants.filter((a) => a.status === 'new');
   const formSubmittedApplicants  = applicants.filter((a) => a.status === 'form_submitted');
-  const otherApplicants          = applicants.filter((a) => a.status !== 'new' && a.status !== 'form_submitted');
+  const selectionApplicants      = applicants.filter((a) => selectionStatuses.has(a.status));
+  const otherApplicants          = applicants.filter(
+    (a) => a.status !== 'new' && a.status !== 'form_submitted' && !selectionStatuses.has(a.status),
+  );
 
   return (
     <div className="space-y-5">
@@ -481,6 +597,78 @@ export default function VacancyDetailPage() {
         </div>
       </div>
 
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-slate-700">
+          Kandidat Shortlist &amp; Seleksi ({selectionApplicants.length})
+        </h2>
+        <div className="card !p-0 overflow-hidden">
+          {selectionApplicants.length === 0 ? (
+            <EmptyState
+              icon={<ListChecks size={22} />}
+              title="Belum ada kandidat"
+              description="Kandidat yang di-shortlist oleh CEO akan muncul di sini."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left">
+                <thead className="border-b border-slate-100 bg-slate-50">
+                  <tr>
+                    {['Nama', 'Email', 'Status', 'Track', ''].map((h) => (
+                      <th key={h} className="th">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                  {selectionApplicants.map((a) => (
+                    <tr key={a.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#1a2030]">
+                      <td className="td font-medium text-slate-900 dark:text-white">{a.fullName}</td>
+                      <td className="td text-slate-500 dark:text-slate-400">{a.email}</td>
+                      <td className="td">
+                        <Badge variant={APPLICANT_BADGE[a.status] ?? 'default'}>
+                          {APPLICANT_STATUS_LABELS[a.status]}
+                        </Badge>
+                      </td>
+                      <td className="td text-xs text-slate-500 dark:text-slate-400">
+                        {a.selectionTrack === 'fast'
+                          ? 'Fast'
+                          : a.selectionTrack === 'normal'
+                            ? 'Normal'
+                            : '-'}
+                      </td>
+                      <td className="td text-right">
+                        {a.status === 'shortlisted' && (currentUser?.role === 'hr' || currentUser?.role === 'super_admin') && (
+                          <button
+                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
+                            disabled={busyCall === a.id}
+                            onClick={() => void handleCallToSelection(a)}
+                          >
+                            {busyCall === a.id ? 'Memproses...' : 'Panggil ke Seleksi'}
+                          </button>
+                        )}
+                        {a.status === 'selection' && (currentUser?.role === 'hr' || currentUser?.role === 'super_admin') && (
+                          <button
+                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                            onClick={() => void handleOpenSelectionModal(a)}
+                          >
+                            <ListChecks size={13} /> Catat Hasil
+                          </button>
+                        )}
+                        {a.status === 'offer_pending' && (
+                          <Badge variant="default">Siap OL</Badge>
+                        )}
+                        {a.status === 'not_selected' && (
+                          <span className="text-xs text-slate-400">Tidak dipilih</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
       {otherApplicants.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">Riwayat Pelamar</h2>
@@ -639,6 +827,9 @@ export default function VacancyDetailPage() {
         onClose={closeFormModal}
         onExportDocx={() => void handleExportDocx()}
         exportingDocx={exportingDocx}
+        userRole={currentUser?.role}
+        onShortlist={() => void handleShortlist()}
+        shortlisting={shortlisting}
       />
 
       <FileViewerModal
@@ -649,6 +840,125 @@ export default function VacancyDetailPage() {
         filename={formViewer?.filename}
         loading={false}
       />
+
+      {/* Modal pencatatan hasil seleksi */}
+      <Modal
+        open={selectionApplicant !== null}
+        onClose={() => setSelectionApplicant(null)}
+        title={`Hasil Seleksi - ${selectionApplicant?.fullName ?? ''}`}
+        size="md"
+      >
+        {selectionApplicant && (
+          <div className="space-y-5">
+            {selectionError && <Alert variant="error">{selectionError}</Alert>}
+
+            {/* Riwayat catatan */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Riwayat Seleksi
+              </p>
+              {selectionLoading ? (
+                <p className="text-sm text-slate-400">Memuat...</p>
+              ) : selectionRecords.length === 0 ? (
+                <p className="text-sm text-slate-400">Belum ada catatan seleksi.</p>
+              ) : (
+                <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-[#1c2333] dark:border-[#1c2333]">
+                  {selectionRecords.map((rec) => (
+                    <div key={rec.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800 dark:text-white">
+                          {STAGE_LABELS[rec.stage] ?? rec.stage}
+                        </p>
+                        {rec.notes && (
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{rec.notes}</p>
+                        )}
+                        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                          {new Date(rec.recordedAt).toLocaleDateString('id-ID', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                      <Badge variant={rec.result === 'pass' ? 'green' : 'red'}>
+                        {RESULT_LABELS[rec.result] ?? rec.result}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Form tambah catatan baru - hanya jika status masih selection */}
+            {selectionApplicant.status === 'selection' && (
+              <div className="space-y-3 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Tambah Catatan Baru
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Tahap
+                    </label>
+                    <select
+                      className="field-input"
+                      value={selectionStage}
+                      onChange={(e) => setSelectionStage(e.target.value as 'competency_test' | 'interview')}
+                    >
+                      <option value="competency_test">Tes Kompetensi</option>
+                      <option value="interview">Wawancara</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Hasil
+                    </label>
+                    <select
+                      className="field-input"
+                      value={selectionResult}
+                      onChange={(e) => setSelectionResult(e.target.value as 'pass' | 'fail')}
+                    >
+                      <option value="pass">Lulus</option>
+                      <option value="fail">Tidak Lulus</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Catatan (opsional)
+                  </label>
+                  <textarea
+                    className="field-input min-h-[80px] resize-y"
+                    placeholder="Tuliskan catatan singkat tentang hasil seleksi..."
+                    value={selectionNotes}
+                    onChange={(e) => setSelectionNotes(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => setSelectionApplicant(null)}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    className="btn-primary"
+                    disabled={savingSelection}
+                    onClick={() => void handleSaveSelection()}
+                  >
+                    {savingSelection ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {selectionApplicant.status !== 'selection' && (
+              <div className="flex justify-end border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+                <button className="btn-secondary" onClick={() => setSelectionApplicant(null)}>Tutup</button>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={confirmClose}

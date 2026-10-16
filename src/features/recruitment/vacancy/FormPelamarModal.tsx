@@ -14,6 +14,9 @@ interface FormPelamarModalProps {
   onClose: () => void;
   onExportDocx: () => void;
   exportingDocx: boolean;
+  userRole?: string;
+  onShortlist?: () => void;
+  shortlisting?: boolean;
 }
 
 function SectionHeader({ title }: { title: string }) {
@@ -61,6 +64,9 @@ export function FormPelamarModal({
   onClose,
   onExportDocx,
   exportingDocx,
+  userRole,
+  onShortlist,
+  shortlisting = false,
 }: FormPelamarModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="Form Pelamar" size="lg">
@@ -412,7 +418,18 @@ export function FormPelamarModal({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end border-t border-slate-100 px-6 py-4 dark:border-[#1c2333]">
+          <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 dark:border-[#1c2333]">
+            <div>
+              {userRole === 'super_admin' && applicant?.status === 'form_submitted' && onShortlist && (
+                <button
+                  className="btn-primary !py-1.5 text-xs disabled:opacity-60"
+                  onClick={onShortlist}
+                  disabled={shortlisting}
+                >
+                  {shortlisting ? 'Memproses...' : 'Shortlist Kandidat Ini'}
+                </button>
+              )}
+            </div>
             <button className="btn-secondary" onClick={onClose}>Tutup</button>
           </div>
         </div>

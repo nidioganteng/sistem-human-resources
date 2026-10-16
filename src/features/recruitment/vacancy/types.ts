@@ -40,6 +40,15 @@ export interface Applicant {
   hasPortfolio: boolean;
   message: string | null;
   createdAt: string;
+  selectionTrack?: 'fast' | 'normal' | null;
+}
+
+export interface SelectionRecord {
+  id: number;
+  stage: 'competency_test' | 'interview';
+  result: 'pass' | 'fail';
+  notes: string | null;
+  recordedAt: string;
 }
 
 export interface FormPelamarData {

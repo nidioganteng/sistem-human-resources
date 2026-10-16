@@ -1,5 +1,5 @@
 import { apiFetch, apiFetchBlob, post } from '@/services/api';
-import type { Applicant, ApplicantFormDetail, Vacancy } from './types';
+import type { Applicant, ApplicantFormDetail, SelectionRecord, Vacancy } from './types';
 
 export const listVacancies = (): Promise<{ items: Vacancy[] }> =>
   apiFetch('/vacancies');
@@ -50,3 +50,20 @@ export const rejectApplicant = (id: number): Promise<{ success: boolean }> =>
 
 export const getApplicantFormData = (id: number): Promise<ApplicantFormDetail> =>
   apiFetch(`/applicants/${id}/form-data`);
+
+export const shortlistApplicant = (id: number): Promise<Applicant> =>
+  post(`/applicants/${id}/shortlist`);
+
+export const callToSelection = (id: number): Promise<Applicant> =>
+  post(`/applicants/${id}/call-selection`);
+
+export const recordSelectionResult = (
+  id: number,
+  stage: string,
+  result: string,
+  notes?: string,
+): Promise<Applicant> =>
+  post(`/applicants/${id}/record-selection`, { stage, result, notes: notes ?? null });
+
+export const getSelectionRecords = (id: number): Promise<{ items: SelectionRecord[] }> =>
+  apiFetch(`/applicants/${id}/selections`);
