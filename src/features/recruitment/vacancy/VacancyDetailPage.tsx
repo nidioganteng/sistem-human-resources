@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Copy, Download, FileText, Users } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Copy, Download, FileText, Users } from 'lucide-react';
 import { Badge } from '@/shared/ui/Badge';
 import { Alert } from '@/shared/ui/Alert';
 import { EmptyState } from '@/shared/ui/EmptyState';
@@ -11,14 +11,17 @@ import {
   archiveVacancy,
   closeVacancy,
   downloadAndDeleteVacancy,
+  getApplicantFormData,
   getVacancy,
   listApplicants,
   rejectApplicant,
   reopenVacancy,
 } from './vacancyService';
 import { APPLICANT_STATUS_LABELS } from './types';
-import type { Applicant, Vacancy } from './types';
+import type { Applicant, ApplicantFormDetail, Vacancy } from './types';
 import { ApiError, apiFetchBlob } from '@/services/api';
+import { FormPelamarModal } from './FormPelamarModal';
+import { exportFormPelamarDocx } from './exportFormPelamar';
 
 const APPLICANT_BADGE: Partial<Record<string, 'default' | 'green' | 'red' | 'amber'>> = {
   new:            'amber',
@@ -43,11 +46,25 @@ export default function VacancyDetailPage() {
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDownload, setConfirmDownload] = useState(false);
+  const [confirmReject, setConfirmReject] = useState<Applicant | null>(null);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Applicant | null>(null);
   const [fileLoading, setFileLoading] = useState<'cv' | 'portfolio' | null>(null);
   const [viewer, setViewer] = useState<{ blobUrl: string; title: string; filename: string } | null>(null);
   const blobUrlRef = useRef<string | null>(null);
+
+  // State untuk modal Form Pelamar
+  const [formApplicant, setFormApplicant] = useState<Applicant | null>(null);
+  const [formDetail, setFormDetail] = useState<ApplicantFormDetail | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+  const photoUrlRef = useRef<string | null>(null);
+  const signatureUrlRef = useRef<string | null>(null);
+  const [formViewer, setFormViewer] = useState<{ blobUrl: string; title: string; filename: string } | null>(null);
+  const formViewerRef = useRef<string | null>(null);
+  const [exportingDocx, setExportingDocx] = useState(false);
 
   const vacancyId = Number(id);
 
@@ -91,8 +108,8 @@ export default function VacancyDetailPage() {
   };
 
   const handleReject = async (applicant: Applicant) => {
-    if (!window.confirm(`Tolak lamaran ${applicant.fullName}? Data pelamar akan dihapus permanen.`)) return;
     setBusy(applicant.id);
+    setConfirmReject(null);
     setActionMsg(null);
     try {
       await rejectApplicant(applicant.id);
@@ -111,6 +128,83 @@ export default function VacancyDetailPage() {
     if (blobUrlRef.current) {
       URL.revokeObjectURL(blobUrlRef.current);
       blobUrlRef.current = null;
+    }
+  };
+
+  const closeFormViewer = () => {
+    setFormViewer(null);
+    if (formViewerRef.current) {
+      URL.revokeObjectURL(formViewerRef.current);
+      formViewerRef.current = null;
+    }
+  };
+
+  const closeFormModal = () => {
+    setFormApplicant(null);
+    setFormDetail(null);
+    setFormError('');
+    if (photoUrlRef.current) {
+      URL.revokeObjectURL(photoUrlRef.current);
+      photoUrlRef.current = null;
+      setPhotoUrl(null);
+    }
+    if (signatureUrlRef.current) {
+      URL.revokeObjectURL(signatureUrlRef.current);
+      signatureUrlRef.current = null;
+      setSignatureUrl(null);
+    }
+  };
+
+  const handleOpenFormModal = async (applicant: Applicant) => {
+    setFormApplicant(applicant);
+    setFormDetail(null);
+    setFormError('');
+    setPhotoUrl(null);
+    setSignatureUrl(null);
+    setFormLoading(true);
+    try {
+      const detail = await getApplicantFormData(applicant.id);
+      setFormDetail(detail);
+
+      // Load foto jika ada
+      if (detail.photoPath) {
+        try {
+          const photoBlob = await apiFetchBlob(`/applicants/${applicant.id}/file/photo`);
+          const url = URL.createObjectURL(photoBlob);
+          photoUrlRef.current = url;
+          setPhotoUrl(url);
+        } catch {
+          // Foto gagal dimuat, lanjutkan tanpa foto
+        }
+      }
+
+      // Load tanda tangan jika ada
+      if (detail.signaturePath) {
+        try {
+          const sigBlob = await apiFetchBlob(`/applicants/${applicant.id}/file/signature`);
+          const url = URL.createObjectURL(sigBlob);
+          signatureUrlRef.current = url;
+          setSignatureUrl(url);
+        } catch {
+          // Tanda tangan gagal dimuat
+        }
+      }
+    } catch (e) {
+      setFormError(e instanceof ApiError ? e.message : 'Gagal memuat data Form Pelamar.');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleExportDocx = async () => {
+    if (!formApplicant || !formDetail) return;
+    setExportingDocx(true);
+    try {
+      await exportFormPelamarDocx(formApplicant, formDetail, photoUrl, signatureUrl);
+    } catch (e) {
+      setActionMsg({ type: 'err', text: 'Gagal mengekspor dokumen.' });
+    } finally {
+      setExportingDocx(false);
     }
   };
 
@@ -196,8 +290,9 @@ export default function VacancyDetailPage() {
   if (error) return <Alert variant="error">{error}</Alert>;
   if (!vacancy) return null;
 
-  const newApplicants   = applicants.filter((a) => a.status === 'new');
-  const otherApplicants = applicants.filter((a) => a.status !== 'new');
+  const newApplicants            = applicants.filter((a) => a.status === 'new');
+  const formSubmittedApplicants  = applicants.filter((a) => a.status === 'form_submitted');
+  const otherApplicants          = applicants.filter((a) => a.status !== 'new' && a.status !== 'form_submitted');
 
   return (
     <div className="space-y-5">
@@ -338,6 +433,54 @@ export default function VacancyDetailPage() {
         </div>
       </div>
 
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-slate-700">
+          Form Pelamar Masuk ({formSubmittedApplicants.length})
+        </h2>
+        <div className="card !p-0 overflow-hidden">
+          {formSubmittedApplicants.length === 0 ? (
+            <EmptyState
+              icon={<ClipboardList size={22} />}
+              title="Belum ada form yang terisi"
+              description="Pelamar yang sudah mengisi Form Pelamar akan muncul di sini."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left">
+                <thead className="border-b border-slate-100 bg-slate-50">
+                  <tr>
+                    {['Nama', 'Email', 'Tanggal Submit', ''].map((h) => (
+                      <th key={h} className="th">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                  {formSubmittedApplicants.map((a) => (
+                    <tr key={a.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#1a2030]">
+                      <td className="td font-medium text-slate-900 dark:text-white">{a.fullName}</td>
+                      <td className="td text-slate-500 dark:text-slate-400">{a.email}</td>
+                      <td className="td text-xs text-slate-400 dark:text-slate-500">
+                        {new Date(a.createdAt).toLocaleDateString('id-ID', {
+                          day: '2-digit', month: 'short', year: 'numeric',
+                        })}
+                      </td>
+                      <td className="td text-right">
+                        <button
+                          className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                          onClick={() => void handleOpenFormModal(a)}
+                        >
+                          <ClipboardList size={13} /> Lihat Form
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
       {otherApplicants.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">Riwayat Pelamar</h2>
@@ -459,7 +602,7 @@ export default function VacancyDetailPage() {
                 <button
                   className="btn-danger flex-1"
                   disabled={busy === selected.id}
-                  onClick={() => void handleReject(selected)}
+                  onClick={() => setConfirmReject(selected)}
                 >
                   {busy === selected.id ? '...' : 'Tolak Lamaran'}
                 </button>
@@ -482,6 +625,28 @@ export default function VacancyDetailPage() {
         blobUrl={viewer?.blobUrl ?? null}
         title={viewer?.title ?? ''}
         filename={viewer?.filename}
+        loading={false}
+      />
+
+      <FormPelamarModal
+        open={formApplicant !== null}
+        applicant={formApplicant}
+        detail={formDetail}
+        loading={formLoading}
+        error={formError}
+        photoUrl={photoUrl}
+        signatureUrl={signatureUrl}
+        onClose={closeFormModal}
+        onExportDocx={() => void handleExportDocx()}
+        exportingDocx={exportingDocx}
+      />
+
+      <FileViewerModal
+        open={formViewer !== null}
+        onClose={closeFormViewer}
+        blobUrl={formViewer?.blobUrl ?? null}
+        title={formViewer?.title ?? ''}
+        filename={formViewer?.filename}
         loading={false}
       />
 
@@ -517,6 +682,32 @@ export default function VacancyDetailPage() {
             <button className="btn-secondary" onClick={() => setConfirmArchive(false)}>Batal</button>
             <button className="btn-danger" disabled={busy === 'archive'} onClick={() => void handleArchive()}>
               {busy === 'archive' ? 'Mengarsipkan...' : 'Ya, Arsipkan'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={confirmReject !== null}
+        onClose={() => setConfirmReject(null)}
+        title="Tolak Lamaran?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Lamaran dari <strong className="text-slate-700">{confirmReject?.fullName}</strong> akan ditolak
+            dan email penolakan akan dikirim secara otomatis.
+            Data pelamar akan <strong className="text-slate-700">dihapus permanen</strong> dari server.
+          </p>
+          <p className="text-xs text-red-500">Tindakan ini tidak dapat dibatalkan.</p>
+          <div className="flex justify-end gap-2">
+            <button className="btn-secondary" onClick={() => setConfirmReject(null)}>Batal</button>
+            <button
+              className="btn-danger"
+              disabled={busy === confirmReject?.id}
+              onClick={() => confirmReject && void handleReject(confirmReject)}
+            >
+              {busy === confirmReject?.id ? 'Menolak...' : 'Ya, Tolak Lamaran'}
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { apiFetch, apiFetchBlob, post } from '@/services/api';
-import type { Applicant, Vacancy } from './types';
+import type { Applicant, ApplicantFormDetail, Vacancy } from './types';
 
 export const listVacancies = (): Promise<{ items: Vacancy[] }> =>
   apiFetch('/vacancies');
@@ -47,3 +47,6 @@ export const approveApplicant = (id: number, appBaseUrl: string): Promise<{ succ
 
 export const rejectApplicant = (id: number): Promise<{ success: boolean }> =>
   post(`/applicants/${id}/reject`);
+
+export const getApplicantFormData = (id: number): Promise<ApplicantFormDetail> =>
+  apiFetch(`/applicants/${id}/form-data`);
