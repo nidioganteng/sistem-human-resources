@@ -13,6 +13,22 @@ export const openVacancy = (mrfId: number): Promise<Vacancy> =>
 export const closeVacancy = (id: number): Promise<Vacancy> =>
   post(`/vacancies/${id}/close`);
 
+export const reopenVacancy = (id: number): Promise<Vacancy> =>
+  post(`/vacancies/${id}/reopen`);
+
+export const archiveVacancy = (id: number): Promise<Vacancy> =>
+  post(`/vacancies/${id}/archive`);
+
+export const downloadAndDeleteVacancy = async (id: number, filename: string): Promise<void> => {
+  const blob = await apiFetchBlob(`/vacancies/${id}/archive-download`);
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 export const listApplicants = (vacancyId: number): Promise<{ items: Applicant[] }> =>
   apiFetch(`/vacancies/${vacancyId}/applicants`);
 

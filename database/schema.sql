@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS vacancies (
     position     VARCHAR(150) NOT NULL,                    -- disalin dari MRF saat lowongan dibuka
     division     VARCHAR(80)  NOT NULL,
     public_token CHAR(32) NOT NULL UNIQUE,                 -- bagian tautan pendaftaran di poster Instagram
-    status       ENUM('open','closed') NOT NULL DEFAULT 'open',
+    status       ENUM('open','closed','archived') NOT NULL DEFAULT 'open',
     opened_by    BIGINT UNSIGNED NOT NULL,
     opened_at    DATETIME NOT NULL,
     closed_at    DATETIME NULL,

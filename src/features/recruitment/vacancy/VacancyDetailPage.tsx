@@ -8,10 +8,13 @@ import { Modal } from '@/shared/ui/Modal';
 import { FileViewerModal } from '@/shared/ui/FileViewerModal';
 import {
   approveApplicant,
+  archiveVacancy,
   closeVacancy,
+  downloadAndDeleteVacancy,
   getVacancy,
   listApplicants,
   rejectApplicant,
+  reopenVacancy,
 } from './vacancyService';
 import { APPLICANT_STATUS_LABELS } from './types';
 import type { Applicant, Vacancy } from './types';
@@ -35,9 +38,11 @@ export default function VacancyDetailPage() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState<number | 'close' | null>(null);
+  const [busy, setBusy] = useState<number | 'close' | 'reopen' | 'archive' | 'download' | null>(null);
   const [actionMsg, setActionMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [confirmDownload, setConfirmDownload] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Applicant | null>(null);
   const [fileLoading, setFileLoading] = useState<'cv' | 'portfolio' | null>(null);
@@ -144,6 +149,49 @@ export default function VacancyDetailPage() {
     }
   };
 
+  const handleReopen = async () => {
+    setBusy('reopen');
+    try {
+      const updated = await reopenVacancy(vacancyId);
+      setVacancy(updated);
+      setActionMsg({ type: 'ok', text: 'Lowongan berhasil dibuka kembali.' });
+    } catch (e) {
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal membuka kembali lowongan.' });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleArchive = async () => {
+    setBusy('archive');
+    setConfirmArchive(false);
+    try {
+      const updated = await archiveVacancy(vacancyId);
+      setVacancy(updated);
+      setActionMsg({ type: 'ok', text: 'Lowongan berhasil diarsipkan. Gunakan tombol "Unduh & Hapus" di halaman Arsip untuk mengunduh data pelamar.' });
+    } catch (e) {
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal mengarsipkan lowongan.' });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleDownloadAndDelete = async () => {
+    if (!vacancy) return;
+    setBusy('download');
+    setConfirmDownload(false);
+    try {
+      const safeName = vacancy.position.replace(/\s+/g, '_');
+      const date     = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      await downloadAndDeleteVacancy(vacancyId, `arsip-${safeName}-${date}.zip`);
+      setActionMsg({ type: 'ok', text: 'Arsip berhasil diunduh. Data lowongan dan pelamar telah dihapus dari server.' });
+      setTimeout(() => { window.location.href = '/lowongan'; }, 2000);
+    } catch (e) {
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal mengunduh arsip.' });
+      setBusy(null);
+    }
+  };
+
   if (loading) return <p className="text-sm text-slate-400">Memuat...</p>;
   if (error) return <Alert variant="error">{error}</Alert>;
   if (!vacancy) return null;
@@ -169,8 +217,20 @@ export default function VacancyDetailPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={vacancy.status === 'open' ? 'green' : 'default'}>
-              {vacancy.status === 'open' ? 'Terbuka' : 'Ditutup'}
+            <Badge
+              variant={
+                vacancy.status === 'open'
+                  ? 'green'
+                  : vacancy.status === 'archived'
+                    ? 'amber'
+                    : 'default'
+              }
+            >
+              {vacancy.status === 'open'
+                ? 'Terbuka'
+                : vacancy.status === 'archived'
+                  ? 'Diarsipkan'
+                  : 'Ditutup'}
             </Badge>
             {vacancy.status === 'open' && (
               <button
@@ -179,6 +239,33 @@ export default function VacancyDetailPage() {
                 onClick={() => setConfirmClose(true)}
               >
                 {busy === 'close' ? 'Menutup...' : 'Tutup Lowongan'}
+              </button>
+            )}
+            {vacancy.status === 'closed' && (
+              <>
+                <button
+                  className="btn-secondary !py-1.5 text-xs"
+                  disabled={busy === 'reopen'}
+                  onClick={() => void handleReopen()}
+                >
+                  {busy === 'reopen' ? 'Membuka...' : 'Buka Kembali'}
+                </button>
+                <button
+                  className="btn-danger !py-1.5 text-xs"
+                  disabled={busy === 'archive'}
+                  onClick={() => setConfirmArchive(true)}
+                >
+                  {busy === 'archive' ? 'Mengarsipkan...' : 'Arsipkan'}
+                </button>
+              </>
+            )}
+            {vacancy.status === 'archived' && (
+              <button
+                className="!bg-amber-500 hover:!bg-amber-600 !text-white btn-primary !py-1.5 text-xs"
+                disabled={busy === 'download'}
+                onClick={() => setConfirmDownload(true)}
+              >
+                {busy === 'download' ? 'Mengunduh...' : 'Unduh & Hapus'}
               </button>
             )}
           </div>
@@ -406,11 +493,59 @@ export default function VacancyDetailPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-slate-500">
-            Tautan pendaftaran akan langsung tidak aktif. Tindakan ini tidak dapat dibatalkan.
+            Tautan pendaftaran akan langsung tidak aktif. Lowongan masih bisa dibuka kembali nanti.
           </p>
           <div className="flex justify-end gap-2">
             <button className="btn-secondary" onClick={() => setConfirmClose(false)}>Batal</button>
             <button className="btn-danger" onClick={() => void handleClose()}>Ya, Tutup</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={confirmArchive}
+        onClose={() => setConfirmArchive(false)}
+        title="Arsipkan Lowongan?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Lowongan akan diarsipkan. Status berubah ke <strong className="text-slate-700">Diarsipkan</strong>{' '}
+            dan tidak bisa dibuka kembali. Data pelamar masih tersimpan hingga Anda mengunduh arsip.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button className="btn-secondary" onClick={() => setConfirmArchive(false)}>Batal</button>
+            <button className="btn-danger" disabled={busy === 'archive'} onClick={() => void handleArchive()}>
+              {busy === 'archive' ? 'Mengarsipkan...' : 'Ya, Arsipkan'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={confirmDownload}
+        onClose={() => setConfirmDownload(false)}
+        title="Unduh & Hapus Data?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Semua data pelamar (CSV + berkas CV dan portofolio) akan dikemas dalam satu file ZIP dan diunduh.
+            Setelah unduhan selesai, <strong className="text-slate-700">seluruh data pelamar dan lowongan ini akan dihapus permanen dari server</strong>.
+            Pastikan file ZIP berhasil tersimpan sebelum melanjutkan.
+          </p>
+          <p className="text-xs text-amber-600">
+            Tindakan ini tidak dapat dibatalkan.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button className="btn-secondary" onClick={() => setConfirmDownload(false)}>Batal</button>
+            <button
+              className="!bg-amber-500 hover:!bg-amber-600 !text-white btn-primary"
+              disabled={busy === 'download'}
+              onClick={() => void handleDownloadAndDelete()}
+            >
+              {busy === 'download' ? 'Mengunduh...' : 'Ya, Unduh & Hapus'}
+            </button>
           </div>
         </div>
       </Modal>

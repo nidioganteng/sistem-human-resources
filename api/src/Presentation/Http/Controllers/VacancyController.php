@@ -40,4 +40,32 @@ final class VacancyController
     {
         return Response::json($this->vacancies->close($req->requireUser(), (int) $p['id']));
     }
+
+    /** @param array<string,string> $p */
+    public function reopen(Request $req, array $p): Response
+    {
+        return Response::json($this->vacancies->reopen($req->requireUser(), (int) $p['id']));
+    }
+
+    /** @param array<string,string> $p */
+    public function archive(Request $req, array $p): Response
+    {
+        return Response::json($this->vacancies->archive($req->requireUser(), (int) $p['id']));
+    }
+
+    /**
+     * Stream ZIP arsip pelamar ke browser lalu hapus semua data.
+     * Use case memanggil exit() setelah streaming selesai sehingga Response
+     * di bawah tidak pernah dikembalikan ke client.
+     *
+     * @param array<string,string> $p
+     */
+    public function downloadArchive(Request $req, array $p): Response
+    {
+        $this->vacancies->streamArchiveAndDelete($req->requireUser(), (int) $p['id']);
+
+        // Baris ini tidak pernah tercapai karena use case memanggil exit().
+        // Diperlukan agar analisis statis mengenali return type Response.
+        return Response::json(['success' => true]); // @codeCoverageIgnore
+    }
 }

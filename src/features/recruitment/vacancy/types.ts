@@ -1,4 +1,4 @@
-export type VacancyStatus = 'open' | 'closed';
+export type VacancyStatus = 'open' | 'closed' | 'archived';
 
 export type ApplicantStatus =
   | 'new'

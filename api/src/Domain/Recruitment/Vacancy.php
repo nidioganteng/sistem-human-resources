@@ -71,8 +71,38 @@ final class Vacancy
             throw new DomainRuleViolation('Lowongan sudah ditutup.');
         }
 
-        $this->status    = VacancyStatus::Closed;
-        $this->closedAt  = new DateTimeImmutable();
+        $this->status   = VacancyStatus::Closed;
+        $this->closedAt = new DateTimeImmutable();
+    }
+
+    public function reopen(User $actor): void
+    {
+        if ($actor->role !== Role::Hr) {
+            throw new NotAllowed('Hanya HR yang dapat membuka kembali lowongan.');
+        }
+        if ($this->status === VacancyStatus::Open) {
+            throw new DomainRuleViolation('Lowongan sudah terbuka.');
+        }
+
+        $this->status   = VacancyStatus::Open;
+        $this->closedAt = null;
+    }
+
+    public function archive(User $actor): void
+    {
+        if ($actor->role !== Role::Hr) {
+            throw new NotAllowed('Hanya HR yang dapat mengarsipkan lowongan.');
+        }
+        if ($this->status !== VacancyStatus::Closed) {
+            throw new DomainRuleViolation('Hanya lowongan yang sudah ditutup yang dapat diarsipkan.');
+        }
+
+        $this->status = VacancyStatus::Archived;
+    }
+
+    public function canBeDeleted(): bool
+    {
+        return $this->status === VacancyStatus::Closed;
     }
 
     public function isOpen(): bool

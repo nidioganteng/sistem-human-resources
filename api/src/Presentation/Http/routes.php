@@ -31,10 +31,13 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/mrfs/{id}/cancel',    [$mrf, 'cancel'],  [$auth]);
 
     $vac = $c->get(VacancyController::class);
-    $r->add('GET',  '/vacancies',            [$vac, 'index'], [$auth]);
-    $r->add('POST', '/vacancies',            [$vac, 'store'], [$auth]);
-    $r->add('GET',  '/vacancies/{id}',       [$vac, 'show'],  [$auth]);
-    $r->add('POST', '/vacancies/{id}/close', [$vac, 'close'], [$auth]);
+    $r->add('GET',  '/vacancies',                          [$vac, 'index'],           [$auth]);
+    $r->add('POST', '/vacancies',                          [$vac, 'store'],           [$auth]);
+    $r->add('GET',  '/vacancies/{id}',                     [$vac, 'show'],            [$auth]);
+    $r->add('POST', '/vacancies/{id}/close',               [$vac, 'close'],           [$auth]);
+    $r->add('POST', '/vacancies/{id}/reopen',              [$vac, 'reopen'],          [$auth]);
+    $r->add('POST', '/vacancies/{id}/archive',             [$vac, 'archive'],         [$auth]);
+    $r->add('GET',  '/vacancies/{id}/archive-download',    [$vac, 'downloadArchive'], [$auth]);
 
     $app = $c->get(ApplicantController::class);
     $r->add('GET',  '/vacancies/{id}/applicants',      [$app, 'index'],     [$auth]);

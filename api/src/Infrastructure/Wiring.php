@@ -59,7 +59,8 @@ final class Wiring
         ));
         $c->set(MrfUseCases::class, static fn (Container $c) => new MrfUseCases($c->get(MrfRepository::class)));
         $c->set(VacancyUseCases::class, static fn (Container $c) => new VacancyUseCases(
-            $c->get(VacancyRepository::class), $c->get(MrfRepository::class)
+            $c->get(VacancyRepository::class), $c->get(MrfRepository::class),
+            $c->get(ApplicantRepository::class), $c->get(FileStorage::class)
         ));
         $c->set(ApplicantUseCases::class, static fn (Container $c) => new ApplicantUseCases(
             $c->get(ApplicantRepository::class), $c->get(VacancyRepository::class),
