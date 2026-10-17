@@ -57,6 +57,7 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/applicants/{id}/call-selection', [$app, 'callToSelection'], [$auth]);
     $r->add('POST', '/applicants/{id}/record-selection', [$app, 'recordSelection'], [$auth]);
     $r->add('GET',  '/applicants/{id}/selections',     [$app, 'listSelections'],  [$auth]);
+    $r->add('POST', '/applicants/{id}/hire',           [$app, 'hire'],            [$auth]);
 
     $ol = $c->get(OfferingLetterController::class);
     $r->add('GET',  '/offering-letters',                  [$ol, 'list'],    [$auth]);
@@ -67,6 +68,7 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/offering-letters/{id}/approve',     [$ol, 'approve'], [$auth]);
     $r->add('POST', '/offering-letters/{id}/revise',      [$ol, 'revise'],  [$auth]);
     $r->add('POST', '/offering-letters/{id}/send',        [$ol, 'send'],    [$auth]);
+    $r->add('POST', '/offering-letters/{id}/resend',      [$ol, 'resend'],  [$auth]);
 
     $emp = $c->get(EmployeeController::class);
     $r->add('GET',  '/employees',                           [$emp, 'index'],          [$auth]);

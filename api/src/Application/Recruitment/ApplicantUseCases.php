@@ -3,13 +3,17 @@ declare(strict_types=1);
 
 namespace App\Application\Recruitment;
 
+use App\Application\Employee\EmployeeView;
 use App\Application\Ports\FileStorage;
 use App\Application\Ports\Mailer;
+use App\Domain\Employee\Employee;
+use App\Domain\Employee\EmployeeRepository;
 use App\Domain\Identity\Role;
 use App\Domain\Identity\User;
 use App\Domain\Recruitment\Applicant;
 use App\Domain\Recruitment\ApplicantRepository;
 use App\Domain\Recruitment\MrfRepository;
+use App\Domain\Recruitment\OfferingLetterRepository;
 use App\Domain\Recruitment\VacancyRepository;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Domain\Shared\NotAllowed;
@@ -28,6 +32,8 @@ final class ApplicantUseCases
         private MrfRepository $mrfs,
         private FileStorage $storage,
         private Mailer $mailer,
+        private ?EmployeeRepository $employees = null,
+        private ?OfferingLetterRepository $ols = null,
     ) {}
 
     /** @return array<string,mixed> */
@@ -446,6 +452,51 @@ final class ApplicantUseCases
         // satu kali setelah recordSelectionResult menentukan pass + kondisi terpenuhi.
         // Kita panggil method ini; domain akan memeriksa kondisi dan mengubah status.
         $applicant->advanceToOffer();
+    }
+
+    /** @return array<string,mixed> */
+    public function hire(User $actor, int $applicantId): array
+    {
+        if ($actor->role !== Role::Hr) {
+            throw new NotAllowed('Hanya HR yang dapat menjadikan kandidat sebagai karyawan.');
+        }
+
+        $applicant = $this->applicants->find($applicantId);
+        if ($applicant === null) {
+            throw new NotFound('Pelamar tidak ditemukan.');
+        }
+
+        $vacancy = $this->vacancies->find($applicant->vacancyId());
+        if ($vacancy === null) {
+            throw new NotFound('Data lowongan tidak ditemukan.');
+        }
+
+        $salary = null;
+        if ($this->ols !== null) {
+            $ol = $this->ols->findByApplicant($applicantId);
+            $salary = $ol?->salary();
+        }
+
+        $employee = Employee::create(
+            $actor,
+            $applicant->fullName(),
+            $vacancy->position(),
+            $vacancy->division(),
+            'PKWT',
+            $salary,
+            $applicant->id(),
+        );
+
+        if ($this->employees === null) {
+            throw new DomainRuleViolation('Fitur hire tidak tersedia.');
+        }
+
+        $this->employees->save($employee);
+
+        $applicant->markHired();
+        $this->applicants->save($applicant);
+
+        return EmployeeView::from($employee);
     }
 
     private function buildApproveEmail(
