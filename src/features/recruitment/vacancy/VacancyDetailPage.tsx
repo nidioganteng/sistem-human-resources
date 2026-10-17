@@ -471,10 +471,10 @@ export default function VacancyDetailPage() {
   return (
     <div className="space-y-5">
       <Link
-        to="/lowongan"
+        to={currentUser?.role === 'manajer' ? '/kandidat' : '/lowongan'}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700"
       >
-        <ArrowLeft size={15} /> Daftar Lowongan
+        <ArrowLeft size={15} /> {currentUser?.role === 'manajer' ? 'Kandidat' : 'Daftar Lowongan'}
       </Link>
 
       <div className="card space-y-4">
@@ -501,7 +501,7 @@ export default function VacancyDetailPage() {
                   ? 'Diarsipkan'
                   : 'Ditutup'}
             </Badge>
-            {vacancy.status === 'open' && (
+            {currentUser?.role === 'hr' && vacancy.status === 'open' && (
               <button
                 className="btn-danger !py-1.5 text-xs"
                 disabled={busy === 'close'}
@@ -510,7 +510,7 @@ export default function VacancyDetailPage() {
                 {busy === 'close' ? 'Menutup...' : 'Tutup Lowongan'}
               </button>
             )}
-            {vacancy.status === 'closed' && (
+            {currentUser?.role === 'hr' && vacancy.status === 'closed' && (
               <>
                 <button
                   className="btn-secondary !py-1.5 text-xs"
@@ -528,7 +528,7 @@ export default function VacancyDetailPage() {
                 </button>
               </>
             )}
-            {vacancy.status === 'archived' && (
+            {currentUser?.role === 'hr' && vacancy.status === 'archived' && (
               <button
                 className="!bg-amber-500 hover:!bg-amber-600 !text-white btn-primary !py-1.5 text-xs"
                 disabled={busy === 'download'}
@@ -540,7 +540,7 @@ export default function VacancyDetailPage() {
           </div>
         </div>
 
-        {vacancy.status === 'open' && (
+        {vacancy.status === 'open' && currentUser?.role === 'hr' && (
           <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
             <span className="min-w-0 flex-1 break-all font-mono text-xs text-slate-500">{applyUrl}</span>
             <button className="btn-secondary flex shrink-0 items-center gap-1.5 !py-1.5 text-xs" onClick={handleCopy}>
@@ -864,8 +864,8 @@ export default function VacancyDetailPage() {
               </div>
             </div>
 
-            {/* Tombol aksi */}
-            {selected.status === 'new' && (
+            {/* Tombol aksi - hanya HR */}
+            {selected.status === 'new' && currentUser?.role === 'hr' && (
               <div className="flex gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
                 <button
                   className="btn-danger flex-1"

@@ -46,12 +46,16 @@ final class VacancyUseCases
     /** @return array<string,mixed> */
     public function get(User $actor, int $id): array
     {
-        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer)) {
             throw new NotAllowed('Anda tidak memiliki akses melihat lowongan.');
         }
 
         $row = $this->vacancies->findWithCounts($id);
         if ($row === null) {
+            throw new NotFound('Lowongan tidak ditemukan.');
+        }
+
+        if ($actor->role === Role::Manajer && $row['vacancy']->division() !== $actor->division) {
             throw new NotFound('Lowongan tidak ditemukan.');
         }
 

@@ -132,12 +132,16 @@ final class ApplicantUseCases
     /** @return array<int,array<string,mixed>> */
     public function listByVacancy(User $actor, int $vacancyId): array
     {
-        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer)) {
             throw new NotAllowed('Anda tidak memiliki akses melihat daftar pelamar.');
         }
 
         $vacancy = $this->vacancies->find($vacancyId);
         if ($vacancy === null) {
+            throw new NotFound('Lowongan tidak ditemukan.');
+        }
+
+        if ($actor->role === Role::Manajer && $vacancy->division() !== $actor->division) {
             throw new NotFound('Lowongan tidak ditemukan.');
         }
 
