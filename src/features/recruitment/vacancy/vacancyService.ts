@@ -1,5 +1,6 @@
 import { apiFetch, apiFetchBlob, post } from '@/services/api';
 import type { Applicant, ApplicantFormDetail, CandidateItem, SelectionRecord, Vacancy } from './types';
+import type { Employee } from '@/features/karyawan/types';
 
 export const listVacancies = (): Promise<{ items: Vacancy[] }> =>
   apiFetch('/vacancies');
@@ -70,3 +71,6 @@ export const getSelectionRecords = (id: number): Promise<{ items: SelectionRecor
 
 export const listCandidates = (): Promise<{ items: CandidateItem[] }> =>
   apiFetch('/candidates');
+
+export const hireApplicant = (id: number): Promise<Employee> =>
+  post(`/applicants/${id}/hire`);

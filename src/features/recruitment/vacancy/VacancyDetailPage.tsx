@@ -15,6 +15,7 @@ import {
   getApplicantFormData,
   getSelectionRecords,
   getVacancy,
+  hireApplicant,
   listApplicants,
   recordSelectionResult,
   rejectApplicant,
@@ -110,6 +111,7 @@ export default function VacancyDetailPage() {
   const [selectionNotes, setSelectionNotes] = useState('');
   const [savingSelection, setSavingSelection] = useState(false);
   const [busyCall, setBusyCall] = useState<number | null>(null);
+  const [busyHire, setBusyHire] = useState<number | null>(null);
 
   const vacancyId = Number(id);
 
@@ -293,6 +295,21 @@ export default function VacancyDetailPage() {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal memanggil ke seleksi.' });
     } finally {
       setBusyCall(null);
+    }
+  };
+
+  const handleHire = async (applicant: Applicant) => {
+    setBusyHire(applicant.id);
+    setActionMsg(null);
+    try {
+      const employee = await hireApplicant(applicant.id);
+      setActionMsg({ type: 'ok', text: `${applicant.fullName} berhasil dijadikan karyawan.` });
+      await load();
+      navigate(`/karyawan/${employee.id}`);
+    } catch (e) {
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal menjadikan karyawan.' });
+    } finally {
+      setBusyHire(null);
     }
   };
 
@@ -736,6 +753,15 @@ export default function VacancyDetailPage() {
                           >
                             Cek OL
                           </Link>
+                        )}
+                        {a.status === 'accepted' && currentUser?.role === 'hr' && (
+                          <button
+                            className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:underline disabled:opacity-50"
+                            disabled={busyHire === a.id}
+                            onClick={() => void handleHire(a)}
+                          >
+                            {busyHire === a.id ? 'Memproses...' : 'Jadikan Karyawan'}
+                          </button>
                         )}
                         {a.status === 'not_selected' && (
                           <span className="text-xs text-slate-400">Tidak dipilih</span>
