@@ -45,6 +45,7 @@ final class PdoUserRepository implements UserRepository
             $r['division'] !== null ? (string) $r['division'] : null,
             $r['division_type'] !== null ? DivisionType::from((string) $r['division_type']) : null,
             (bool) $r['is_active'],
+            isset($r['signature_path']) ? (string) $r['signature_path'] : null,
         );
     }
 }

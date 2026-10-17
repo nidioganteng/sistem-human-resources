@@ -46,6 +46,7 @@ final class PublicApplyController
         $email    = trim((string) ($req->body['email'] ?? ''));
         $phone    = trim((string) ($req->body['phone'] ?? ''));
         $consent  = (string) ($req->body['consent'] ?? '');
+        $message  = trim((string) ($req->body['message'] ?? '')) ?: null;
 
         if ($fullName === '') {
             throw new HttpException(422, 'Nama lengkap wajib diisi.');
@@ -79,6 +80,7 @@ final class PublicApplyController
             $phone,
             $cvPath,
             $portfolioPath,
+            $message,
         );
 
         return Response::json(['success' => true, 'applicant' => $result], 201);

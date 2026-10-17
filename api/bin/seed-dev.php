@@ -1,8 +1,13 @@
 <?php
 declare(strict_types=1);
 
-// HANYA untuk laptop: mengisi 4 akun contoh dengan password yang sama. Menolak jalan jika APP_ENV bukan 'local'.
-//   php api/bin/seed-dev.php
+// HANYA untuk laptop: mengisi akun dev dengan password yang ditentukan lewat argumen.
+// Menolak jalan jika APP_ENV bukan 'local'.
+//
+// Cara pakai:
+//   php api/bin/seed-dev.php <password>
+// Contoh:
+//   php api/bin/seed-dev.php rahasia123
 
 if (PHP_SAPI !== 'cli') {
     exit('CLI only');
@@ -19,19 +24,41 @@ if (!defined('APP_ENV') || APP_ENV !== 'local') {
     exit(1);
 }
 
-$pw   = 'password-dev-123';
+$pw = $argv[1] ?? null;
+if (!$pw) {
+    fwrite(STDERR, "Cara pakai: php api/bin/seed-dev.php <password>\n");
+    exit(1);
+}
+
 $hash = (new NativePasswordHasher())->hash($pw);
 $pdo  = Database::connect();
-$st   = $pdo->prepare('INSERT IGNORE INTO users (name, email, password_hash, role, division, division_type) VALUES (?,?,?,?,?,?)');
 
+// Update akun lama jika masih pakai email lama
+$updates = [
+    ['Admin Gaharu',  'admin@gaharusempana.com',   'super_admin', 'ceo@contoh.test'],
+    ['HR Gaharu',     'hr@gaharusempana.com',       'hr',          'hr@contoh.test'],
+    ['Manajer Sipil', 'manajer@gaharusempana.com',  'manajer',     'manajer@contoh.test'],
+    ['PIC Sipil',     'pic@gaharusempana.com',      'pic',         'pic@contoh.test'],
+];
+$upd = $pdo->prepare('UPDATE users SET name=?, email=?, password_hash=?, role=? WHERE email=?');
+foreach ($updates as [$name, $newEmail, $role, $oldEmail]) {
+    $upd->execute([$name, $newEmail, $hash, $role, $oldEmail]);
+}
+
+// Reset password semua akun @gaharusempana.com
+$pdo->prepare('UPDATE users SET password_hash=? WHERE email LIKE ?')
+    ->execute([$hash, '%@gaharusempana.com']);
+
+// Insert jika belum ada (idempotent)
+$st = $pdo->prepare('INSERT IGNORE INTO users (name, email, password_hash, role, division, division_type) VALUES (?,?,?,?,?,?)');
 $rows = [
-    ['CEO Contoh',         'ceo@contoh.test',      'super_admin', null,      null],
-    ['HR Contoh',          'hr@contoh.test',       'hr',          null,      null],
-    ['Manajer Sipil',      'manajer@contoh.test',  'manajer',     'Sipil',   'teknis'],
-    ['PIC Sipil',          'pic@contoh.test',      'pic',         'Sipil',   'teknis'],
-    ['Manajer Keuangan',   'keuangan@contoh.test', 'manajer',     'Keuangan', 'non_teknis'],
+    ['Admin Gaharu',  'admin@gaharusempana.com',   'super_admin', null,    null],
+    ['HR Gaharu',     'hr@gaharusempana.com',       'hr',          null,    null],
+    ['Manajer Sipil', 'manajer@gaharusempana.com',  'manajer',     'Sipil', 'teknis'],
+    ['PIC Sipil',     'pic@gaharusempana.com',      'pic',         'Sipil', 'teknis'],
 ];
 foreach ($rows as [$name, $email, $role, $div, $type]) {
     $st->execute([$name, $email, $hash, $role, $div, $type]);
 }
-echo "Selesai. Login dengan email di atas, password: $pw\n";
+
+echo "Selesai. Email: admin/hr/manajer/pic @gaharusempana.com, password: (yang Anda masukkan)\n";

@@ -20,6 +20,7 @@ final class Applicant
         private string $phone,
         private string $cvPath,
         private ?string $portfolioPath,
+        private ?string $message,
         private DateTimeImmutable $consentAt,
         private ApplicantStatus $status,
         private ?int $screenedBy,
@@ -34,12 +35,13 @@ final class Applicant
         string $phone,
         string $cvPath,
         ?string $portfolioPath,
+        ?string $message,
     ): self {
         $now = new DateTimeImmutable();
 
         return new self(
             null, $vacancyId, $fullName, $email, $phone,
-            $cvPath, $portfolioPath, $now,
+            $cvPath, $portfolioPath, $message, $now,
             ApplicantStatus::New, null, $now, $now,
         );
     }
@@ -52,6 +54,7 @@ final class Applicant
         string $phone,
         string $cvPath,
         ?string $portfolioPath,
+        ?string $message,
         DateTimeImmutable $consentAt,
         ApplicantStatus $status,
         ?int $screenedBy,
@@ -60,7 +63,7 @@ final class Applicant
     ): self {
         return new self(
             $id, $vacancyId, $fullName, $email, $phone,
-            $cvPath, $portfolioPath, $consentAt,
+            $cvPath, $portfolioPath, $message, $consentAt,
             $status, $screenedBy, $createdAt, $updatedAt,
         );
     }
@@ -81,6 +84,119 @@ final class Applicant
         $this->status     = ApplicantStatus::ScreenRejected;
         $this->screenedBy = $hr->id;
         $this->updatedAt  = new DateTimeImmutable();
+    }
+
+    /** CEO (super_admin) memberi shortlist pada pelamar yang sudah mengisi Form Pelamar. */
+    public function shortlist(User $actor): void
+    {
+        if ($actor->role !== Role::SuperAdmin) {
+            throw new NotAllowed('Hanya CEO yang dapat melakukan shortlist kandidat.');
+        }
+        if ($this->status !== ApplicantStatus::FormSubmitted) {
+            throw new DomainRuleViolation('Shortlist hanya dapat dilakukan pada pelamar berstatus Form Terisi.');
+        }
+
+        $this->status    = ApplicantStatus::Shortlisted;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** HR atau CEO memanggil kandidat ke tahap seleksi. */
+    public function callToSelection(User $actor): void
+    {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            throw new NotAllowed('Hanya HR atau CEO yang dapat memanggil kandidat ke seleksi.');
+        }
+        if ($this->status !== ApplicantStatus::Shortlisted) {
+            throw new DomainRuleViolation('Pemanggilan seleksi hanya dapat dilakukan pada kandidat berstatus Shortlist.');
+        }
+
+        $this->status    = ApplicantStatus::Selection;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /**
+     * HR atau CEO mencatat hasil satu tahap seleksi.
+     * Jika gagal, status langsung berubah ke not_selected.
+     * Jika lulus, status tetap selection; use case yang menentukan apakah lanjut ke offer_pending.
+     */
+    public function recordSelectionResult(User $actor, string $stage, string $result): void
+    {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            throw new NotAllowed('Hanya HR atau CEO yang dapat mencatat hasil seleksi.');
+        }
+        if ($this->status !== ApplicantStatus::Selection) {
+            throw new DomainRuleViolation('Pencatatan hasil seleksi hanya dapat dilakukan pada kandidat berstatus Seleksi.');
+        }
+        if (!in_array($stage, ['competency_test', 'interview'], true)) {
+            throw new DomainRuleViolation('Tahap seleksi tidak valid.');
+        }
+        if (!in_array($result, ['pass', 'fail'], true)) {
+            throw new DomainRuleViolation('Hasil seleksi tidak valid.');
+        }
+
+        if ($result === 'fail') {
+            $this->status = ApplicantStatus::NotSelected;
+        }
+
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /**
+     * Dipanggil use case setelah memastikan kondisi lulus + track terpenuhi untuk offer.
+     * Hanya boleh dipanggil ketika status masih selection (sebelum save).
+     */
+    public function advanceToOffer(): void
+    {
+        if ($this->status !== ApplicantStatus::Selection) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus Seleksi yang dapat dilanjutkan ke Penawaran.');
+        }
+
+        $this->status    = ApplicantStatus::OfferPending;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** Dipanggil use case saat HR mengirim Offering Letter ke kandidat. */
+    public function advanceToOffered(): void
+    {
+        if ($this->status !== ApplicantStatus::OfferPending) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus offer_pending yang dapat dilanjutkan ke Offered.');
+        }
+
+        $this->status    = ApplicantStatus::Offered;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** Kandidat menerima penawaran. */
+    public function acceptOffer(): void
+    {
+        if ($this->status !== ApplicantStatus::Offered) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus offered yang dapat menerima penawaran.');
+        }
+
+        $this->status    = ApplicantStatus::Accepted;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** Kandidat menolak penawaran. */
+    public function declineOffer(): void
+    {
+        if ($this->status !== ApplicantStatus::Offered) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus offered yang dapat menolak penawaran.');
+        }
+
+        $this->status    = ApplicantStatus::Declined;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /** HR menjadikan kandidat yang menerima OL sebagai karyawan. */
+    public function markHired(): void
+    {
+        if ($this->status !== ApplicantStatus::Accepted) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus diterima yang dapat dijadikan karyawan.');
+        }
+
+        $this->status    = ApplicantStatus::Hired;
+        $this->updatedAt = new DateTimeImmutable();
     }
 
     /** HR menyetujui pelamar dan mengirim tautan Form Pelamar. */
@@ -107,6 +223,7 @@ final class Applicant
     public function phone(): string { return $this->phone; }
     public function cvPath(): string { return $this->cvPath; }
     public function portfolioPath(): ?string { return $this->portfolioPath; }
+    public function message(): ?string { return $this->message; }
     public function consentAt(): DateTimeImmutable { return $this->consentAt; }
     public function status(): ApplicantStatus { return $this->status; }
     public function screenedBy(): ?int { return $this->screenedBy; }

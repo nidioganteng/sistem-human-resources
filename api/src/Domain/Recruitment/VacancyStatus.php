@@ -5,6 +5,7 @@ namespace App\Domain\Recruitment;
 
 enum VacancyStatus: string
 {
-    case Open   = 'open';
-    case Closed = 'closed';
+    case Open     = 'open';
+    case Closed   = 'closed';
+    case Archived = 'archived';
 }

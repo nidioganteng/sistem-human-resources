@@ -25,4 +25,9 @@ interface VacancyRepository
 
     /** Cek apakah sudah ada lowongan terbuka untuk MRF ini. */
     public function hasOpenForMrf(int $mrfId): bool;
+
+    /** Menghitung total pelamar yang masih aktif (belum dihapus) untuk lowongan ini. */
+    public function countApplicants(int $vacancyId): int;
+
+    public function delete(int $id): void;
 }

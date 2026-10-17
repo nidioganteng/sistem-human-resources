@@ -97,6 +97,12 @@ final class MrfUseCases
         return $this->act($actor, $id, static fn (Mrf $m) => $m->cancel($actor));
     }
 
+    /** @return array<string,mixed> */
+    public function recall(User $actor, int $id): array
+    {
+        return $this->act($actor, $id, static fn (Mrf $m) => $m->recall($actor));
+    }
+
     // ──
 
     private function load(User $actor, int $id): Mrf

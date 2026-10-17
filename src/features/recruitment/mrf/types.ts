@@ -5,7 +5,7 @@ export type SelectionTrack = 'fast' | 'normal';
 export interface MrfHistoryEntry {
   actorName: string;
   roleLabel: string;
-  action: 'submit' | 'approve' | 'revise' | 'cancel';
+  action: 'submit' | 'approve' | 'revise' | 'cancel' | 'recalled';
   actionLabel: string;
   comment: string | null;
   toLabel: string;
@@ -35,6 +35,7 @@ export interface Mrf extends MrfInput {
   updatedAt: string;
   canEdit: boolean;
   canDecide: boolean;
+  canRecall: boolean;
   needsMyAction: boolean;
   history?: MrfHistoryEntry[];
 }

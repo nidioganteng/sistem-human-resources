@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS mrf_approvals (
     mrf_id      BIGINT UNSIGNED NOT NULL,
     actor_id    BIGINT UNSIGNED NOT NULL,
     actor_role  ENUM('super_admin','hr','manajer','pic') NOT NULL,
-    action      ENUM('submit','approve','revise','cancel') NOT NULL,
+    action      ENUM('submit','approve','revise','cancel','recalled') NOT NULL,
     comment     TEXT NULL,
     from_status VARCHAR(20) NOT NULL,
     to_status   VARCHAR(20) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS vacancies (
     position     VARCHAR(150) NOT NULL,                    -- disalin dari MRF saat lowongan dibuka
     division     VARCHAR(80)  NOT NULL,
     public_token CHAR(32) NOT NULL UNIQUE,                 -- bagian tautan pendaftaran di poster Instagram
-    status       ENUM('open','closed') NOT NULL DEFAULT 'open',
+    status       ENUM('open','closed','archived') NOT NULL DEFAULT 'open',
     opened_by    BIGINT UNSIGNED NOT NULL,
     opened_at    DATETIME NOT NULL,
     closed_at    DATETIME NULL,
@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS applicants (
     phone          VARCHAR(30) NOT NULL,
     cv_path        VARCHAR(255) NOT NULL,                  -- PDF maks. 2 MB, disimpan di luar public_html
     portfolio_path VARCHAR(255) NULL,
+    message        TEXT NULL,                              -- pesan opsional dari pelamar (mis. link web portofolio)
     consent_at     DATETIME NOT NULL,                      -- persetujuan penyimpanan data
     status         ENUM('new','screen_rejected','form_pending','form_submitted','shortlisted','not_selected',
                         'selection','offer_pending','offered','accepted','declined','expired','hired') NOT NULL DEFAULT 'new',
@@ -107,6 +108,19 @@ CREATE TABLE IF NOT EXISTS applicant_forms (
     CONSTRAINT fk_form_app FOREIGN KEY (applicant_id) REFERENCES applicants(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS applicant_selections (
+    id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    applicant_id  BIGINT UNSIGNED NOT NULL,
+    stage         ENUM('competency_test','interview') NOT NULL,
+    result        ENUM('pass','fail') NOT NULL,
+    notes         TEXT NULL,
+    recorded_by   BIGINT UNSIGNED NOT NULL,
+    recorded_at   DATETIME NOT NULL,
+    CONSTRAINT fk_sel_app  FOREIGN KEY (applicant_id) REFERENCES applicants(id),
+    CONSTRAINT fk_sel_user FOREIGN KEY (recorded_by)  REFERENCES users(id),
+    INDEX idx_sel_app (applicant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS offering_letters (
     id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     applicant_id     BIGINT UNSIGNED NOT NULL,
@@ -116,7 +130,8 @@ CREATE TABLE IF NOT EXISTS offering_letters (
     salary           DECIMAL(15,2) NOT NULL,
     start_date       DATE NULL,
     body             MEDIUMTEXT NULL,
-    status           ENUM('draft','pending_ceo','revision','sent','accepted','declined','expired') NOT NULL DEFAULT 'draft',
+    status           ENUM('draft','pending_ceo','revision','approved','sent','accepted','declined','expired') NOT NULL DEFAULT 'draft',
+    revision_comment TEXT NULL,
     response_token   CHAR(64) NULL UNIQUE,
     sent_at          DATETIME NULL,
     respond_before   DATETIME NULL,
@@ -140,6 +155,11 @@ CREATE TABLE IF NOT EXISTS employees (
     contract_start    DATE NULL,
     contract_end      DATE NULL,
     status            ENUM('onboarding','active','inactive') NOT NULL DEFAULT 'onboarding',
+    onboarding_token  CHAR(64) NULL UNIQUE,
+    token_expires_at  DATETIME NULL,
+    email             VARCHAR(190) NULL,
+    phone             VARCHAR(30) NULL,
+    personal_data     JSON NULL,
     validated_at      DATETIME NULL,                       -- diisi HR setelah berkas lengkap; baru setelah itu terlihat oleh Simatra
     validated_by      BIGINT UNSIGNED NULL,
     created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

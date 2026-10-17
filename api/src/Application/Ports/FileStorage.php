@@ -21,4 +21,7 @@ interface FileStorage
 
     /** Hapus berkas di jalur relatif. Diam-diam abaikan jika berkas tidak ada. */
     public function delete(string $relativePath): void;
+
+    /** Kembalikan jalur absolut dari jalur relatif (untuk streaming lewat PHP). */
+    public function absolutePath(string $relativePath): string;
 }
