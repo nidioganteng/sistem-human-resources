@@ -16,6 +16,7 @@ import {
   EMPLOYMENT_STATUS_LABELS,
   PERSONAL_DATA_LABELS,
 } from './types';
+import { formatRupiah, RupiahInput } from '@/shared/ui/RupiahInput';
 
 const STATUS_LABELS: Record<string, string> = {
   onboarding: 'Onboarding',
@@ -77,10 +78,6 @@ function formatDate(s: string | null | undefined): string {
   return new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
-function formatCurrency(n: number | null): string {
-  if (n == null) return '-';
-  return 'Rp ' + n.toLocaleString('id-ID');
-}
 
 export default function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -269,7 +266,7 @@ export default function EmployeeDetailPage() {
             { label: 'Email', value: employee.email ?? '-' },
             { label: 'Nomor HP', value: employee.phone ?? '-' },
             { label: 'Status Kepegawaian', value: EMPLOYMENT_STATUS_LABELS[employee.employmentStatus] },
-            { label: 'Gaji', value: formatCurrency(employee.salary) },
+            { label: 'Gaji', value: formatRupiah(employee.salary) },
             { label: 'Mulai Kontrak', value: formatDate(employee.contractStart) },
             { label: 'Selesai Kontrak', value: formatDate(employee.contractEnd) },
             { label: 'Divalidasi', value: employee.validatedAt ? formatDate(employee.validatedAt) : '-' },
@@ -446,7 +443,10 @@ export default function EmployeeDetailPage() {
                 </div>
                 <div>
                   <label className="field-label">Gaji</label>
-                  <input className="field-input" type="number" min="0" value={editForm.salary} onChange={(e) => setEditForm((f) => f ? { ...f, salary: e.target.value } : f)} />
+                  <RupiahInput
+                    value={editForm.salary}
+                    onChange={(raw) => setEditForm((f) => f ? { ...f, salary: raw } : f)}
+                  />
                 </div>
                 <div>
                   <label className="field-label">Mulai Kontrak</label>

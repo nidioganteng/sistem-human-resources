@@ -5,10 +5,7 @@ import { getOlPublic, respondOl } from '@/features/recruitment/ol/olService';
 import { OL_STATUS_LABELS } from '@/features/recruitment/ol/types';
 import type { OfferingLetter } from '@/features/recruitment/ol/types';
 import { ApiError } from '@/services/api';
-
-function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
-}
+import { formatRupiah } from '@/shared/ui/RupiahInput';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });

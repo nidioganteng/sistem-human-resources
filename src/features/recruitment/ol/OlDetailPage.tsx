@@ -9,6 +9,7 @@ import { ApiError } from '@/services/api';
 import { getOl, updateOl, submitOl, approveOl, reviseOl, sendOl } from './olService';
 import { OL_STATUS_LABELS } from './types';
 import type { OfferingLetter, OlStatus } from './types';
+import { formatRupiah, RupiahInput } from '@/shared/ui/RupiahInput';
 
 const STATUS_BADGE: Record<OlStatus, 'default' | 'green' | 'red' | 'amber'> = {
   draft:       'default',
@@ -20,10 +21,6 @@ const STATUS_BADGE: Record<OlStatus, 'default' | 'green' | 'red' | 'amber'> = {
   declined:    'red',
   expired:     'red',
 };
-
-function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -335,13 +332,10 @@ export default function OlDetailPage() {
             />
           </div>
           <div>
-            <label className="field-label">Gaji (Rp)</label>
-            <input
-              className="field-input"
-              type="number"
-              min={0}
+            <label className="field-label">Gaji</label>
+            <RupiahInput
               value={editSalary}
-              onChange={(e) => setEditSalary(e.target.value)}
+              onChange={setEditSalary}
             />
           </div>
           <div>

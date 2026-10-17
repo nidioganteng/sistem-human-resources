@@ -24,6 +24,7 @@ import {
 import { APPLICANT_STATUS_LABELS } from './types';
 import type { Applicant, ApplicantFormDetail, SelectionRecord, Vacancy } from './types';
 import { ApiError, apiFetchBlob } from '@/services/api';
+import { RupiahInput } from '@/shared/ui/RupiahInput';
 import { FormPelamarModal } from './FormPelamarModal';
 import { exportFormPelamarDocx } from './exportFormPelamar';
 import { useAuth } from '@/auth/AuthContext';
@@ -1122,14 +1123,10 @@ export default function VacancyDetailPage() {
             />
           </div>
           <div>
-            <label className="field-label">Gaji (Rp)</label>
-            <input
-              className="field-input"
-              type="number"
-              min={0}
-              placeholder="Contoh: 5000000"
+            <label className="field-label">Gaji</label>
+            <RupiahInput
               value={olSalary}
-              onChange={(e) => setOlSalary(e.target.value)}
+              onChange={setOlSalary}
             />
           </div>
           <div>

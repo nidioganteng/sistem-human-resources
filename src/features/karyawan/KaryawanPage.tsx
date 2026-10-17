@@ -6,6 +6,7 @@ import { ApiError } from '@/services/api';
 import { createEmployee, listEmployees } from './karyawanService';
 import type { Employee } from './types';
 import { EMPLOYMENT_STATUS_LABELS } from './types';
+import { RupiahInput } from '@/shared/ui/RupiahInput';
 
 type Tab = 'PKWT' | 'PKWTT';
 
@@ -235,13 +236,9 @@ export default function KaryawanPage() {
               </div>
               <div>
                 <label className="field-label">Gaji</label>
-                <input
-                  className="field-input"
-                  type="number"
-                  min="0"
+                <RupiahInput
                   value={form.salary}
-                  onChange={(e) => setForm((f) => ({ ...f, salary: e.target.value }))}
-                  placeholder="mis. 5000000"
+                  onChange={(raw) => setForm((f) => ({ ...f, salary: raw }))}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Plus, Trash2, Upload } from 'lucide-react';
 import { getFormPelamarInfo, submitFormPelamar, type FormPelamarInfo } from './formPelamarService';
+import { RupiahInput } from '@/shared/ui/RupiahInput';
 
 // ── Tipe data form ────────────────────────────────────────────────────────────
 
@@ -1045,14 +1046,11 @@ export default function FormPelamarPage() {
                     <FieldError msg={fieldErrors.misi_kontribusi} />
                   </div>
                   <div>
-                    <FieldLabel required>Gaji/bulan yang diharapkan (Rp)</FieldLabel>
-                    <input
-                      type="number"
-                      min="0"
-                      className="apply-input"
+                    <FieldLabel required>Gaji/bulan yang diharapkan</FieldLabel>
+                    <RupiahInput
                       value={formData.gaji_harapan}
-                      onChange={(e) => setField('gaji_harapan', e.target.value)}
-                      placeholder="5000000"
+                      onChange={(raw) => setField('gaji_harapan', raw)}
+                      inputClassName="apply-input"
                     />
                     <FieldError msg={fieldErrors.gaji_harapan} />
                   </div>
