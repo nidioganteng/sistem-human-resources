@@ -66,15 +66,15 @@ const STATUS_PERKAWINAN = ['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'];
 type PageState = 'loading' | 'form' | 'success' | 'error';
 type FormStep = 1 | 2 | 3 | 4 | 5;
 
-const STEPS: { label: string; sub: string }[] = [
-  { label: 'Identitas',    sub: 'Data diri' },
-  { label: 'Pendidikan',   sub: 'Riwayat pendidikan' },
-  { label: 'Pengalaman',   sub: 'Kerja & organisasi' },
-  { label: 'Kompetensi',   sub: 'Skill & informasi' },
-  { label: 'Tanda Tangan', sub: 'Persetujuan & kirim' },
+const STEPS: { label: string }[] = [
+  { label: 'Identitas' },
+  { label: 'Pendidikan' },
+  { label: 'Pengalaman' },
+  { label: 'Kompetensi' },
+  { label: 'Kirim' },
 ];
 
-// ── Background animasi ────────────────────────────────────────────────────────
+// ── Background ────────────────────────────────────────────────────────────────
 
 function BG({ children }: { children: React.ReactNode }) {
   return (
@@ -89,7 +89,7 @@ function BG({ children }: { children: React.ReactNode }) {
         <div className="animate-float-slow absolute top-16 left-10 h-14 w-14 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm" style={{ animationDelay: '0s' }} />
         <div className="animate-float-medium absolute top-32 right-16 h-10 w-10 rotate-45 border border-white/20 bg-white/10" style={{ animationDelay: '1s' }} />
         <div className="animate-float-slow absolute bottom-40 left-16 h-8 w-8 rounded-full border border-white/20 bg-white/10" style={{ animationDelay: '2s' }} />
-        <div className="animate-float-medium absolute bottom-24 right-12 h-16 w-16 rounded-2xl border border-white/15 bg-white/8" style={{ animationDelay: '0.5s' }} />
+        <div className="animate-float-medium absolute bottom-24 right-12 h-16 w-16 rounded-2xl border border-white/15 bg-white/[0.08]" style={{ animationDelay: '0.5s' }} />
         <svg className="absolute right-0 top-0 h-full opacity-10" viewBox="0 0 400 800" fill="none">
           <circle cx="350" cy="150" r="120" stroke="white" strokeWidth="1" />
           <circle cx="350" cy="150" r="200" stroke="white" strokeWidth="0.5" />
@@ -114,35 +114,42 @@ function BG({ children }: { children: React.ReactNode }) {
 
 function StepIndicator({ current }: { current: FormStep }) {
   return (
-    <div className="flex items-start justify-center gap-0">
+    <div className="flex items-start">
       {STEPS.map((s, i) => {
         const idx = (i + 1) as FormStep;
         const done = current > idx;
         const active = current === idx;
         return (
-          <div key={s.label} className="flex items-center">
+          <div key={s.label} className="flex flex-1 items-start last:flex-none">
             <div className="flex flex-col items-center gap-1.5">
               <div
                 className={[
-                  'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-all',
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-300',
                   done
-                    ? 'bg-brand-600 text-white'
+                    ? 'bg-brand-500 text-white'
                     : active
-                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30'
+                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/40 ring-4 ring-brand-100'
                     : 'border-2 border-slate-200 bg-white text-slate-400',
                 ].join(' ')}
               >
-                {done ? <CheckCircle2 size={15} /> : idx}
+                {done ? <CheckCircle2 size={16} /> : idx}
               </div>
-              <div className="text-center w-16">
-                <p className={['text-[10px] font-semibold leading-tight', active ? 'text-brand-600' : done ? 'text-slate-500' : 'text-slate-400'].join(' ')}>
-                  {s.label}
-                </p>
-                <p className="text-[9px] text-slate-400 leading-tight">{s.sub}</p>
-              </div>
+              <p
+                className={[
+                  'w-14 text-center text-[11px] font-semibold leading-tight transition-colors',
+                  active ? 'text-brand-600' : done ? 'text-slate-500' : 'text-slate-400',
+                ].join(' ')}
+              >
+                {s.label}
+              </p>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={['mx-1 mb-5 h-0.5 w-8 transition-colors', done ? 'bg-brand-500' : 'bg-slate-200'].join(' ')} />
+              <div
+                className={[
+                  'mx-1 mt-[18px] h-0.5 flex-1 transition-all duration-300',
+                  done ? 'bg-brand-400' : 'bg-slate-200',
+                ].join(' ')}
+              />
             )}
           </div>
         );
@@ -155,8 +162,8 @@ function StepIndicator({ current }: { current: FormStep }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border-b border-slate-100 px-6 py-6 sm:px-8 last:border-b-0">
-      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-brand-600">{title}</h2>
+    <div className="px-6 py-6 sm:px-8">
+      <h2 className="mb-5 text-xs font-bold uppercase tracking-widest text-brand-600">{title}</h2>
       <div className="space-y-4">{children}</div>
     </div>
   );
@@ -164,7 +171,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="apply-label">
+    <label className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
       {children}{required && <span className="ml-0.5 text-red-500 normal-case font-bold">*</span>}
     </label>
   );
@@ -172,7 +179,7 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <p className="mt-1 text-xs text-red-600">{msg}</p>;
+  return <p className="mt-1 text-xs text-red-500">{msg}</p>;
 }
 
 // ── Canvas tanda tangan ────────────────────────────────────────────────────────
@@ -238,7 +245,7 @@ function SignatureCanvas({ onCapture }: { onCapture: (dataUrl: string) => void }
 
   return (
     <div className="space-y-2">
-      <div className="relative rounded-xl border-2 border-dashed border-slate-300 bg-white overflow-hidden">
+      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
         <canvas
           ref={canvasRef}
           width={480}
@@ -258,7 +265,7 @@ function SignatureCanvas({ onCapture }: { onCapture: (dataUrl: string) => void }
           </div>
         )}
       </div>
-      <button type="button" onClick={clear} className="text-xs text-red-500 hover:text-red-700 font-medium">
+      <button type="button" onClick={clear} className="text-xs font-medium text-red-400 hover:text-red-600 transition-colors">
         Hapus tanda tangan
       </button>
     </div>
@@ -524,7 +531,7 @@ export default function FormPelamarPage() {
     return (
       <BG>
         <div className="flex min-h-screen items-center justify-center p-4">
-          <div className="apply-card max-w-md w-full p-8 text-center space-y-3">
+          <div className="apply-card w-full max-w-md p-8 text-center space-y-3">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
               <svg className="h-7 w-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -542,20 +549,26 @@ export default function FormPelamarPage() {
     return (
       <BG>
         <div className="flex min-h-screen items-center justify-center p-4">
-          <div className="apply-card max-w-md w-full p-10 text-center space-y-5">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
-              <svg className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="apply-card w-full max-w-md overflow-hidden">
+            <div className="px-8 py-6" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' }}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/60">Gaharu Sempana Group</p>
+              <p className="text-lg font-bold text-white">Form Pelamar Digital</p>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Form Terkirim!</h1>
-              <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                Terima kasih, <strong className="text-slate-700">{info?.applicantName}</strong>!
-                Data Form Pelamar Anda sudah berhasil kami terima untuk posisi{' '}
-                <strong className="text-slate-700">{info?.vacancyPosition}</strong>.
-                Tim HR akan menghubungi Anda untuk langkah selanjutnya.
-              </p>
+            <div className="px-8 py-10 text-center space-y-4">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
+                <svg className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">Form Berhasil Dikirim!</h1>
+                <p className="mt-2 text-sm text-slate-500 leading-relaxed">
+                  Terima kasih, <strong className="text-slate-700">{info?.applicantName}</strong>!
+                  Data Anda sudah kami terima untuk posisi{' '}
+                  <strong className="text-slate-700">{info?.vacancyPosition}</strong>.
+                  Tim HR akan menghubungi Anda untuk langkah selanjutnya.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -567,516 +580,538 @@ export default function FormPelamarPage() {
 
   return (
     <BG>
-      <div className="flex min-h-screen flex-col">
-        <header className="flex items-center gap-3 px-6 py-4">
-          <img src="/logo-gsg.png" alt="Logo Gaharu Sempana Group" className="h-9 w-auto object-contain drop-shadow" />
-          <div className="h-5 w-px bg-white/20" />
-          <span className="text-sm font-semibold text-white/80">Gaharu Sempana Group</span>
-        </header>
+      <div className="flex min-h-screen flex-col items-center justify-start px-4 py-10 sm:py-14">
 
-        <div className="flex flex-1 justify-center px-4 pb-12 pt-4">
-          <div className="w-full max-w-3xl space-y-4">
-            <div className="px-1">
-              <h1 className="text-xl font-bold text-white">Form Pelamar Digital</h1>
-              <p className="text-sm text-white/60">{info?.vacancyPosition} &middot; Divisi {info?.vacancyDivision}</p>
+        {/* Kartu utama - satu kartu untuk semua */}
+        <div ref={cardRef} className="apply-card w-full max-w-2xl overflow-hidden">
+
+          {/* Header kartu */}
+          <div
+            className="flex items-center justify-between gap-4 px-8 py-6"
+            style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' }}
+          >
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/50">Form Pelamar Digital</p>
+              <p className="mt-1 text-xl font-bold leading-tight text-white">{info?.vacancyPosition}</p>
+              <p className="mt-0.5 text-sm text-white/60">Divisi {info?.vacancyDivision} &middot; {info?.applicantName}</p>
             </div>
+            <img
+              src="/logo-gsg.png"
+              alt="GSG"
+              className="h-10 w-auto shrink-0 object-contain opacity-80"
+            />
+          </div>
 
-            {/* Step indicator */}
-            <div className="apply-card p-4">
-              <StepIndicator current={step} />
-            </div>
+          {/* Step indicator */}
+          <div className="border-b border-slate-100 bg-slate-50/60 px-8 py-5">
+            <StepIndicator current={step} />
+          </div>
 
-            {/* Card form */}
-            <div ref={cardRef} className="apply-card overflow-hidden">
-              <form onSubmit={(e) => void handleSubmit(e)} noValidate>
+          {/* Form */}
+          <form onSubmit={(e) => void handleSubmit(e)} noValidate>
 
-                {/* ── STEP 1: Identitas Diri ─────────────────────────── */}
-                {step === 1 && (
-                  <Section title="Identitas Diri">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <FieldLabel required>Nama Lengkap</FieldLabel>
-                        <input className="apply-input" value={info?.applicantName ?? ''} disabled />
-                      </div>
-                      <div>
-                        <FieldLabel required>Nama Panggilan</FieldLabel>
-                        <input
-                          className="apply-input"
-                          value={formData.nama_panggilan}
-                          onChange={(e) => setField('nama_panggilan', e.target.value)}
-                          placeholder="Nama sehari-hari"
-                        />
-                        <FieldError msg={fieldErrors.nama_panggilan} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Tempat Lahir</FieldLabel>
-                        <input
-                          className="apply-input"
-                          value={formData.tempat_lahir}
-                          onChange={(e) => setField('tempat_lahir', e.target.value)}
-                          placeholder="Kota tempat lahir"
-                        />
-                        <FieldError msg={fieldErrors.tempat_lahir} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Tanggal Lahir</FieldLabel>
-                        <input
-                          type="date"
-                          className="apply-input"
-                          value={formData.tanggal_lahir}
-                          onChange={(e) => setField('tanggal_lahir', e.target.value)}
-                        />
-                        <FieldError msg={fieldErrors.tanggal_lahir} />
-                      </div>
-                    </div>
+            {/* ── STEP 1: Identitas Diri ─────────────────────────── */}
+            {step === 1 && (
+              <Section title="Identitas Diri">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel>Nama Lengkap</FieldLabel>
+                    <input className="apply-input" value={info?.applicantName ?? ''} disabled />
+                  </div>
+                  <div>
+                    <FieldLabel required>Nama Panggilan</FieldLabel>
+                    <input
+                      className="apply-input"
+                      value={formData.nama_panggilan}
+                      onChange={(e) => setField('nama_panggilan', e.target.value)}
+                      placeholder="Nama sehari-hari"
+                    />
+                    <FieldError msg={fieldErrors.nama_panggilan} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Tempat Lahir</FieldLabel>
+                    <input
+                      className="apply-input"
+                      value={formData.tempat_lahir}
+                      onChange={(e) => setField('tempat_lahir', e.target.value)}
+                      placeholder="Kota tempat lahir"
+                    />
+                    <FieldError msg={fieldErrors.tempat_lahir} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Tanggal Lahir</FieldLabel>
+                    <input
+                      type="date"
+                      className="apply-input"
+                      value={formData.tanggal_lahir}
+                      onChange={(e) => setField('tanggal_lahir', e.target.value)}
+                    />
+                    <FieldError msg={fieldErrors.tanggal_lahir} />
+                  </div>
+                </div>
 
-                    <div>
-                      <FieldLabel required>Alamat Tinggal</FieldLabel>
-                      <textarea
-                        className="apply-input resize-none"
-                        rows={3}
-                        value={formData.alamat_tinggal}
-                        onChange={(e) => setField('alamat_tinggal', e.target.value)}
-                        placeholder="Alamat lengkap tempat tinggal saat ini"
-                      />
-                      <FieldError msg={fieldErrors.alamat_tinggal} />
-                    </div>
+                <div>
+                  <FieldLabel required>Alamat Tinggal</FieldLabel>
+                  <textarea
+                    className="apply-input resize-none"
+                    rows={3}
+                    value={formData.alamat_tinggal}
+                    onChange={(e) => setField('alamat_tinggal', e.target.value)}
+                    placeholder="Alamat lengkap tempat tinggal saat ini"
+                  />
+                  <FieldError msg={fieldErrors.alamat_tinggal} />
+                </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <FieldLabel>No. Telp/HP</FieldLabel>
-                        <input className="apply-input" value={info?.applicantPhone ?? ''} disabled />
-                      </div>
-                      <div>
-                        <FieldLabel required>No. Identitas KTP/SIM</FieldLabel>
-                        <input
-                          className="apply-input"
-                          value={formData.no_identitas}
-                          onChange={(e) => setField('no_identitas', e.target.value)}
-                          placeholder="Nomor KTP atau SIM"
-                        />
-                        <FieldError msg={fieldErrors.no_identitas} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Agama</FieldLabel>
-                        <input
-                          className="apply-input"
-                          value={formData.agama}
-                          onChange={(e) => setField('agama', e.target.value)}
-                          placeholder="Agama yang dianut"
-                        />
-                        <FieldError msg={fieldErrors.agama} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Status Perkawinan</FieldLabel>
-                        <select
-                          className="apply-input"
-                          value={formData.status_perkawinan}
-                          onChange={(e) => setField('status_perkawinan', e.target.value)}
-                        >
-                          <option value="">-- Pilih --</option>
-                          {STATUS_PERKAWINAN.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                        <FieldError msg={fieldErrors.status_perkawinan} />
-                      </div>
-                      <div>
-                        <FieldLabel>Kewarganegaraan</FieldLabel>
-                        <input
-                          className="apply-input"
-                          value={formData.kewarganegaraan}
-                          onChange={(e) => setField('kewarganegaraan', e.target.value)}
-                        />
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel>No. Telp/HP</FieldLabel>
+                    <input className="apply-input" value={info?.applicantPhone ?? ''} disabled />
+                  </div>
+                  <div>
+                    <FieldLabel required>No. Identitas KTP/SIM</FieldLabel>
+                    <input
+                      className="apply-input"
+                      value={formData.no_identitas}
+                      onChange={(e) => setField('no_identitas', e.target.value)}
+                      placeholder="Nomor KTP atau SIM"
+                    />
+                    <FieldError msg={fieldErrors.no_identitas} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Agama</FieldLabel>
+                    <input
+                      className="apply-input"
+                      value={formData.agama}
+                      onChange={(e) => setField('agama', e.target.value)}
+                      placeholder="Agama yang dianut"
+                    />
+                    <FieldError msg={fieldErrors.agama} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Status Perkawinan</FieldLabel>
+                    <select
+                      className="apply-input"
+                      value={formData.status_perkawinan}
+                      onChange={(e) => setField('status_perkawinan', e.target.value)}
+                    >
+                      <option value="">-- Pilih --</option>
+                      {STATUS_PERKAWINAN.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <FieldError msg={fieldErrors.status_perkawinan} />
+                  </div>
+                  <div>
+                    <FieldLabel>Kewarganegaraan</FieldLabel>
+                    <input
+                      className="apply-input"
+                      value={formData.kewarganegaraan}
+                      onChange={(e) => setField('kewarganegaraan', e.target.value)}
+                    />
+                  </div>
+                </div>
 
-                    <div>
-                      <FieldLabel>Foto Diri (opsional, maks. 500 KB)</FieldLabel>
-                      <div
-                        onClick={() => photoInputRef.current?.click()}
-                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 hover:border-brand-400 hover:bg-brand-50/40 transition-colors"
+                <div>
+                  <FieldLabel>Foto Diri (opsional, maks. 500 KB)</FieldLabel>
+                  <div
+                    onClick={() => photoInputRef.current?.click()}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 transition-colors hover:border-brand-400 hover:bg-brand-50/30"
+                  >
+                    <Upload size={16} className="shrink-0 text-slate-400" />
+                    <span className="text-sm text-slate-500">
+                      {photoFile ? photoFile.name : 'Klik untuk pilih foto (JPEG/PNG/WebP)'}
+                    </span>
+                    {photoFile && (
+                      <button
+                        type="button"
+                        className="ml-auto text-xs font-medium text-red-400 hover:text-red-600 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setPhotoFile(null); if (photoInputRef.current) photoInputRef.current.value = ''; }}
                       >
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+                  <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
+                    onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)} />
+                  <FieldError msg={fieldErrors.photo} />
+                </div>
+              </Section>
+            )}
+
+            {/* ── STEP 2: Riwayat Pendidikan ─────────────────────── */}
+            {step === 2 && (
+              <>
+                <Section title="Pendidikan Formal">
+                  {fieldErrors.pendidikan_formal && (
+                    <p className="text-xs text-red-500">{fieldErrors.pendidikan_formal}</p>
+                  )}
+                  <div className="space-y-3">
+                    {formData.pendidikan_formal.map((row, idx) => (
+                      <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                        {formData.pendidikan_formal.length > 1 && (
+                          <button type="button" onClick={() => removePendidikanFormal(idx)}
+                            className="absolute right-3 top-3 rounded-lg p-1 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div>
+                            <FieldLabel>Tingkat</FieldLabel>
+                            <input className="apply-input" value={row.tingkat}
+                              onChange={(e) => updatePendidikanFormal(idx, 'tingkat', e.target.value)}
+                              placeholder="SMA/SMK, D3, S1, S2..." />
+                          </div>
+                          <div>
+                            <FieldLabel>Nama Sekolah/Universitas</FieldLabel>
+                            <input className="apply-input" value={row.nama_sekolah}
+                              onChange={(e) => updatePendidikanFormal(idx, 'nama_sekolah', e.target.value)}
+                              placeholder="Nama institusi pendidikan" />
+                          </div>
+                          <div>
+                            <FieldLabel>Jurusan</FieldLabel>
+                            <input className="apply-input" value={row.jurusan}
+                              onChange={(e) => updatePendidikanFormal(idx, 'jurusan', e.target.value)}
+                              placeholder="Jurusan atau program studi" />
+                          </div>
+                          <div>
+                            <FieldLabel>Tahun Lulus</FieldLabel>
+                            <input className="apply-input" value={row.tahun_lulus}
+                              onChange={(e) => updatePendidikanFormal(idx, 'tahun_lulus', e.target.value)}
+                              placeholder="2020" />
+                          </div>
+                          <div>
+                            <FieldLabel>Nilai Ijazah / IPK</FieldLabel>
+                            <input className="apply-input" value={row.nilai}
+                              onChange={(e) => updatePendidikanFormal(idx, 'nilai', e.target.value)}
+                              placeholder="3.75 atau 8.5" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button" onClick={addPendidikanFormal}
+                    className="flex items-center gap-2 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700">
+                    <Plus size={15} /> Tambah Pendidikan
+                  </button>
+                </Section>
+
+                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+
+                <Section title="Pendidikan Non Formal">
+                  <p className="text-xs text-slate-400">Kursus, training, diklat, sertifikasi, dll. (opsional)</p>
+                  {formData.pendidikan_non_formal.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input className="apply-input flex-1" value={item}
+                        onChange={(e) => updatePendidikanNonFormal(idx, e.target.value)}
+                        placeholder="Nama kursus/training/diklat" />
+                      <button type="button" onClick={() => removePendidikanNonFormal(idx)}
+                        className="rounded-lg p-1.5 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addPendidikanNonFormal}
+                    className="flex items-center gap-2 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700">
+                    <Plus size={15} /> Tambah
+                  </button>
+                </Section>
+              </>
+            )}
+
+            {/* ── STEP 3: Pengalaman ─────────────────────────────── */}
+            {step === 3 && (
+              <>
+                <Section title="Pengalaman Kerja">
+                  <p className="text-xs text-slate-400">Opsional. Tambahkan pengalaman kerja sebelumnya jika ada.</p>
+                  {formData.pengalaman_kerja.map((row, idx) => (
+                    <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                      <button type="button" onClick={() => removePengalamanKerja(idx)}
+                        className="absolute right-3 top-3 rounded-lg p-1 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <FieldLabel>Nama Perusahaan</FieldLabel>
+                          <input className="apply-input" value={row.nama_perusahaan}
+                            onChange={(e) => updatePengalamanKerja(idx, 'nama_perusahaan', e.target.value)} />
+                        </div>
+                        <div>
+                          <FieldLabel>Jabatan</FieldLabel>
+                          <input className="apply-input" value={row.jabatan}
+                            onChange={(e) => updatePengalamanKerja(idx, 'jabatan', e.target.value)} />
+                        </div>
+                        <div>
+                          <FieldLabel>Periode Dari</FieldLabel>
+                          <input type="month" className="apply-input" value={row.periode_dari}
+                            onChange={(e) => updatePengalamanKerja(idx, 'periode_dari', e.target.value)} />
+                        </div>
+                        <div>
+                          <FieldLabel>Periode Hingga</FieldLabel>
+                          <input type="month" className="apply-input" value={row.periode_hingga}
+                            onChange={(e) => updatePengalamanKerja(idx, 'periode_hingga', e.target.value)}
+                            placeholder="Kosongkan jika masih bekerja" />
+                        </div>
+                        <div>
+                          <FieldLabel>Gaji Terakhir</FieldLabel>
+                          <RupiahInput
+                            value={row.gaji_terakhir}
+                            onChange={(raw) => updatePengalamanKerja(idx, 'gaji_terakhir', raw)}
+                            inputClassName="apply-input"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addPengalamanKerja}
+                    className="flex items-center gap-2 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700">
+                    <Plus size={15} /> Tambah Pengalaman Kerja
+                  </button>
+                </Section>
+
+                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+
+                <Section title="Pengalaman Organisasi">
+                  <p className="text-xs text-slate-400">Opsional.</p>
+                  {formData.pengalaman_organisasi.map((row, idx) => (
+                    <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                      <button type="button" onClick={() => removeOrganisasi(idx)}
+                        className="absolute right-3 top-3 rounded-lg p-1 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <FieldLabel>Nama Organisasi</FieldLabel>
+                          <input className="apply-input" value={row.nama_organisasi}
+                            onChange={(e) => updateOrganisasi(idx, 'nama_organisasi', e.target.value)} />
+                        </div>
+                        <div>
+                          <FieldLabel>Periode</FieldLabel>
+                          <input className="apply-input" value={row.periode}
+                            onChange={(e) => updateOrganisasi(idx, 'periode', e.target.value)}
+                            placeholder="2019 - 2021" />
+                        </div>
+                        <div>
+                          <FieldLabel>Jabatan</FieldLabel>
+                          <input className="apply-input" value={row.jabatan}
+                            onChange={(e) => updateOrganisasi(idx, 'jabatan', e.target.value)} />
+                        </div>
+                        <div>
+                          <FieldLabel>Tugas/Deskripsi</FieldLabel>
+                          <input className="apply-input" value={row.tugas}
+                            onChange={(e) => updateOrganisasi(idx, 'tugas', e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addOrganisasi}
+                    className="flex items-center gap-2 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700">
+                    <Plus size={15} /> Tambah Organisasi
+                  </button>
+                </Section>
+              </>
+            )}
+
+            {/* ── STEP 4: Kompetensi & Info ──────────────────────── */}
+            {step === 4 && (
+              <>
+                <Section title="Penguasaan Bahasa">
+                  {fieldErrors.penguasaan_bahasa && (
+                    <p className="text-xs text-red-500">{fieldErrors.penguasaan_bahasa}</p>
+                  )}
+                  {formData.penguasaan_bahasa.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input className="apply-input flex-1" value={item}
+                        onChange={(e) => updateBahasa(idx, e.target.value)}
+                        placeholder="Contoh: Indonesia, Inggris, Mandarin..." />
+                      {formData.penguasaan_bahasa.length > 1 && (
+                        <button type="button" onClick={() => removeBahasa(idx)}
+                          className="rounded-lg p-1.5 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" onClick={addBahasa}
+                    className="flex items-center gap-2 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700">
+                    <Plus size={15} /> Tambah Bahasa
+                  </button>
+                </Section>
+
+                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+
+                <Section title="Soft Skill">
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                    {SOFT_SKILL_LIST.map((skill) => {
+                      const checked = formData.soft_skill.includes(skill);
+                      return (
+                        <label key={skill}
+                          className={[
+                            'flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-all',
+                            checked
+                              ? 'border-brand-300 bg-brand-50 text-brand-700 shadow-sm'
+                              : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-brand-200 hover:bg-white',
+                          ].join(' ')}>
+                          <div className={[
+                            'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                            checked ? 'border-brand-600 bg-brand-600' : 'border-slate-300 bg-white',
+                          ].join(' ')}>
+                            {checked && (
+                              <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <input type="checkbox" className="sr-only" checked={checked} onChange={() => toggleSoftSkill(skill)} />
+                          <span className="text-xs font-medium">{skill}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </Section>
+
+                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+
+                <Section title="Informasi Tambahan">
+                  <div>
+                    <FieldLabel required>Dari mana Anda mendapat informasi lowongan ini?</FieldLabel>
+                    <textarea className="apply-input resize-none" rows={2}
+                      value={formData.sumber_info} onChange={(e) => setField('sumber_info', e.target.value)}
+                      placeholder="Instagram @gaharusempanagroup, rekomendasi teman, dsb." />
+                    <FieldError msg={fieldErrors.sumber_info} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Apa yang Anda ketahui tentang Gaharu Sempana Group?</FieldLabel>
+                    <textarea className="apply-input resize-none" rows={3}
+                      value={formData.tentang_gsg} onChange={(e) => setField('tentang_gsg', e.target.value)} />
+                    <FieldError msg={fieldErrors.tentang_gsg} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Hal apa yang membuat Anda tertarik bergabung?</FieldLabel>
+                    <textarea className="apply-input resize-none" rows={3}
+                      value={formData.alasan_bergabung} onChange={(e) => setField('alasan_bergabung', e.target.value)} />
+                    <FieldError msg={fieldErrors.alasan_bergabung} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Apa misi kontribusi Anda untuk perusahaan?</FieldLabel>
+                    <textarea className="apply-input resize-none" rows={3}
+                      value={formData.misi_kontribusi} onChange={(e) => setField('misi_kontribusi', e.target.value)} />
+                    <FieldError msg={fieldErrors.misi_kontribusi} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Gaji/bulan yang diharapkan</FieldLabel>
+                    <RupiahInput
+                      value={formData.gaji_harapan}
+                      onChange={(raw) => setField('gaji_harapan', raw)}
+                      inputClassName="apply-input"
+                    />
+                    <FieldError msg={fieldErrors.gaji_harapan} />
+                  </div>
+                </Section>
+              </>
+            )}
+
+            {/* ── STEP 5: Tanda Tangan ───────────────────────────── */}
+            {step === 5 && (
+              <Section title="Tanda Tangan &amp; Persetujuan">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel required>Dibuat di (Kota)</FieldLabel>
+                    <input className="apply-input" value={formData.kota_tanda_tangan}
+                      onChange={(e) => setField('kota_tanda_tangan', e.target.value)}
+                      placeholder="Makassar" />
+                    <FieldError msg={fieldErrors.kota_tanda_tangan} />
+                  </div>
+                  <div>
+                    <FieldLabel>Tanggal</FieldLabel>
+                    <input type="date" className="apply-input" value={today} disabled />
+                  </div>
+                </div>
+
+                <div>
+                  <FieldLabel required>Tanda Tangan</FieldLabel>
+                  <div className="mb-3 flex gap-2">
+                    {(['gambar', 'upload'] as const).map((tab) => (
+                      <button key={tab} type="button" onClick={() => setSignatureTab(tab)}
+                        className={[
+                          'rounded-lg px-4 py-2 text-xs font-semibold transition-all',
+                          signatureTab === tab
+                            ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+                            : 'border border-slate-200 bg-slate-50 text-slate-600 hover:bg-white',
+                        ].join(' ')}>
+                        {tab === 'gambar' ? 'Gambar di layar' : 'Upload foto tanda tangan'}
+                      </button>
+                    ))}
+                  </div>
+                  {signatureTab === 'gambar' ? (
+                    <SignatureCanvas onCapture={setSignatureDataUrl} />
+                  ) : (
+                    <div>
+                      <div onClick={() => signatureInputRef.current?.click()}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 transition-colors hover:border-brand-400 hover:bg-brand-50/30">
                         <Upload size={16} className="shrink-0 text-slate-400" />
                         <span className="text-sm text-slate-500">
-                          {photoFile ? photoFile.name : 'Klik untuk pilih foto (JPEG/PNG/WebP)'}
+                          {signatureFile ? signatureFile.name : 'Klik untuk pilih foto tanda tangan (maks. 500 KB)'}
                         </span>
-                        {photoFile && (
-                          <button
-                            type="button"
-                            className="ml-auto text-xs text-red-500 hover:text-red-700"
-                            onClick={(e) => { e.stopPropagation(); setPhotoFile(null); if (photoInputRef.current) photoInputRef.current.value = ''; }}
-                          >
+                        {signatureFile && (
+                          <button type="button" className="ml-auto text-xs font-medium text-red-400 transition-colors hover:text-red-600"
+                            onClick={(e) => { e.stopPropagation(); setSignatureFile(null); if (signatureInputRef.current) signatureInputRef.current.value = ''; }}>
                             Hapus
                           </button>
                         )}
                       </div>
-                      <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
-                        onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)} />
-                      <FieldError msg={fieldErrors.photo} />
+                      <input ref={signatureInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
+                        onChange={(e) => handleSignatureFileChange(e.target.files?.[0] ?? null)} />
                     </div>
-                  </Section>
-                )}
-
-                {/* ── STEP 2: Riwayat Pendidikan ─────────────────────── */}
-                {step === 2 && (
-                  <>
-                    <Section title="Riwayat Pendidikan Formal">
-                      {fieldErrors.pendidikan_formal && (
-                        <p className="text-xs text-red-600">{fieldErrors.pendidikan_formal}</p>
-                      )}
-                      <div className="space-y-3">
-                        {formData.pendidikan_formal.map((row, idx) => (
-                          <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                            {formData.pendidikan_formal.length > 1 && (
-                              <button type="button" onClick={() => removePendidikanFormal(idx)}
-                                className="absolute right-3 top-3 rounded-lg p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                              <div>
-                                <FieldLabel>Tingkat</FieldLabel>
-                                <input className="apply-input" value={row.tingkat}
-                                  onChange={(e) => updatePendidikanFormal(idx, 'tingkat', e.target.value)}
-                                  placeholder="SMA/SMK, D3, S1, S2..." />
-                              </div>
-                              <div>
-                                <FieldLabel>Nama Sekolah/Universitas</FieldLabel>
-                                <input className="apply-input" value={row.nama_sekolah}
-                                  onChange={(e) => updatePendidikanFormal(idx, 'nama_sekolah', e.target.value)}
-                                  placeholder="Nama institusi pendidikan" />
-                              </div>
-                              <div>
-                                <FieldLabel>Jurusan</FieldLabel>
-                                <input className="apply-input" value={row.jurusan}
-                                  onChange={(e) => updatePendidikanFormal(idx, 'jurusan', e.target.value)}
-                                  placeholder="Jurusan atau program studi" />
-                              </div>
-                              <div>
-                                <FieldLabel>Tahun Lulus</FieldLabel>
-                                <input className="apply-input" value={row.tahun_lulus}
-                                  onChange={(e) => updatePendidikanFormal(idx, 'tahun_lulus', e.target.value)}
-                                  placeholder="2020" />
-                              </div>
-                              <div>
-                                <FieldLabel>Nilai Ijazah / IPK</FieldLabel>
-                                <input className="apply-input" value={row.nilai}
-                                  onChange={(e) => updatePendidikanFormal(idx, 'nilai', e.target.value)}
-                                  placeholder="3.75 atau 8.5" />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <button type="button" onClick={addPendidikanFormal}
-                        className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700">
-                        <Plus size={16} /> Tambah Pendidikan
-                      </button>
-                    </Section>
-
-                    <Section title="Pendidikan Non Formal">
-                      <p className="text-xs text-slate-400">Kursus, training, diklat, sertifikasi, dll. (opsional)</p>
-                      {formData.pendidikan_non_formal.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <input className="apply-input flex-1" value={item}
-                            onChange={(e) => updatePendidikanNonFormal(idx, e.target.value)}
-                            placeholder="Nama kursus/training/diklat" />
-                          <button type="button" onClick={() => removePendidikanNonFormal(idx)}
-                            className="rounded-lg p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                      <button type="button" onClick={addPendidikanNonFormal}
-                        className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700">
-                        <Plus size={16} /> Tambah
-                      </button>
-                    </Section>
-                  </>
-                )}
-
-                {/* ── STEP 3: Pengalaman ─────────────────────────────── */}
-                {step === 3 && (
-                  <>
-                    <Section title="Pengalaman Kerja">
-                      <p className="text-xs text-slate-400">Opsional. Tambahkan pengalaman kerja sebelumnya jika ada.</p>
-                      {formData.pengalaman_kerja.map((row, idx) => (
-                        <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                          <button type="button" onClick={() => removePengalamanKerja(idx)}
-                            className="absolute right-3 top-3 rounded-lg p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
-                            <Trash2 size={14} />
-                          </button>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div>
-                              <FieldLabel>Nama Perusahaan</FieldLabel>
-                              <input className="apply-input" value={row.nama_perusahaan}
-                                onChange={(e) => updatePengalamanKerja(idx, 'nama_perusahaan', e.target.value)} />
-                            </div>
-                            <div>
-                              <FieldLabel>Jabatan</FieldLabel>
-                              <input className="apply-input" value={row.jabatan}
-                                onChange={(e) => updatePengalamanKerja(idx, 'jabatan', e.target.value)} />
-                            </div>
-                            <div>
-                              <FieldLabel>Periode Dari</FieldLabel>
-                              <input type="month" className="apply-input" value={row.periode_dari}
-                                onChange={(e) => updatePengalamanKerja(idx, 'periode_dari', e.target.value)} />
-                            </div>
-                            <div>
-                              <FieldLabel>Periode Hingga</FieldLabel>
-                              <input type="month" className="apply-input" value={row.periode_hingga}
-                                onChange={(e) => updatePengalamanKerja(idx, 'periode_hingga', e.target.value)}
-                                placeholder="Kosongkan jika masih bekerja" />
-                            </div>
-                            <div>
-                              <FieldLabel>Gaji Terakhir</FieldLabel>
-                              <RupiahInput
-                                value={row.gaji_terakhir}
-                                onChange={(raw) => updatePengalamanKerja(idx, 'gaji_terakhir', raw)}
-                                inputClassName="apply-input"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <button type="button" onClick={addPengalamanKerja}
-                        className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700">
-                        <Plus size={16} /> Tambah Pengalaman Kerja
-                      </button>
-                    </Section>
-
-                    <Section title="Pengalaman Organisasi">
-                      <p className="text-xs text-slate-400">Opsional.</p>
-                      {formData.pengalaman_organisasi.map((row, idx) => (
-                        <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                          <button type="button" onClick={() => removeOrganisasi(idx)}
-                            className="absolute right-3 top-3 rounded-lg p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
-                            <Trash2 size={14} />
-                          </button>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div>
-                              <FieldLabel>Nama Organisasi</FieldLabel>
-                              <input className="apply-input" value={row.nama_organisasi}
-                                onChange={(e) => updateOrganisasi(idx, 'nama_organisasi', e.target.value)} />
-                            </div>
-                            <div>
-                              <FieldLabel>Periode</FieldLabel>
-                              <input className="apply-input" value={row.periode}
-                                onChange={(e) => updateOrganisasi(idx, 'periode', e.target.value)}
-                                placeholder="2019 - 2021" />
-                            </div>
-                            <div>
-                              <FieldLabel>Jabatan</FieldLabel>
-                              <input className="apply-input" value={row.jabatan}
-                                onChange={(e) => updateOrganisasi(idx, 'jabatan', e.target.value)} />
-                            </div>
-                            <div>
-                              <FieldLabel>Tugas/Deskripsi</FieldLabel>
-                              <input className="apply-input" value={row.tugas}
-                                onChange={(e) => updateOrganisasi(idx, 'tugas', e.target.value)} />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <button type="button" onClick={addOrganisasi}
-                        className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700">
-                        <Plus size={16} /> Tambah Organisasi
-                      </button>
-                    </Section>
-                  </>
-                )}
-
-                {/* ── STEP 4: Kompetensi & Info ──────────────────────── */}
-                {step === 4 && (
-                  <>
-                    <Section title="Penguasaan Bahasa">
-                      {fieldErrors.penguasaan_bahasa && (
-                        <p className="text-xs text-red-600">{fieldErrors.penguasaan_bahasa}</p>
-                      )}
-                      {formData.penguasaan_bahasa.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <input className="apply-input flex-1" value={item}
-                            onChange={(e) => updateBahasa(idx, e.target.value)}
-                            placeholder="Contoh: Indonesia, Inggris, Mandarin..." />
-                          {formData.penguasaan_bahasa.length > 1 && (
-                            <button type="button" onClick={() => removeBahasa(idx)}
-                              className="rounded-lg p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600">
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <button type="button" onClick={addBahasa}
-                        className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700">
-                        <Plus size={16} /> Tambah Bahasa
-                      </button>
-                    </Section>
-
-                    <Section title="Soft Skill">
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                        {SOFT_SKILL_LIST.map((skill) => {
-                          const checked = formData.soft_skill.includes(skill);
-                          return (
-                            <label key={skill}
-                              className={['flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-colors',
-                                checked ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300',
-                              ].join(' ')}>
-                              <div className={['flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                                checked ? 'border-brand-600 bg-brand-600' : 'border-slate-300'].join(' ')}>
-                                {checked && (
-                                  <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </div>
-                              <input type="checkbox" className="sr-only" checked={checked} onChange={() => toggleSoftSkill(skill)} />
-                              <span className="text-xs font-medium">{skill}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </Section>
-
-                    <Section title="Informasi Tambahan">
-                      <div>
-                        <FieldLabel required>Dari mana Anda mendapat informasi lowongan ini?</FieldLabel>
-                        <textarea className="apply-input resize-none" rows={2}
-                          value={formData.sumber_info} onChange={(e) => setField('sumber_info', e.target.value)}
-                          placeholder="Instagram @gaharusempanagroup, rekomendasi teman, dsb." />
-                        <FieldError msg={fieldErrors.sumber_info} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Apa yang Anda ketahui tentang Gaharu Sempana Group?</FieldLabel>
-                        <textarea className="apply-input resize-none" rows={3}
-                          value={formData.tentang_gsg} onChange={(e) => setField('tentang_gsg', e.target.value)} />
-                        <FieldError msg={fieldErrors.tentang_gsg} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Hal apa yang membuat Anda tertarik bergabung dengan Gaharu Sempana Group?</FieldLabel>
-                        <textarea className="apply-input resize-none" rows={3}
-                          value={formData.alasan_bergabung} onChange={(e) => setField('alasan_bergabung', e.target.value)} />
-                        <FieldError msg={fieldErrors.alasan_bergabung} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Apa misi kontribusi Anda untuk perusahaan?</FieldLabel>
-                        <textarea className="apply-input resize-none" rows={3}
-                          value={formData.misi_kontribusi} onChange={(e) => setField('misi_kontribusi', e.target.value)} />
-                        <FieldError msg={fieldErrors.misi_kontribusi} />
-                      </div>
-                      <div>
-                        <FieldLabel required>Gaji/bulan yang diharapkan</FieldLabel>
-                        <RupiahInput
-                          value={formData.gaji_harapan}
-                          onChange={(raw) => setField('gaji_harapan', raw)}
-                          inputClassName="apply-input"
-                        />
-                        <FieldError msg={fieldErrors.gaji_harapan} />
-                      </div>
-                    </Section>
-                  </>
-                )}
-
-                {/* ── STEP 5: Tanda Tangan ───────────────────────────── */}
-                {step === 5 && (
-                  <Section title="Tanda Tangan & Persetujuan">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <FieldLabel required>Dibuat di (Kota)</FieldLabel>
-                        <input className="apply-input" value={formData.kota_tanda_tangan}
-                          onChange={(e) => setField('kota_tanda_tangan', e.target.value)}
-                          placeholder="Makassar" />
-                        <FieldError msg={fieldErrors.kota_tanda_tangan} />
-                      </div>
-                      <div>
-                        <FieldLabel>Tanggal</FieldLabel>
-                        <input type="date" className="apply-input" value={today} disabled />
-                      </div>
-                    </div>
-
-                    <div>
-                      <FieldLabel required>Tanda Tangan</FieldLabel>
-                      <div className="flex gap-2 mb-3">
-                        {(['gambar', 'upload'] as const).map((tab) => (
-                          <button key={tab} type="button" onClick={() => setSignatureTab(tab)}
-                            className={['rounded-lg px-4 py-2 text-xs font-semibold transition-colors',
-                              signatureTab === tab ? 'bg-brand-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50',
-                            ].join(' ')}>
-                            {tab === 'gambar' ? 'Gambar di layar' : 'Upload foto tanda tangan'}
-                          </button>
-                        ))}
-                      </div>
-                      {signatureTab === 'gambar' ? (
-                        <SignatureCanvas onCapture={setSignatureDataUrl} />
-                      ) : (
-                        <div>
-                          <div onClick={() => signatureInputRef.current?.click()}
-                            className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 hover:border-brand-400 hover:bg-brand-50/40 transition-colors">
-                            <Upload size={16} className="shrink-0 text-slate-400" />
-                            <span className="text-sm text-slate-500">
-                              {signatureFile ? signatureFile.name : 'Klik untuk pilih foto tanda tangan (maks. 500 KB)'}
-                            </span>
-                            {signatureFile && (
-                              <button type="button" className="ml-auto text-xs text-red-500 hover:text-red-700"
-                                onClick={(e) => { e.stopPropagation(); setSignatureFile(null); if (signatureInputRef.current) signatureInputRef.current.value = ''; }}>
-                                Hapus
-                              </button>
-                            )}
-                          </div>
-                          <input ref={signatureInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
-                            onChange={(e) => handleSignatureFileChange(e.target.files?.[0] ?? null)} />
-                        </div>
-                      )}
-                      <FieldError msg={fieldErrors.signature} />
-                    </div>
-
-                    {submitError && (
-                      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {submitError}
-                      </div>
-                    )}
-
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Dengan mengklik tombol di bawah, Anda menyatakan bahwa semua data yang diisi adalah benar dan dapat dipertanggungjawabkan.
-                    </p>
-                  </Section>
-                )}
-
-                {/* ── Navigasi ─────────────────────────────────────────── */}
-                <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-5 sm:px-8">
-                  {step > 1 ? (
-                    <button type="button" onClick={goBack}
-                      className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50">
-                      <ChevronLeft size={16} /> Kembali
-                    </button>
-                  ) : (
-                    <div />
                   )}
-
-                  {step < 5 ? (
-                    <button type="button" onClick={goNext}
-                      className="apply-btn flex items-center gap-2 px-8">
-                      Lanjut <ChevronRight size={16} />
-                    </button>
-                  ) : (
-                    <button type="submit" className="apply-btn flex items-center gap-2 px-8" disabled={submitting}>
-                      {submitting ? (
-                        <>
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          Mengirim...
-                        </>
-                      ) : (
-                        'Kirim Form Pelamar'
-                      )}
-                    </button>
-                  )}
+                  <FieldError msg={fieldErrors.signature} />
                 </div>
 
-              </form>
+                {submitError && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {submitError}
+                  </div>
+                )}
+
+                <p className="text-xs leading-relaxed text-slate-400">
+                  Dengan mengklik tombol di bawah, Anda menyatakan bahwa semua data yang diisi adalah benar dan dapat dipertanggungjawabkan.
+                </p>
+              </Section>
+            )}
+
+            {/* ── Navigasi ─────────────────────────────────────────── */}
+            <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-5 sm:px-8">
+              {step > 1 ? (
+                <button type="button" onClick={goBack}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50">
+                  <ChevronLeft size={16} /> Kembali
+                </button>
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-400">{step} / {STEPS.length}</span>
+                {step < 5 ? (
+                  <button type="button" onClick={goNext}
+                    className="apply-btn flex items-center gap-1.5 px-7">
+                    Lanjut <ChevronRight size={16} />
+                  </button>
+                ) : (
+                  <button type="submit" className="apply-btn px-7" disabled={submitting}>
+                    {submitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Mengirim...
+                      </span>
+                    ) : (
+                      'Kirim Form Pelamar'
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Progress teks */}
-            <p className="text-center text-xs text-white/50">Langkah {step} dari {STEPS.length}</p>
-          </div>
+          </form>
         </div>
+
       </div>
     </BG>
   );
