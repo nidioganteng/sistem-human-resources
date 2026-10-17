@@ -117,6 +117,22 @@ function FileUploadBox({
   inputRef: React.RefObject<HTMLInputElement>;
   hint?: string;
 }) {
+  const [sizeError, setSizeError] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0] ?? null;
+    if (picked && picked.size > MAX_BYTES) {
+      setSizeError(`File terlalu besar (${(picked.size / 1024 / 1024).toFixed(1)} MB). Maksimal ${MAX_MB} MB.`);
+      e.target.value = '';
+      onChange(null);
+      return;
+    }
+    setSizeError('');
+    onChange(picked);
+  };
+
+  const displayError = sizeError || error;
+
   return (
     <div>
       <label className="apply-label">
@@ -128,7 +144,7 @@ function FileUploadBox({
           'group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition-all',
           file
             ? 'border-brand-400 bg-brand-50'
-            : error
+            : displayError
             ? 'border-red-300 bg-red-50'
             : 'border-slate-200 bg-slate-50 hover:border-brand-300 hover:bg-brand-50/40',
         ].join(' ')}
@@ -138,7 +154,7 @@ function FileUploadBox({
           type="file"
           accept="application/pdf,.pdf"
           className="sr-only"
-          onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+          onChange={handleChange}
         />
         {file ? (
           <>
@@ -159,8 +175,8 @@ function FileUploadBox({
           </>
         ) : (
           <>
-            <div className={['flex h-10 w-10 items-center justify-center rounded-full transition-colors', error ? 'bg-red-100' : 'bg-slate-100 group-hover:bg-brand-100'].join(' ')}>
-              <Upload size={20} className={error ? 'text-red-400' : 'text-slate-400 group-hover:text-brand-500'} />
+            <div className={['flex h-10 w-10 items-center justify-center rounded-full transition-colors', displayError ? 'bg-red-100' : 'bg-slate-100 group-hover:bg-brand-100'].join(' ')}>
+              <Upload size={20} className={displayError ? 'text-red-400' : 'text-slate-400 group-hover:text-brand-500'} />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-600 group-hover:text-brand-600">Klik untuk pilih file</p>
@@ -170,7 +186,7 @@ function FileUploadBox({
           </>
         )}
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
+      {displayError && <p className="mt-1.5 text-xs text-red-600">{displayError}</p>}
     </div>
   );
 }
