@@ -14,11 +14,12 @@ final class LogMailer implements Mailer
 {
     public function send(string $to, string $subject, string $body): void
     {
-        error_log(sprintf(
-            "[sistem-hr][email] To: %s | Subject: %s\n%s",
+        $msg = sprintf(
+            "\n[sistem-hr][email] ─────────────────────────────\nTo     : %s\nSubject: %s\n\n%s\n────────────────────────────────────────────\n",
             $to,
             $subject,
             $body,
-        ));
+        );
+        file_put_contents('php://stderr', $msg);
     }
 }
