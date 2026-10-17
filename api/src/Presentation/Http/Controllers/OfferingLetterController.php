@@ -109,4 +109,14 @@ final class OfferingLetterController
 
         return Response::json($data);
     }
+
+    /** POST /offering-letters/{id}/resend */
+    /** @param array<string,string> $p */
+    public function resend(Request $req, array $p): Response
+    {
+        $appBaseUrl = isset($req->body['appBaseUrl']) ? (string) $req->body['appBaseUrl'] : '';
+        $data       = $this->ols->resend($req->requireUser(), (int) $p['id'], $appBaseUrl);
+
+        return Response::json($data);
+    }
 }

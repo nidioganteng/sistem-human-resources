@@ -233,6 +233,41 @@ final class OfferingLetterUseCases
     }
 
     /** @return array<string,mixed> */
+    public function resend(User $actor, int $id, string $appBaseUrl): array
+    {
+        $ol = $this->loadForHr($actor, $id);
+
+        if ($ol->status() !== OfferingLetterStatus::Sent) {
+            throw new DomainRuleViolation('Hanya Offering Letter berstatus Terkirim yang dapat dikirim ulang.');
+        }
+
+        $applicant = $this->applicants->find($ol->applicantId());
+        if ($applicant === null) {
+            throw new NotFound('Pelamar tidak ditemukan.');
+        }
+
+        $olUrl = rtrim($appBaseUrl, '/') . '/ol/' . $ol->responseToken();
+        $body  = $this->buildOfferingEmail(
+            $applicant->fullName(),
+            $ol->position(),
+            $olUrl,
+            $ol->respondBefore() ?? new DateTimeImmutable('+7 days'),
+        );
+
+        try {
+            $this->mailer->send(
+                $applicant->email(),
+                'Offering Letter - Gaharu Sempana Group',
+                $body,
+            );
+        } catch (\Throwable $e) {
+            error_log('[sistem-hr] Gagal mengirim ulang Offering Letter ke ' . $applicant->email() . ': ' . $e->getMessage());
+        }
+
+        return OfferingLetterView::from($ol, ...$this->resolveSignaturePaths($ol));
+    }
+
+    /** @return array<string,mixed> */
     public function getPublic(string $token): array
     {
         $ol = $this->ols->findByToken($token);
