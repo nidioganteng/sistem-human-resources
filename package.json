@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "backend": "php -S localhost:8001 api/router.php",
-    "dev:all": "concurrently -n PHP,Vite -c cyan,magenta \"npm run backend\" \"npm run dev\""
+    "backend": "php -S 0.0.0.0:8001 api/router.php",
+    "dev:all": "concurrently -n PHP,Vite -c cyan,magenta \"npm run backend\" \"npm run dev -- --host\""
   },
   "dependencies": {
     "docx": "^9.11.0",
