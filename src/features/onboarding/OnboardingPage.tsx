@@ -20,6 +20,43 @@ const DOC_FIELDS: Array<{ key: string; label: string; required: boolean }> = [
   { key: 'lainnya', label: 'Dokumen Lainnya', required: false },
 ];
 
+function PageBackground() {
+  return (
+    <>
+      <style>{`
+        @keyframes ob-shift {
+          0%, 100% { background-position: 0% 50%; }
+          50%       { background-position: 100% 50%; }
+        }
+        @keyframes ob-float1 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+          33%       { transform: translate(50px, -40px) scale(1.1); opacity: 0.7; }
+          66%       { transform: translate(-25px, 25px) scale(0.95); opacity: 0.5; }
+        }
+        @keyframes ob-float2 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+          40%       { transform: translate(-60px, 35px) scale(1.12); opacity: 0.65; }
+          70%       { transform: translate(35px, -25px) scale(0.93); opacity: 0.45; }
+        }
+        @keyframes ob-float3 {
+          0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0.4; }
+          50%       { transform: translate(-50%, 50px) scale(1.08); opacity: 0.6; }
+        }
+        .ob-bg    { animation: ob-shift 10s ease infinite; background-size: 200% 200%; }
+        .ob-blob1 { animation: ob-float1 14s ease-in-out infinite; }
+        .ob-blob2 { animation: ob-float2 18s ease-in-out infinite; }
+        .ob-blob3 { animation: ob-float3 11s ease-in-out infinite; }
+      `}</style>
+      <div className="ob-bg pointer-events-none fixed inset-0"
+        style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 30%, #dbeafe 60%, #eff6ff 100%)' }}
+      />
+      <div className="ob-blob1 pointer-events-none fixed -left-20 -top-20 h-96 w-96 rounded-full bg-sky-400/50 blur-3xl" />
+      <div className="ob-blob2 pointer-events-none fixed -bottom-16 -right-16 h-80 w-80 rounded-full bg-blue-400/40 blur-3xl" />
+      <div className="ob-blob3 pointer-events-none fixed left-1/2 top-1/3 h-64 w-64 rounded-full bg-sky-300/35 blur-2xl" />
+    </>
+  );
+}
+
 export default function OnboardingPage() {
   const { token } = useParams<{ token: string }>();
 
@@ -33,7 +70,6 @@ export default function OnboardingPage() {
     documents: { docType: string }[];
   } | null>(null);
 
-  // Teks
   const [nik, setNik] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -46,7 +82,6 @@ export default function OnboardingPage() {
   const [bpjsNumber, setBpjsNumber] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
 
-  // Berkas
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -153,16 +188,23 @@ export default function OnboardingPage() {
 
   if (step === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-sm text-slate-500">Memuat...</p>
+      <div className="relative flex min-h-screen items-center justify-center">
+        <PageBackground />
+        <p className="relative text-sm text-slate-500">Memuat...</p>
       </div>
     );
   }
 
   if (step === 'error') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-        <div className="apply-card max-w-md text-center">
+      <div className="relative flex min-h-screen items-center justify-center p-4">
+        <PageBackground />
+        <div className="apply-card relative max-w-md p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+            <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
           <p className="text-slate-600">{loadError}</p>
         </div>
       </div>
@@ -171,8 +213,9 @@ export default function OnboardingPage() {
 
   if (step === 'done') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-        <div className="apply-card max-w-md space-y-3 text-center">
+      <div className="relative flex min-h-screen items-center justify-center p-4">
+        <PageBackground />
+        <div className="apply-card relative max-w-md space-y-3 p-8 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-100">
             <svg className="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -189,15 +232,16 @@ export default function OnboardingPage() {
 
   if (step === 'success') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-        <div className="apply-card max-w-md space-y-3 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-            <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="relative flex min-h-screen items-center justify-center p-4">
+        <PageBackground />
+        <div className="apply-card relative max-w-md space-y-3 p-8 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+            <svg className="h-7 w-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="font-heading text-lg font-bold text-slate-800">Data Berhasil Dikirim!</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="font-heading text-xl font-bold text-slate-800">Data Berhasil Dikirim!</h1>
+          <p className="text-sm text-slate-500">
             HR akan memeriksa dan menghubungi Anda jika ada yang kurang.
           </p>
         </div>
@@ -206,199 +250,266 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-lg space-y-6">
-        <div className="text-center">
-          <img
-            src="/logo-gsg.png"
-            alt="Logo Gaharu Sempana Group"
-            className="mx-auto mb-3 h-12 w-12 object-contain"
-          />
-          <div className="font-heading text-xs font-semibold uppercase tracking-widest text-sky-700">
-            Gaharu Sempana Group
+    <div className="relative min-h-screen px-4 py-10">
+      <PageBackground />
+
+      <div className="relative mx-auto max-w-lg">
+        <div className="apply-card overflow-hidden">
+          {/* Header bergradien */}
+          <div className="relative bg-gradient-to-br from-sky-600 to-sky-800 px-8 py-8">
+            <div className="absolute inset-0 opacity-10">
+              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="ob-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="1.5" fill="white" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#ob-dots)" />
+              </svg>
+            </div>
+            <div className="relative flex flex-col items-center gap-3 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 p-1 shadow-lg backdrop-blur-sm">
+                <img
+                  src="/logo-gsg.png"
+                  alt="Logo Gaharu Sempana Group"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-sky-200">
+                  Gaharu Sempana Group
+                </p>
+                <h1 className="font-heading mt-1 text-xl font-bold text-white">
+                  Formulir Onboarding
+                </h1>
+                {info && (
+                  <p className="mt-1 text-sm text-sky-100">
+                    {info.fullName}
+                    {info.position ? ` – ${info.position}` : ''}
+                    {info.division ? ` / ${info.division}` : ''}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
-          <h1 className="font-heading mt-1 text-2xl font-bold text-slate-900">Formulir Onboarding</h1>
-          {info && (
-            <p className="mt-1 text-sm text-slate-500">
-              {info.fullName} &ndash; {info.position}
-              {info.division ? ` / ${info.division}` : ''}
-            </p>
-          )}
-        </div>
 
-        <form className="space-y-6" onSubmit={(e) => void handleSubmit(e)}>
-          <div className="apply-card space-y-4">
-            <h2 className="font-heading text-base font-bold text-slate-800">Data Pribadi</h2>
-
-            <div>
-              <label className="apply-label">NIK <span className="text-red-500">*</span></label>
-              <input
-                className="apply-input"
-                value={nik}
-                onChange={(e) => setNik(e.target.value)}
-                placeholder="16 digit NIK sesuai KTP"
-                inputMode="numeric"
-              />
-              {fieldErrors['nik'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['nik']}</p>}
-            </div>
-
-            <div>
-              <label className="apply-label">Email <span className="text-red-500">*</span></label>
-              <input
-                className="apply-input"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@contoh.com"
-              />
-              {fieldErrors['email'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['email']}</p>}
-            </div>
-
-            <div>
-              <label className="apply-label">Nomor HP <span className="text-red-500">*</span></label>
-              <input
-                className="apply-input"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="08xx-xxxx-xxxx"
-              />
-              {fieldErrors['phone'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['phone']}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="apply-label">Tanggal Lahir <span className="text-red-500">*</span></label>
-                <input
-                  className="apply-input"
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                />
-                {fieldErrors['birth_date'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['birth_date']}</p>}
+          {/* Form */}
+          <form onSubmit={(e) => void handleSubmit(e)}>
+            {/* Seksi Data Pribadi */}
+            <div className="px-6 pb-2 pt-6 sm:px-8">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100">
+                  <svg className="h-4 w-4 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <h2 className="font-heading text-base font-bold text-slate-800">Data Pribadi</h2>
               </div>
-              <div>
-                <label className="apply-label">Tempat Lahir <span className="text-red-500">*</span></label>
-                <input
-                  className="apply-input"
-                  value={birthPlace}
-                  onChange={(e) => setBirthPlace(e.target.value)}
-                  placeholder="Kota"
-                />
-                {fieldErrors['birth_place'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['birth_place']}</p>}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="apply-label">NIK <span className="text-red-500">*</span></label>
+                  <input
+                    className="apply-input"
+                    value={nik}
+                    onChange={(e) => setNik(e.target.value)}
+                    placeholder="16 digit NIK sesuai KTP"
+                    inputMode="numeric"
+                  />
+                  {fieldErrors['nik'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['nik']}</p>}
+                </div>
+
+                <div>
+                  <label className="apply-label">Email <span className="text-red-500">*</span></label>
+                  <input
+                    className="apply-input"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@contoh.com"
+                  />
+                  {fieldErrors['email'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['email']}</p>}
+                </div>
+
+                <div>
+                  <label className="apply-label">Nomor HP <span className="text-red-500">*</span></label>
+                  <input
+                    className="apply-input"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="08xx-xxxx-xxxx"
+                  />
+                  {fieldErrors['phone'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['phone']}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="apply-label">Tanggal Lahir <span className="text-red-500">*</span></label>
+                    <input
+                      className="apply-input"
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                    />
+                    {fieldErrors['birth_date'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['birth_date']}</p>}
+                  </div>
+                  <div>
+                    <label className="apply-label">Tempat Lahir <span className="text-red-500">*</span></label>
+                    <input
+                      className="apply-input"
+                      value={birthPlace}
+                      onChange={(e) => setBirthPlace(e.target.value)}
+                      placeholder="Kota"
+                    />
+                    {fieldErrors['birth_place'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['birth_place']}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="apply-label">Alamat <span className="text-red-500">*</span></label>
+                  <textarea
+                    className="apply-input resize-none"
+                    rows={3}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Alamat lengkap sesuai KTP"
+                  />
+                  {fieldErrors['address'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['address']}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="apply-label">Agama</label>
+                    <input
+                      className="apply-input"
+                      value={religion}
+                      onChange={(e) => setReligion(e.target.value)}
+                      placeholder="mis. Islam"
+                    />
+                  </div>
+                  <div>
+                    <label className="apply-label">Status Pernikahan</label>
+                    <select
+                      className="apply-input"
+                      value={maritalStatus}
+                      onChange={(e) => setMaritalStatus(e.target.value)}
+                    >
+                      <option value="">-- Pilih --</option>
+                      <option value="Belum Menikah">Belum Menikah</option>
+                      <option value="Menikah">Menikah</option>
+                      <option value="Cerai">Cerai</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="apply-label">Nomor NPWP</label>
+                    <input
+                      className="apply-input"
+                      value={npwpNumber}
+                      onChange={(e) => setNpwpNumber(e.target.value)}
+                      placeholder="xx.xxx.xxx.x-xxx.xxx"
+                    />
+                  </div>
+                  <div>
+                    <label className="apply-label">Nomor BPJS</label>
+                    <input
+                      className="apply-input"
+                      value={bpjsNumber}
+                      onChange={(e) => setBpjsNumber(e.target.value)}
+                      placeholder="Nomor kartu BPJS"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="apply-label">Kontak Darurat</label>
+                  <input
+                    className="apply-input"
+                    value={emergencyContact}
+                    onChange={(e) => setEmergencyContact(e.target.value)}
+                    placeholder="Nama - Hubungan - Nomor HP"
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="apply-label">Alamat <span className="text-red-500">*</span></label>
-              <textarea
-                className="apply-input resize-none"
-                rows={3}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Alamat lengkap sesuai KTP"
-              />
-              {fieldErrors['address'] && <p className="mt-1 text-xs text-red-600">{fieldErrors['address']}</p>}
+            {/* Divider */}
+            <div className="mx-6 my-6 border-t border-slate-100 sm:mx-8" />
+
+            {/* Seksi Dokumen */}
+            <div className="px-6 pb-6 sm:px-8">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100">
+                  <svg className="h-4 w-4 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="font-heading text-base font-bold text-slate-800">Unggah Dokumen</h2>
+                  <p className="text-xs text-slate-400">Format: PDF, JPG, atau PNG. Maks. {MAX_MB} MB per berkas.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {DOC_FIELDS.map(({ key, label, required }) => (
+                  <div key={key}>
+                    <label className="apply-label">
+                      {label}
+                      {required && <span className="text-red-500"> *</span>}
+                      {uploadedDocTypes.has(key) && (
+                        <span className="ml-2 normal-case text-emerald-600">(sudah ada)</span>
+                      )}
+                    </label>
+                    <input
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
+                      className="apply-input cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-sky-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-sky-700"
+                      ref={(el) => { fileRefs.current[key] = el; }}
+                      onChange={(e) => setFiles((prev) => ({ ...prev, [key]: e.target.files?.[0] ?? null }))}
+                    />
+                    {fieldErrors[key] && <p className="mt-1 text-xs text-red-600">{fieldErrors[key]}</p>}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div>
-              <label className="apply-label">Agama</label>
-              <input
-                className="apply-input"
-                value={religion}
-                onChange={(e) => setReligion(e.target.value)}
-                placeholder="mis. Islam"
-              />
-            </div>
+            {/* Divider + footer */}
+            <div className="mx-6 border-t border-slate-100 sm:mx-8" />
 
-            <div>
-              <label className="apply-label">Status Pernikahan</label>
-              <select
-                className="apply-input"
-                value={maritalStatus}
-                onChange={(e) => setMaritalStatus(e.target.value)}
+            <div className="px-6 py-6 sm:px-8">
+              {submitError && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {submitError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="apply-btn w-full py-3.5 text-base"
+                disabled={submitting}
               >
-                <option value="">-- Pilih --</option>
-                <option value="Belum Menikah">Belum Menikah</option>
-                <option value="Menikah">Menikah</option>
-                <option value="Cerai">Cerai</option>
-              </select>
+                {submitting ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Mengirim...
+                  </>
+                ) : (
+                  'Kirim Data'
+                )}
+              </button>
+
+              <p className="mt-4 text-center text-xs text-slate-400">
+                Dengan mengirim formulir ini, Anda menyatakan bahwa semua informasi yang diberikan adalah benar.
+              </p>
             </div>
-
-            <div>
-              <label className="apply-label">Nomor NPWP</label>
-              <input
-                className="apply-input"
-                value={npwpNumber}
-                onChange={(e) => setNpwpNumber(e.target.value)}
-                placeholder="xx.xxx.xxx.x-xxx.xxx"
-              />
-            </div>
-
-            <div>
-              <label className="apply-label">Nomor BPJS <span className="text-slate-400 text-xs">(wajib)</span></label>
-              <input
-                className="apply-input"
-                value={bpjsNumber}
-                onChange={(e) => setBpjsNumber(e.target.value)}
-                placeholder="Nomor kartu BPJS"
-              />
-            </div>
-
-            <div>
-              <label className="apply-label">Kontak Darurat</label>
-              <input
-                className="apply-input"
-                value={emergencyContact}
-                onChange={(e) => setEmergencyContact(e.target.value)}
-                placeholder="Nama - Hubungan - Nomor HP"
-              />
-            </div>
-          </div>
-
-          <div className="apply-card space-y-4">
-            <h2 className="font-heading text-base font-bold text-slate-800">Unggah Dokumen</h2>
-            <p className="text-xs text-slate-500">Format: PDF, JPG, atau PNG. Maks. {MAX_MB} MB per berkas.</p>
-
-            {DOC_FIELDS.map(({ key, label, required }) => (
-              <div key={key}>
-                <label className="apply-label">
-                  {label}
-                  {required && <span className="text-red-500"> *</span>}
-                  {uploadedDocTypes.has(key) && (
-                    <span className="ml-2 text-xs text-emerald-600">(sudah ada)</span>
-                  )}
-                </label>
-                <input
-                  type="file"
-                  accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
-                  className="apply-input cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-sky-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-sky-700"
-                  ref={(el) => { fileRefs.current[key] = el; }}
-                  onChange={(e) => setFiles((prev) => ({ ...prev, [key]: e.target.files?.[0] ?? null }))}
-                />
-                {fieldErrors[key] && <p className="mt-1 text-xs text-red-600">{fieldErrors[key]}</p>}
-              </div>
-            ))}
-          </div>
-
-          {submitError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {submitError}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="apply-btn w-full"
-            disabled={submitting}
-          >
-            {submitting ? 'Mengirim...' : 'Kirim Data'}
-          </button>
-
-          <p className="text-center text-xs text-slate-400">
-            Dengan mengirim formulir ini, Anda menyatakan bahwa semua informasi yang diberikan adalah benar.
-          </p>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
