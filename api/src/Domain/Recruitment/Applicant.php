@@ -188,6 +188,17 @@ final class Applicant
         $this->updatedAt = new DateTimeImmutable();
     }
 
+    /** HR menjadikan kandidat yang menerima OL sebagai karyawan. */
+    public function markHired(): void
+    {
+        if ($this->status !== ApplicantStatus::Accepted) {
+            throw new DomainRuleViolation('Hanya kandidat berstatus diterima yang dapat dijadikan karyawan.');
+        }
+
+        $this->status    = ApplicantStatus::Hired;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     /** HR menyetujui pelamar dan mengirim tautan Form Pelamar. */
     public function approvePending(User $hr): void
     {

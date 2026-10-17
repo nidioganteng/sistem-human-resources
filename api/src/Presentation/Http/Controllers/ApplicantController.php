@@ -144,4 +144,13 @@ final class ApplicantController
 
         return Response::json(['items' => $records]);
     }
+
+    /** POST /applicants/{id}/hire */
+    /** @param array<string,string> $p */
+    public function hire(Request $req, array $p): Response
+    {
+        $data = $this->applicants->hire($req->requireUser(), (int) $p['id']);
+
+        return Response::json($data, 201);
+    }
 }

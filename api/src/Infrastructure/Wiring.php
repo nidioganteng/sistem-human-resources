@@ -83,7 +83,8 @@ final class Wiring
         ));
         $c->set(ApplicantUseCases::class, static fn (Container $c) => new ApplicantUseCases(
             $c->get(ApplicantRepository::class), $c->get(VacancyRepository::class),
-            $c->get(MrfRepository::class), $c->get(FileStorage::class), $c->get(Mailer::class)
+            $c->get(MrfRepository::class), $c->get(FileStorage::class), $c->get(Mailer::class),
+            $c->get(EmployeeRepository::class), $c->get(OfferingLetterRepository::class),
         ));
         $c->set(OfferingLetterUseCases::class, static fn (Container $c) => new OfferingLetterUseCases(
             $c->get(OfferingLetterRepository::class), $c->get(ApplicantRepository::class),
