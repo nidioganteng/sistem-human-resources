@@ -39,6 +39,7 @@ final class MrfView
             'updatedAt'        => $m->updatedAt()->format(DATE_ATOM),
             'canEdit'          => $m->canBeEditedBy($actor),
             'canDecide'        => $m->canBeDecidedBy($actor),
+            'canRecall'        => $m->canBeRecalledBy($actor),
             'needsMyAction'    => $m->needsActionFrom($actor),
         ];
 

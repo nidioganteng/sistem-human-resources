@@ -34,6 +34,7 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/mrfs/{id}/approve',   [$mrf, 'approve'], [$auth]);
     $r->add('POST', '/mrfs/{id}/revise',    [$mrf, 'revise'],  [$auth]);
     $r->add('POST', '/mrfs/{id}/cancel',    [$mrf, 'cancel'],  [$auth]);
+    $r->add('POST', '/mrfs/{id}/recall',    [$mrf, 'recall'],  [$auth]);
 
     $vac = $c->get(VacancyController::class);
     $r->add('GET',  '/vacancies',                          [$vac, 'index'],           [$auth]);

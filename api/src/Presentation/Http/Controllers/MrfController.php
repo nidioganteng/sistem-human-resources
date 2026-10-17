@@ -68,4 +68,10 @@ final class MrfController
     {
         return Response::json($this->mrfs->cancel($req->requireUser(), (int) $p['id']));
     }
+
+    /** @param array<string,string> $p */
+    public function recall(Request $req, array $p): Response
+    {
+        return Response::json($this->mrfs->recall($req->requireUser(), (int) $p['id']));
+    }
 }

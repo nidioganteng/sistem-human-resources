@@ -91,6 +91,12 @@ final class Mrf
         return $u->id === $this->requesterId && $this->status->isEditable();
     }
 
+    public function canBeRecalledBy(User $u): bool
+    {
+        return $u->id === $this->requesterId
+            && ($this->status === MrfStatus::PendingManager || $this->status === MrfStatus::PendingCeo);
+    }
+
     public function canBeDecidedBy(User $u): bool
     {
         return match ($this->status) {
@@ -150,6 +156,17 @@ final class Mrf
     {
         $this->assertEditableBy($actor);
         $this->transition($actor, ApprovalAction::Cancel, null, $this->status, MrfStatus::Cancelled);
+    }
+
+    public function recall(User $actor): void
+    {
+        if ($actor->id !== $this->requesterId) {
+            throw new NotAllowed('Hanya pembuat MRF yang dapat menarik kembali.');
+        }
+        if ($this->status !== MrfStatus::PendingManager && $this->status !== MrfStatus::PendingCeo) {
+            throw new DomainRuleViolation('MRF hanya dapat ditarik saat menunggu persetujuan Manajer atau CEO.');
+        }
+        $this->transition($actor, ApprovalAction::Recalled, null, $this->status, MrfStatus::Draft);
     }
 
     // ── Dipanggil repository ──

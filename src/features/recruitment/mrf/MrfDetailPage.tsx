@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Ban, CheckCircle, Clock, Pencil, RefreshCw, Send, ServerOff, RotateCcw,
+  ArrowLeft, Ban, CheckCircle, Clock, Pencil, RefreshCw, Send, ServerOff, RotateCcw, Undo2,
 } from 'lucide-react';
 import { StatusBadge } from '@/shared/ui/Badge';
 import { Alert } from '@/shared/ui/Alert';
 import { fmtDate, TRACK_LABEL } from './format';
-import { approveMrf, cancelMrf, getMrf, reviseMrf, submitMrf } from './mrfService';
+import { approveMrf, cancelMrf, getMrf, recallMrf, reviseMrf, submitMrf } from './mrfService';
 import type { Mrf, MrfHistoryEntry } from './types';
 
 const ICON_BG: Record<MrfHistoryEntry['action'], string> = {
-  submit:  'bg-brand-100 text-brand-600',
-  approve: 'bg-emerald-100 text-emerald-600',
-  revise:  'bg-amber-100 text-amber-700',
-  cancel:  'bg-red-100 text-red-600',
+  submit:   'bg-brand-100 text-brand-600',
+  approve:  'bg-emerald-100 text-emerald-600',
+  revise:   'bg-amber-100 text-amber-700',
+  cancel:   'bg-red-100 text-red-600',
+  recalled: 'bg-slate-100 text-slate-500',
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -152,7 +153,7 @@ export default function MrfDetailPage() {
                   <li key={i} className="grid grid-cols-[28px_1fr] gap-2.5">
                     <div className="flex flex-col items-center">
                       <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs ${ICON_BG[h.action]}`}>
-                        {h.action === 'submit' ? '→' : h.action === 'approve' ? '✓' : h.action === 'revise' ? '↩' : '✕'}
+                        {h.action === 'submit' ? '→' : h.action === 'approve' ? '✓' : h.action === 'revise' ? '↩' : h.action === 'recalled' ? '↺' : '✕'}
                       </span>
                       {i < mrf.history!.length - 1 && <span className="w-px flex-1 bg-slate-200 dark:bg-[#1c2333] min-h-[12px] mt-1" />}
                     </div>
@@ -306,9 +307,21 @@ function ActionPanel({
           </p>
         </div>
       </div>
-      <div className="rounded-lg bg-slate-50 dark:bg-[#0c1018] px-3 py-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-        Anda tidak memiliki tindakan pada MRF ini saat ini.
-      </div>
+      {mrf.canRecall ? (
+        <button
+          className="btn-ghost w-full text-slate-600 hover:bg-slate-100 dark:hover:bg-[#1c2333]"
+          disabled={busy}
+          onClick={() => {
+            if (window.confirm('Tarik kembali MRF ini ke Draft?')) void run(() => recallMrf(mrf.id));
+          }}
+        >
+          <Undo2 size={15} /> Tarik Kembali
+        </button>
+      ) : (
+        <div className="rounded-lg bg-slate-50 dark:bg-[#0c1018] px-3 py-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Anda tidak memiliki tindakan pada MRF ini saat ini.
+        </div>
+      )}
     </>
   );
 }

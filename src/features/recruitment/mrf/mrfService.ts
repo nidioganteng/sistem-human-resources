@@ -16,3 +16,4 @@ export const submitMrf = (id: number): Promise<Mrf> => post(`/mrfs/${id}/submit`
 export const approveMrf = (id: number, comment?: string): Promise<Mrf> => post(`/mrfs/${id}/approve`, { comment });
 export const reviseMrf = (id: number, comment: string): Promise<Mrf> => post(`/mrfs/${id}/revise`, { comment });
 export const cancelMrf = (id: number): Promise<Mrf> => post(`/mrfs/${id}/cancel`);
+export const recallMrf = (id: number): Promise<Mrf> => post(`/mrfs/${id}/recall`);
