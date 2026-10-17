@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS mrf_approvals (
     mrf_id      BIGINT UNSIGNED NOT NULL,
     actor_id    BIGINT UNSIGNED NOT NULL,
     actor_role  ENUM('super_admin','hr','manajer','pic') NOT NULL,
-    action      ENUM('submit','approve','revise','cancel') NOT NULL,
+    action      ENUM('submit','approve','revise','cancel','recalled') NOT NULL,
     comment     TEXT NULL,
     from_status VARCHAR(20) NOT NULL,
     to_status   VARCHAR(20) NOT NULL,
