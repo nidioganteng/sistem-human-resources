@@ -6,7 +6,7 @@ import { Alert } from '@/shared/ui/Alert';
 import { Modal } from '@/shared/ui/Modal';
 import { useAuth } from '@/auth/AuthContext';
 import { ApiError } from '@/services/api';
-import { getOl, updateOl, submitOl, approveOl, reviseOl, sendOl } from './olService';
+import { getOl, updateOl, submitOl, approveOl, reviseOl, sendOl, resendOl } from './olService';
 import { OL_STATUS_LABELS } from './types';
 import type { OfferingLetter, OlStatus } from './types';
 import { formatRupiah, RupiahInput } from '@/shared/ui/RupiahInput';
@@ -180,6 +180,20 @@ export default function OlDetailPage() {
     }
   };
 
+  const handleResend = async () => {
+    if (!ol) return;
+    setBusy(true);
+    setActionMsg(null);
+    try {
+      await resendOl(ol.id, window.location.origin);
+      setActionMsg({ type: 'ok', text: 'Email Offering Letter berhasil dikirim ulang.' });
+    } catch (e) {
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal mengirim ulang email.' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) return <p className="text-sm text-slate-400">Memuat...</p>;
   if (error) return <Alert variant="error">{error}</Alert>;
   if (!ol) return null;
@@ -270,6 +284,19 @@ export default function OlDetailPage() {
             {ol.respondedAt && <li>Direspons: {formatDateTime(ol.respondedAt)}</li>}
           </ul>
         </div>
+
+        {isHr && ol.status === 'sent' && (
+          <div className="border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+            <button
+              className="btn-secondary text-sm"
+              disabled={busy}
+              onClick={() => void handleResend()}
+            >
+              {busy ? 'Mengirim...' : 'Kirim Ulang Email'}
+            </button>
+            <p className="mt-1 text-xs text-slate-400">Kirim ulang ke kandidat tanpa mengubah token atau batas respons.</p>
+          </div>
+        )}
 
         {(canEdit || canSubmit || canSend || canApprove || canRevise) && (
           <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">

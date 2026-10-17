@@ -34,6 +34,9 @@ export const reviseOl = (id: number, comment: string): Promise<OfferingLetter> =
 export const sendOl = (id: number, appBaseUrl: string): Promise<OfferingLetter> =>
   post(`/offering-letters/${id}/send`, { appBaseUrl });
 
+export const resendOl = (id: number, appBaseUrl: string): Promise<OfferingLetter> =>
+  post(`/offering-letters/${id}/resend`, { appBaseUrl });
+
 export const getOlPublic = (token: string): Promise<OfferingLetter> =>
   apiFetch(`/ol/${token}`);
 
