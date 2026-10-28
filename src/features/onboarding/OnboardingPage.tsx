@@ -1,3 +1,4 @@
+import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -21,40 +22,7 @@ const DOC_FIELDS: Array<{ key: string; label: string; required: boolean }> = [
 ];
 
 function PageBackground() {
-  return (
-    <>
-      <style>{`
-        @keyframes ob-shift {
-          0%, 100% { background-position: 0% 50%; }
-          50%       { background-position: 100% 50%; }
-        }
-        @keyframes ob-float1 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
-          33%       { transform: translate(50px, -40px) scale(1.1); opacity: 0.7; }
-          66%       { transform: translate(-25px, 25px) scale(0.95); opacity: 0.5; }
-        }
-        @keyframes ob-float2 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-          40%       { transform: translate(-60px, 35px) scale(1.12); opacity: 0.65; }
-          70%       { transform: translate(35px, -25px) scale(0.93); opacity: 0.45; }
-        }
-        @keyframes ob-float3 {
-          0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0.4; }
-          50%       { transform: translate(-50%, 50px) scale(1.08); opacity: 0.6; }
-        }
-        .ob-bg    { animation: ob-shift 10s ease infinite; background-size: 200% 200%; }
-        .ob-blob1 { animation: ob-float1 14s ease-in-out infinite; }
-        .ob-blob2 { animation: ob-float2 18s ease-in-out infinite; }
-        .ob-blob3 { animation: ob-float3 11s ease-in-out infinite; }
-      `}</style>
-      <div className="ob-bg pointer-events-none fixed inset-0"
-        style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 30%, #dbeafe 60%, #eff6ff 100%)' }}
-      />
-      <div className="ob-blob1 pointer-events-none fixed -left-20 -top-20 h-96 w-96 rounded-full bg-sky-400/50 blur-3xl" />
-      <div className="ob-blob2 pointer-events-none fixed -bottom-16 -right-16 h-80 w-80 rounded-full bg-blue-400/40 blur-3xl" />
-      <div className="ob-blob3 pointer-events-none fixed left-1/2 top-1/3 h-64 w-64 rounded-full bg-sky-300/35 blur-2xl" />
-    </>
-  );
+  return <div className="portfolio-surface pointer-events-none fixed inset-0 -z-10" aria-hidden="true" />;
 }
 
 export default function OnboardingPage() {
@@ -188,16 +156,16 @@ export default function OnboardingPage() {
 
   if (step === 'loading') {
     return (
-      <div className="relative flex min-h-screen items-center justify-center">
+      <div className="relative flex min-h-[100dvh] items-center justify-center">
         <PageBackground />
-        <p className="relative text-sm text-slate-500">Memuat...</p>
+        <p className="relative text-sm text-caption">Memuat...</p>
       </div>
     );
   }
 
   if (step === 'error') {
     return (
-      <div className="relative flex min-h-screen items-center justify-center p-4">
+      <div className="relative flex min-h-[100dvh] items-center justify-center p-4">
         <PageBackground />
         <div className="apply-card relative max-w-md p-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
@@ -205,7 +173,7 @@ export default function OnboardingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <p className="text-slate-600">{loadError}</p>
+          <p className="text-body">{loadError}</p>
         </div>
       </div>
     );
@@ -213,7 +181,7 @@ export default function OnboardingPage() {
 
   if (step === 'done') {
     return (
-      <div className="relative flex min-h-screen items-center justify-center p-4">
+      <div className="relative flex min-h-[100dvh] items-center justify-center p-4">
         <PageBackground />
         <div className="apply-card relative max-w-md space-y-3 p-8 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-100">
@@ -221,8 +189,8 @@ export default function OnboardingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="font-heading text-lg font-bold text-slate-800">Data Sudah Diterima</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="font-heading text-lg font-bold text-ink">Data Sudah Diterima</h1>
+          <p className="text-sm text-body">
             Data Anda sudah diterima. Silakan hubungi HR jika ada perubahan.
           </p>
         </div>
@@ -232,7 +200,7 @@ export default function OnboardingPage() {
 
   if (step === 'success') {
     return (
-      <div className="relative flex min-h-screen items-center justify-center p-4">
+      <div className="relative flex min-h-[100dvh] items-center justify-center p-4">
         <PageBackground />
         <div className="apply-card relative max-w-md space-y-3 p-8 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
@@ -240,8 +208,8 @@ export default function OnboardingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="font-heading text-xl font-bold text-slate-800">Data Berhasil Dikirim!</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="font-heading text-xl font-bold text-ink">Data Berhasil Dikirim!</h1>
+          <p className="text-sm text-caption">
             HR akan memeriksa dan menghubungi Anda jika ada yang kurang.
           </p>
         </div>
@@ -250,13 +218,13 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative min-h-screen px-4 py-10">
+    <div className="public-page relative isolate min-h-[100dvh] px-4 py-10">
       <PageBackground />
 
       <div className="relative mx-auto max-w-lg">
         <div className="apply-card overflow-hidden">
           {/* Header bergradien */}
-          <div className="relative bg-gradient-to-br from-sky-600 to-sky-800 px-8 py-8">
+          <div className="relative public-banner px-8 py-8">
             <div className="absolute inset-0 opacity-10">
               <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -269,23 +237,22 @@ export default function OnboardingPage() {
             </div>
             <div className="relative flex flex-col items-center gap-3 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 p-1 shadow-lg backdrop-blur-sm">
-                <img
-                  src="/logo-gsg.png"
+                <BrandLogo onDark
                   alt="Logo Gaharu Sempana Group"
                   className="h-full w-full object-contain"
                 />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-sky-200">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-300">
                   Gaharu Sempana Group
                 </p>
                 <h1 className="font-heading mt-1 text-xl font-bold text-white">
                   Formulir Onboarding
                 </h1>
                 {info && (
-                  <p className="mt-1 text-sm text-sky-100">
+                  <p className="mt-1 text-sm text-slate-300">
                     {info.fullName}
-                    {info.position ? ` – ${info.position}` : ''}
+                    {info.position ? ` - ${info.position}` : ''}
                     {info.division ? ` / ${info.division}` : ''}
                   </p>
                 )}
@@ -303,7 +270,7 @@ export default function OnboardingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h2 className="font-heading text-base font-bold text-slate-800">Data Pribadi</h2>
+                <h2 className="font-heading text-base font-bold text-ink">Data Pribadi</h2>
               </div>
 
               <div className="space-y-4">
@@ -437,7 +404,7 @@ export default function OnboardingPage() {
             </div>
 
             {/* Divider */}
-            <div className="mx-6 my-6 border-t border-slate-100 sm:mx-8" />
+            <div className="mx-6 my-6 border-t border-line sm:mx-8" />
 
             {/* Seksi Dokumen */}
             <div className="px-6 pb-6 sm:px-8">
@@ -448,8 +415,8 @@ export default function OnboardingPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="font-heading text-base font-bold text-slate-800">Unggah Dokumen</h2>
-                  <p className="text-xs text-slate-400">Format: PDF, JPG, atau PNG. Maks. {MAX_MB} MB per berkas.</p>
+                  <h2 className="font-heading text-base font-bold text-ink">Unggah Dokumen</h2>
+                  <p className="text-xs text-caption">Format: PDF, JPG, atau PNG. Maks. {MAX_MB} MB per berkas.</p>
                 </div>
               </div>
 
@@ -477,7 +444,7 @@ export default function OnboardingPage() {
             </div>
 
             {/* Divider + footer */}
-            <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+            <div className="mx-6 border-t border-line sm:mx-8" />
 
             <div className="px-6 py-6 sm:px-8">
               {submitError && (
@@ -504,7 +471,7 @@ export default function OnboardingPage() {
                 )}
               </button>
 
-              <p className="mt-4 text-center text-xs text-slate-400">
+              <p className="mt-4 text-center text-xs text-caption">
                 Dengan mengirim formulir ini, Anda menyatakan bahwa semua informasi yang diberikan adalah benar.
               </p>
             </div>
