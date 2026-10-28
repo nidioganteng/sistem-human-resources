@@ -13,14 +13,14 @@ interface ApprovalProgressProps {
 const DOT: Record<Step['status'], string> = {
   done:     'bg-emerald-500 ring-emerald-100 dark:ring-emerald-900/40',
   active:   'bg-brand-600 ring-brand-100 dark:ring-brand-900/40 animate-pulse',
-  pending:  'bg-slate-200 dark:bg-slate-700 ring-slate-50 dark:ring-slate-800',
+  pending:  'bg-muted ring-line',
   rejected: 'bg-red-400 ring-red-100 dark:ring-red-900/40',
 };
 
 const LABEL: Record<Step['status'], string> = {
   done:     'text-emerald-700 dark:text-emerald-400',
   active:   'text-brand-700 dark:text-brand-400 font-semibold',
-  pending:  'text-slate-400 dark:text-slate-500',
+  pending:  'text-caption',
   rejected: 'text-red-600 dark:text-red-400',
 };
 
@@ -34,12 +34,12 @@ export function ApprovalProgress({ steps }: ApprovalProgressProps) {
             <span className={`text-[11px] leading-tight text-center ${LABEL[step.status]}`}>
               {step.label}
               {step.sublabel && (
-                <span className="block text-slate-400 dark:text-slate-500 font-normal">{step.sublabel}</span>
+                <span className="block text-caption font-normal">{step.sublabel}</span>
               )}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`mb-4 h-px flex-1 mx-1 ${step.status === 'done' ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-slate-200 dark:bg-slate-700'}`} />
+            <div className={`mb-4 h-px flex-1 mx-1 ${step.status === 'done' ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-muted'}`} />
           )}
         </li>
       ))}
