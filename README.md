@@ -20,15 +20,33 @@ Hostinger Premium tidak menjalankan Node.js, jadi frontend dibuild menjadi file 
 
 Butuh Node 20+, PHP 8.1+, MySQL/MariaDB.
 
+DBngin menjalankan server MySQL; TablePlus hanya dipakai untuk melihat dan mengelola isinya. Tidak perlu membuat database atau tabel secara manual untuk instalasi lokal baru.
+
 ```bash
-npm install
-cp api/config/env.php.example api/config/env.php    # isi DB_*, JWT_SECRET, dan set APP_ENV = 'local'
-# buat database kosong, lalu impor database/schema.sql (phpMyAdmin atau: mysql -u USER -p NAMA_DB < database/schema.sql)
-php api/bin/seed-dev.php                            # 5 akun contoh, hanya jalan jika APP_ENV = 'local'
-npm run dev:all                                     # PHP di :8001 dan Vite di :5174
+npm ci
+cp api/config/env.php.example api/config/env.php
+mkdir -p storage
 ```
 
-Akun contoh (password `password-dev-123`): `ceo@`, `hr@`, `manajer@` (Sipil), `pic@` (Sipil), `keuangan@` (manajer non-teknis), semuanya `@contoh.test`.
+Isi `api/config/env.php`: `APP_ENV = 'local'`, kredensial `DB_*`, `JWT_SECRET` acak (minimal 32 karakter), dan `STORAGE_PATH` berupa jalur absolut folder `storage` proyek. Buat JWT secret dengan `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`. Untuk DBngin di laptop ini gunakan host `127.0.0.1`, port `3307`, database `sistem_hr`, user `root`, password kosong (sesuaikan jika pengaturan DBngin berbeda). Ekstensi PHP yang dipakai: `pdo_mysql`, `mbstring`, `fileinfo`, dan `zip` untuk arsip unduhan.
+
+```bash
+npm run db:migrate -- --create                     # membuat database lokal dan mengimpor skema
+php api/bin/seed-dev.php password-dev-123           # 4 akun contoh; hanya untuk APP_ENV = 'local'
+npm run dev:all                                    # PHP di :8001 dan Vite di :5174
+```
+
+Buka http://localhost:5174. Akun contoh: `admin@gaharusempana.com` (CEO), `hr@gaharusempana.com`, `manajer@gaharusempana.com`, dan `pic@gaharusempana.com` (Sipil), dengan password yang diberikan ke seed. Seed memperbarui password akun contoh yang sudah ada; jalankan hanya saat diperlukan.
+
+Koneksi TablePlus: MySQL, host `127.0.0.1`, port `3307`, user `root`, password kosong, database `sistem_hr`.
+
+### Migrasi database
+
+`npm run db:migrate` menjalankan berkas SQL baru di `database/migrations/` berdasarkan urutan nama, lalu mencatat nama dan checksum di `schema_migrations`. Gunakan nama bertanggal yang meningkat dan jangan mengubah migrasi yang sudah diterapkan.
+
+Instalasi baru mengimpor `database/schema.sql` dan mencatat tujuh migrasi lama sampai `2026-10-17` sebagai baseline karena perubahannya sudah ada di skema. Perintah dapat dijalankan ulang tanpa mengimpor ulang atau menghapus data. `--create` hanya diperbolehkan di lingkungan lokal. Database lama tanpa riwayat migrasi ditolak agar tidak otomatis diubah; periksa dan migrasikan database lama secara terpisah terlebih dahulu.
+
+DDL MySQL tidak otomatis rollback. Jika migrasi gagal sebagian, periksa perubahan yang sudah masuk sebelum mencoba lagi. Untuk produksi, cadangkan database dan jalankan migrasi melalui SSH; workflow deploy belum menjalankannya otomatis.
 
 ## Arsitektur backend (`api/src`)
 
