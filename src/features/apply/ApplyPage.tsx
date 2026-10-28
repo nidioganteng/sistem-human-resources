@@ -1,3 +1,4 @@
+import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle2, Upload, FileText, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -22,43 +23,10 @@ const STEPS: { label: string; sub: string }[] = [
 
 // Didefinisikan di LUAR komponen agar tidak di-remount setiap render
 function BG({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="relative min-h-screen overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 35%, #2563eb 60%, #0ea5e9 100%)' }}
-    >
-      <div className="pointer-events-none absolute inset-0">
-        <div className="animate-drift absolute -top-20 -left-20 h-72 w-72 rounded-full bg-white/5 blur-2xl" style={{ animationDelay: '0s' }} />
-        <div className="animate-drift absolute top-1/3 -right-24 h-80 w-80 rounded-full bg-sky-300/10 blur-3xl" style={{ animationDelay: '3s' }} />
-        <div className="animate-drift absolute -bottom-24 left-1/4 h-96 w-96 rounded-full bg-blue-300/10 blur-3xl" style={{ animationDelay: '1.5s' }} />
-
-        <div className="animate-float-slow absolute top-16 left-10 h-14 w-14 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm" style={{ animationDelay: '0s' }} />
-        <div className="animate-float-medium absolute top-32 right-16 h-10 w-10 rotate-45 border border-white/20 bg-white/10" style={{ animationDelay: '1s' }} />
-        <div className="animate-float-slow absolute bottom-40 left-16 h-8 w-8 rounded-full border border-white/20 bg-white/10" style={{ animationDelay: '2s' }} />
-        <div className="animate-float-medium absolute bottom-24 right-12 h-16 w-16 rounded-2xl border border-white/15 bg-white/8" style={{ animationDelay: '0.5s' }} />
-        <div className="animate-float-slow absolute top-1/2 left-8 h-6 w-6 rotate-12 border border-white/20 bg-white/10" style={{ animationDelay: '3.5s' }} />
-        <div className="animate-float-medium absolute top-3/4 right-8 h-10 w-10 rounded-full border border-white/15 bg-white/8" style={{ animationDelay: '2.5s' }} />
-
-        <svg className="absolute right-0 top-0 h-full opacity-10" viewBox="0 0 400 800" fill="none">
-          <circle cx="350" cy="150" r="120" stroke="white" strokeWidth="1" />
-          <circle cx="350" cy="150" r="200" stroke="white" strokeWidth="0.5" />
-          <circle cx="50" cy="650" r="90" stroke="white" strokeWidth="1" />
-          <circle cx="50" cy="650" r="160" stroke="white" strokeWidth="0.5" />
-        </svg>
-
-        <svg className="absolute inset-0 h-full w-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="1.5" fill="white" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#dots)" />
-        </svg>
-      </div>
-
-      <div className="relative z-10">{children}</div>
-    </div>
-  );
+  return <div className="public-page relative isolate overflow-hidden">
+    <div className="ambient-strands" aria-hidden="true" />
+    <div className="relative">{children}</div>
+  </div>;
 }
 
 function StepIndicator({ current }: { current: FormStep }) {
@@ -78,20 +46,20 @@ function StepIndicator({ current }: { current: FormStep }) {
                     ? 'bg-brand-600 text-white'
                     : active
                     ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30'
-                    : 'border-2 border-slate-200 bg-white text-slate-400',
+                    : 'border-2 border-line bg-panel text-caption',
                 ].join(' ')}
               >
                 {done ? <CheckCircle2 size={18} /> : idx}
               </div>
               <div className="text-center">
-                <p className={['text-xs font-semibold', active ? 'text-brand-600' : done ? 'text-slate-600' : 'text-slate-400'].join(' ')}>
+                <p className={['text-xs font-semibold', active ? 'text-brand-600' : done ? 'text-body' : 'text-caption'].join(' ')}>
                   {s.label}
                 </p>
-                <p className="text-[10px] text-slate-400">{s.sub}</p>
+                <p className="text-[10px] text-caption">{s.sub}</p>
               </div>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={['mx-4 mb-5 h-0.5 w-16 transition-colors', done ? 'bg-brand-500' : 'bg-slate-200'].join(' ')} />
+              <div className={['mx-2 mb-5 h-0.5 w-8 sm:mx-4 sm:w-16 transition-colors', done ? 'bg-brand-500' : 'bg-muted'].join(' ')} />
             )}
           </div>
         );
@@ -146,7 +114,7 @@ function FileUploadBox({
             ? 'border-brand-400 bg-brand-50'
             : displayError
             ? 'border-red-300 bg-red-50'
-            : 'border-slate-200 bg-slate-50 hover:border-brand-300 hover:bg-brand-50/40',
+            : 'border-line bg-subtle hover:border-brand-300 hover:bg-brand-50/40',
         ].join(' ')}
       >
         <input
@@ -163,7 +131,7 @@ function FileUploadBox({
             </div>
             <div>
               <p className="text-sm font-semibold text-brand-700">{file.name}</p>
-              <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(0)} KB &middot; PDF</p>
+              <p className="text-xs text-caption">{(file.size / 1024).toFixed(0)} KB &middot; PDF</p>
             </div>
             <button
               type="button"
@@ -175,14 +143,14 @@ function FileUploadBox({
           </>
         ) : (
           <>
-            <div className={['flex h-10 w-10 items-center justify-center rounded-full transition-colors', displayError ? 'bg-red-100' : 'bg-slate-100 group-hover:bg-brand-100'].join(' ')}>
-              <Upload size={20} className={displayError ? 'text-red-400' : 'text-slate-400 group-hover:text-brand-500'} />
+            <div className={['flex h-10 w-10 items-center justify-center rounded-full transition-colors', displayError ? 'bg-red-100' : 'bg-subtle group-hover:bg-brand-100'].join(' ')}>
+              <Upload size={20} className={displayError ? 'text-red-400' : 'text-caption group-hover:text-brand-500'} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-600 group-hover:text-brand-600">Klik untuk pilih file</p>
-              <p className="text-xs text-slate-400">PDF, maks. {MAX_MB} MB</p>
+              <p className="text-sm font-medium text-body group-hover:text-brand-600">Klik untuk pilih file</p>
+              <p className="text-xs text-caption">PDF, maks. {MAX_MB} MB</p>
             </div>
-            {hint && <p className="text-xs text-slate-400 italic">{hint}</p>}
+            {hint && <p className="text-xs text-caption italic">{hint}</p>}
           </>
         )}
       </div>
@@ -292,7 +260,7 @@ export default function ApplyPage() {
   if (step === 'loading') {
     return (
       <BG>
-        <div className="flex min-h-screen items-center justify-center">
+        <div className="flex min-h-[100dvh] items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-white/30 border-t-white" />
             <p className="text-sm text-white/70">Memuat informasi lowongan...</p>
@@ -305,15 +273,15 @@ export default function ApplyPage() {
   if (step === 'error') {
     return (
       <BG>
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-[100dvh] items-center justify-center p-4">
           <div className="apply-card max-w-md w-full p-8 text-center space-y-3">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
               <svg className="h-7 w-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="font-semibold text-slate-800">Terjadi Kesalahan</p>
-            <p className="text-sm text-slate-500">{loadError}</p>
+            <p className="font-semibold text-ink">Terjadi Kesalahan</p>
+            <p className="text-sm text-caption">{loadError}</p>
           </div>
         </div>
       </BG>
@@ -323,21 +291,21 @@ export default function ApplyPage() {
   if (step === 'closed') {
     return (
       <BG>
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-[100dvh] items-center justify-center p-4">
           <div className="apply-card max-w-md w-full p-10 text-center space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-              <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-subtle">
+              <svg className="h-8 w-8 text-caption" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Lowongan Sudah Ditutup</h1>
-              <p className="mt-2 text-sm text-slate-500">
-                Lowongan <strong className="text-slate-700">{vacancy?.position}</strong> di divisi{' '}
-                <strong className="text-slate-700">{vacancy?.division}</strong> sudah tidak menerima lamaran.
+              <h1 className="text-xl font-bold text-ink">Lowongan Sudah Ditutup</h1>
+              <p className="mt-2 text-sm text-caption">
+                Lowongan <strong className="text-body">{vacancy?.position}</strong> di divisi{' '}
+                <strong className="text-body">{vacancy?.division}</strong> sudah tidak menerima lamaran.
               </p>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-caption">
               Ikuti{' '}
               <a href="https://instagram.com/gaharusempanagroup" className="font-medium text-brand-600 hover:underline" target="_blank" rel="noreferrer">
                 @gaharusempanagroup
@@ -353,7 +321,7 @@ export default function ApplyPage() {
   if (step === 'success') {
     return (
       <BG>
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-[100dvh] items-center justify-center p-4">
           <div className="apply-card max-w-md w-full p-10 text-center space-y-5">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
               <svg className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -361,10 +329,10 @@ export default function ApplyPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Lamaran Terkirim!</h1>
-              <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                Terima kasih, <strong className="text-slate-700">{fullName}</strong>! Lamaran Anda untuk posisi{' '}
-                <strong className="text-slate-700">{vacancy?.position}</strong> sedang kami tinjau.
+              <h1 className="text-2xl font-bold text-ink">Lamaran Terkirim!</h1>
+              <p className="mt-2 text-sm text-caption leading-relaxed">
+                Terima kasih, <strong className="text-body">{fullName}</strong>! Lamaran Anda untuk posisi{' '}
+                <strong className="text-body">{vacancy?.position}</strong> sedang kami tinjau.
                 Tim HR akan mengirim email jika Anda lolos screening awal.
               </p>
             </div>
@@ -376,24 +344,24 @@ export default function ApplyPage() {
 
   return (
     <BG>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-[100dvh] flex-col">
         {/* Top nav bar */}
         <header className="flex items-center gap-3 px-6 py-4">
-          <img src="/logo-gsg.png" alt="Logo Gaharu Sempana Group" className="h-9 w-auto object-contain drop-shadow" />
+          <BrandLogo alt="Logo Gaharu Sempana Group" className="h-9 w-auto object-contain drop-shadow" />
           <div className="h-5 w-px bg-white/20" />
-          <span className="text-sm font-semibold text-white/80">Gaharu Sempana Group</span>
+          <span className="text-sm font-semibold text-body">Gaharu Sempana Group</span>
         </header>
 
         {/* Content */}
         <div className="flex flex-1 items-start justify-center px-4 pb-10 pt-4">
           <div className="w-full max-w-xl space-y-4">
             <div className="px-1">
-              <h1 className="text-xl font-bold text-white">Formulir Lamaran</h1>
-              <p className="text-sm text-white/60">{vacancy?.position} &middot; Divisi {vacancy?.division}</p>
+              <h1 className="text-xl font-bold text-ink">Formulir Lamaran</h1>
+              <p className="text-sm text-caption">{vacancy?.position} &middot; Divisi {vacancy?.division}</p>
             </div>
 
             <div className="apply-card overflow-hidden">
-              <div className="border-b border-slate-100 px-8 pt-7 pb-6">
+              <div className="border-b border-line px-8 pt-7 pb-6">
                 <StepIndicator current={formStep} />
               </div>
 
@@ -403,8 +371,8 @@ export default function ApplyPage() {
                   {formStep === 1 && (
                     <>
                       <div>
-                        <p className="text-base font-bold text-slate-800">Data Diri</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Isi dengan data yang sesuai dokumen resmi.</p>
+                        <p className="text-base font-bold text-ink">Data Diri</p>
+                        <p className="text-xs text-caption mt-0.5">Isi dengan data yang sesuai dokumen resmi.</p>
                       </div>
                       <div>
                         <label className="apply-label">Nama Lengkap <span className="text-red-500 normal-case font-bold">*</span></label>
@@ -446,8 +414,8 @@ export default function ApplyPage() {
                   {formStep === 2 && (
                     <>
                       <div>
-                        <p className="text-base font-bold text-slate-800">Berkas Lamaran</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Unggah dalam format PDF, maksimal {MAX_MB} MB per file.</p>
+                        <p className="text-base font-bold text-ink">Berkas Lamaran</p>
+                        <p className="text-xs text-caption mt-0.5">Unggah dalam format PDF, maksimal {MAX_MB} MB per file.</p>
                       </div>
                       <FileUploadBox label="CV / Daftar Riwayat Hidup" required file={cv} onChange={setCv} error={fieldErrors.cv} inputRef={cvRef} />
                       <FileUploadBox label="Portofolio" file={portfolio} onChange={setPortfolio} error={fieldErrors.portfolio} inputRef={portRef} hint="Opsional" />
@@ -461,7 +429,7 @@ export default function ApplyPage() {
                           placeholder="Link portofolio online, keterangan tambahan, atau pesan untuk HR... (opsional)"
                           maxLength={1000}
                         />
-                        <p className="mt-1 text-right text-xs text-slate-400">{message.length}/1000</p>
+                        <p className="mt-1 text-right text-xs text-caption">{message.length}/1000</p>
                       </div>
                     </>
                   )}
@@ -469,15 +437,15 @@ export default function ApplyPage() {
                   {formStep === 3 && (
                     <>
                       <div>
-                        <p className="text-base font-bold text-slate-800">Konfirmasi Lamaran</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Periksa kembali data Anda sebelum mengirim.</p>
+                        <p className="text-base font-bold text-ink">Konfirmasi Lamaran</p>
+                        <p className="text-xs text-caption mt-0.5">Periksa kembali data Anda sebelum mengirim.</p>
                       </div>
 
-                      <div className="rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden">
-                        <div className="px-5 py-3 border-b border-slate-100">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ringkasan Data</p>
+                      <div className="rounded-2xl bg-subtle border border-line overflow-hidden">
+                        <div className="px-5 py-3 border-b border-line">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-caption">Ringkasan Data</p>
                         </div>
-                        <div className="divide-y divide-slate-100">
+                        <div className="divide-y divide-line">
                           {[
                             { k: 'Nama Lengkap', v: fullName },
                             { k: 'Email', v: email },
@@ -486,14 +454,14 @@ export default function ApplyPage() {
                             { k: 'Portofolio', v: portfolio?.name ?? 'Tidak dilampirkan' },
                           ].map(({ k, v }) => (
                             <div key={k} className="flex items-start justify-between gap-4 px-5 py-2.5">
-                              <span className="text-xs text-slate-400 shrink-0">{k}</span>
-                              <span className="text-xs font-medium text-slate-700 text-right break-all">{v}</span>
+                              <span className="text-xs text-caption shrink-0">{k}</span>
+                              <span className="text-xs font-medium text-body text-right break-all">{v}</span>
                             </div>
                           ))}
                           {message && (
                             <div className="px-5 py-2.5">
-                              <p className="text-xs text-slate-400 mb-1">Pesan</p>
-                              <p className="text-xs text-slate-700">{message}</p>
+                              <p className="text-xs text-caption mb-1">Pesan</p>
+                              <p className="text-xs text-body">{message}</p>
                             </div>
                           )}
                         </div>
@@ -509,7 +477,7 @@ export default function ApplyPage() {
                           />
                           <div className={[
                             'h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center',
-                            consent ? 'border-brand-600 bg-brand-600' : 'border-slate-300 bg-white group-hover:border-brand-400',
+                            consent ? 'border-brand-600 bg-brand-600' : 'border-line bg-panel group-hover:border-brand-400',
                           ].join(' ')}>
                             {consent && (
                               <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -518,9 +486,9 @@ export default function ApplyPage() {
                             )}
                           </div>
                         </div>
-                        <span className="text-xs leading-relaxed text-slate-600">
+                        <span className="text-xs leading-relaxed text-body">
                           Saya menyetujui bahwa data dan dokumen yang saya kirimkan akan disimpan oleh{' '}
-                          <strong className="text-slate-800">Gaharu Sempana Group</strong> selama proses rekrutmen
+                          <strong className="text-ink">Gaharu Sempana Group</strong> selama proses rekrutmen
                           berlangsung, hingga maksimal 2 tahun, sesuai kebijakan penyimpanan data perusahaan.{' '}
                           <span className="text-red-500">*</span>
                         </span>
@@ -536,7 +504,7 @@ export default function ApplyPage() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between border-t border-slate-100 px-8 py-5">
+                <div className="flex items-center justify-between border-t border-line px-8 py-5">
                   {formStep > 1 ? (
                     <button type="button" className="apply-btn-ghost" onClick={handleBack} disabled={submitting}>
                       <ChevronLeft size={16} /> Kembali
@@ -564,7 +532,7 @@ export default function ApplyPage() {
               </form>
             </div>
 
-            <p className="text-center text-xs text-white/40 pb-4">
+            <p className="text-center text-xs text-caption pb-4">
               Dengan mengirim formulir ini, Anda menyatakan bahwa semua informasi yang diberikan adalah benar.
             </p>
           </div>
