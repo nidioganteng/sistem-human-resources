@@ -12,7 +12,7 @@ export function StatCard({ label, value, caption, onClick, highlight = false }: 
   const base = 'relative rounded-xl border p-4 transition-colors';
   const style = highlight
     ? 'border-brand-200 bg-brand-50 cursor-pointer hover:bg-brand-100'
-    : 'border-slate-200 bg-white shadow-card';
+    : 'border-line bg-panel shadow-card';
 
   const El = onClick ? 'button' : 'div';
   return (
@@ -20,12 +20,12 @@ export function StatCard({ label, value, caption, onClick, highlight = false }: 
       {...(onClick ? { onClick, type: 'button' as const } : {})}
       className={`${base} ${style} ${onClick ? 'text-left w-full' : ''}`}
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-      <p className={`mt-1 text-3xl font-bold ${highlight ? 'text-brand-700' : 'text-slate-900'}`}>
+      <p className="text-xs font-semibold uppercase tracking-wider text-caption">{label}</p>
+      <p className={`mt-1 text-3xl font-bold ${highlight ? 'text-brand-700' : 'text-ink'}`}>
         {value}
       </p>
       {caption && (
-        <p className={`mt-1 text-xs ${highlight ? 'text-brand-600' : 'text-slate-500'}`}>{caption}</p>
+        <p className={`mt-1 text-xs ${highlight ? 'text-brand-600' : 'text-caption'}`}>{caption}</p>
       )}
       {onClick && (
         <ArrowRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-400" />
