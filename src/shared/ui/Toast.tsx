@@ -57,14 +57,14 @@ const STYLES: Record<ToastVariant, string> = {
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number) => void }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-xl border px-4 py-3 shadow-modal text-sm font-medium text-slate-800 min-w-[280px] max-w-sm ${STYLES[toast.variant]}`}
+      className={`flex items-center gap-3 rounded-xl border px-4 py-3 shadow-modal text-sm font-medium text-ink min-w-[280px] max-w-sm ${STYLES[toast.variant]}`}
     >
       {ICONS[toast.variant]}
       <span className="flex-1">{toast.message}</span>
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="ml-1 rounded p-0.5 text-slate-400 hover:text-slate-600"
+        className="ml-1 rounded p-0.5 text-caption hover:text-body"
       >
         <X size={14} />
       </button>
