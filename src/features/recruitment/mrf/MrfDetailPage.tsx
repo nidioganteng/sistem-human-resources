@@ -14,13 +14,13 @@ const ICON_BG: Record<MrfHistoryEntry['action'], string> = {
   approve:  'bg-emerald-100 text-emerald-600',
   revise:   'bg-amber-100 text-amber-700',
   cancel:   'bg-red-100 text-red-600',
-  recalled: 'bg-slate-100 text-slate-500',
+  recalled: 'bg-subtle text-caption',
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-b border-slate-100 dark:border-[#1c2333] px-6 py-5 last:border-0">
-      <h3 className="mb-3 text-base font-semibold text-slate-900 dark:text-white">{title}</h3>
+    <section className="border-b border-line px-6 py-5 last:border-0">
+      <h3 className="mb-3 text-base font-semibold text-ink">{title}</h3>
       {children}
     </section>
   );
@@ -29,8 +29,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function DtRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-xs text-slate-500 dark:text-slate-400">{label}</dt>
-      <dd className="mt-0.5 text-sm font-medium text-slate-900 dark:text-white">{children}</dd>
+      <dt className="text-xs text-caption">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium text-ink">{children}</dd>
     </div>
   );
 }
@@ -68,7 +68,7 @@ export default function MrfDetailPage() {
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
           <ServerOff size={22} />
         </span>
-        <p className="font-semibold text-slate-800 dark:text-slate-100">{fetchError}</p>
+        <p className="font-semibold text-ink">{fetchError}</p>
         <div className="flex gap-2">
           <button type="button" className="btn-primary" onClick={load}>
             <RefreshCw size={15} /> Coba lagi
@@ -80,7 +80,7 @@ export default function MrfDetailPage() {
   }
 
   if (!mrf) {
-    return <div className="text-sm text-slate-400 dark:text-slate-500">Memuat...</div>;
+    return <div className="text-sm text-caption">Memuat...</div>;
   }
 
   const isManagerCreated = mrf.requester.role === 'manajer';
@@ -89,19 +89,19 @@ export default function MrfDetailPage() {
     <div className="space-y-5">
       <Link
         to="/mrf"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-caption hover:text-body dark:hover:text-white"
       >
         <ArrowLeft size={15} /> Daftar MRF
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-6">
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm tabular-nums text-slate-500 dark:text-slate-400">{mrf.code}</span>
+          <span className="text-sm tabular-nums text-caption">{mrf.code}</span>
           <div className="flex items-center gap-3">
             <h1 className="page-title">{mrf.position}</h1>
             <StatusBadge status={mrf.status} />
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-caption">
             {mrf.division} · {mrf.headcount} orang · {mrf.employmentStatus} · diajukan oleh {mrf.requester.name} ({mrf.requester.roleLabel})
           </p>
         </div>
@@ -121,17 +121,17 @@ export default function MrfDetailPage() {
           </Section>
 
           <Section title="Tanggung jawab">
-            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-300">{mrf.responsibilities}</p>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-body">{mrf.responsibilities}</p>
           </Section>
 
           <Section title="Kualifikasi">
             <dl className="grid gap-3 text-sm sm:grid-cols-[160px_1fr]">
-              <dt className="text-slate-500 dark:text-slate-400">Pendidikan</dt>
-              <dd className="text-slate-900 dark:text-white">{mrf.education}</dd>
-              <dt className="text-slate-500 dark:text-slate-400">Kemampuan</dt>
-              <dd className="whitespace-pre-line text-slate-900 dark:text-white">{mrf.skills}</dd>
-              <dt className="text-slate-500 dark:text-slate-400">Pengalaman</dt>
-              <dd className="text-slate-900 dark:text-white">{mrf.experience}</dd>
+              <dt className="text-caption">Pendidikan</dt>
+              <dd className="text-ink">{mrf.education}</dd>
+              <dt className="text-caption">Kemampuan</dt>
+              <dd className="whitespace-pre-line text-ink">{mrf.skills}</dd>
+              <dt className="text-caption">Pengalaman</dt>
+              <dd className="text-ink">{mrf.experience}</dd>
             </dl>
           </Section>
         </div>
@@ -144,9 +144,9 @@ export default function MrfDetailPage() {
           {actionError && <Alert variant="error">{actionError}</Alert>}
 
           <div className="card flex flex-col gap-4">
-            <h3 className="font-semibold text-slate-900 dark:text-white">Riwayat</h3>
+            <h3 className="font-semibold text-ink">Riwayat</h3>
             {(mrf.history ?? []).length === 0 ? (
-              <p className="text-sm text-slate-400 dark:text-slate-500">Belum ada riwayat.</p>
+              <p className="text-sm text-caption">Belum ada riwayat.</p>
             ) : (
               <ol className="flex flex-col">
                 {mrf.history!.map((h, i) => (
@@ -155,17 +155,17 @@ export default function MrfDetailPage() {
                       <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs ${ICON_BG[h.action]}`}>
                         {h.action === 'submit' ? '→' : h.action === 'approve' ? '✓' : h.action === 'revise' ? '↩' : h.action === 'recalled' ? '↺' : '✕'}
                       </span>
-                      {i < mrf.history!.length - 1 && <span className="w-px flex-1 bg-slate-200 dark:bg-[#1c2333] min-h-[12px] mt-1" />}
+                      {i < mrf.history!.length - 1 && <span className="w-px flex-1 bg-muted min-h-[12px] mt-1" />}
                     </div>
                     <div className="pb-4">
-                      <p className="text-sm text-slate-700 dark:text-slate-300">
-                        <strong className="font-semibold text-slate-900 dark:text-white">{h.actorName}</strong>
-                        {' '}<span className="text-slate-500 dark:text-slate-400">· {h.roleLabel}</span>
+                      <p className="text-sm text-body">
+                        <strong className="font-semibold text-ink">{h.actorName}</strong>
+                        {' '}<span className="text-caption">· {h.roleLabel}</span>
                         <br />{h.actionLabel}
                       </p>
-                      <time className="text-xs text-slate-400 dark:text-slate-500">{fmtDate(h.createdAt)}</time>
+                      <time className="text-xs text-caption">{fmtDate(h.createdAt)}</time>
                       {h.comment && (
-                        <div className="mt-1.5 rounded-lg border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-slate-700 dark:text-amber-300 leading-relaxed">
+                        <div className="mt-1.5 rounded-lg border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-body dark:text-amber-300 leading-relaxed">
                           {h.comment}
                         </div>
                       )}
@@ -194,8 +194,8 @@ function ActionPanel({
     return (
       <>
         <div>
-          <p className="font-semibold text-slate-900 dark:text-white">Tindakan</p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="font-semibold text-ink">Tindakan</p>
+          <p className="mt-1 text-sm text-caption leading-relaxed">
             {mrf.status === 'draft'
               ? 'Draft hanya terlihat oleh Anda. Ajukan untuk meneruskan ke proses persetujuan.'
               : 'Revisi diminta. Perbaiki dan ajukan kembali.'}
@@ -222,8 +222,8 @@ function ActionPanel({
     return (
       <>
         <div>
-          <p className="font-semibold text-slate-900 dark:text-white">Keputusan Anda</p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="font-semibold text-ink">Keputusan Anda</p>
+          <p className="mt-1 text-sm text-caption">
             {mrf.requester.name} menunggu keputusan Anda.
           </p>
         </div>
@@ -237,7 +237,7 @@ function ActionPanel({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
           />
-          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Wajib saat meminta revisi, opsional saat menyetujui.</p>
+          <p className="mt-1.5 text-xs text-caption">Wajib saat meminta revisi, opsional saat menyetujui.</p>
         </div>
         <button
           className="btn-primary w-full"
@@ -265,8 +265,8 @@ function ActionPanel({
             <CheckCircle size={18} />
           </span>
           <div>
-            <p className="font-semibold text-slate-900 dark:text-white">Disetujui seluruhnya</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="font-semibold text-ink">Disetujui seluruhnya</p>
+            <p className="text-sm text-caption">
               {mrf.history?.filter((h) => h.action === 'approve').at(-1)?.actorName ?? 'CEO'} menyetujui
             </p>
           </div>
@@ -281,12 +281,12 @@ function ActionPanel({
   if (mrf.status === 'cancelled') {
     return (
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-[#1c2333] text-slate-500 dark:text-slate-400">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-caption">
           <Ban size={18} />
         </span>
         <div>
-          <p className="font-semibold text-slate-900 dark:text-white">MRF dibatalkan</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">MRF ini tidak lagi aktif.</p>
+          <p className="font-semibold text-ink">MRF dibatalkan</p>
+          <p className="text-sm text-caption">MRF ini tidak lagi aktif.</p>
         </div>
       </div>
     );
@@ -299,17 +299,17 @@ function ActionPanel({
           <Clock size={18} />
         </span>
         <div>
-          <p className="font-semibold text-slate-900 dark:text-white">
+          <p className="font-semibold text-ink">
             {mrf.status === 'pending_manager' ? 'Menunggu persetujuan Manajer' : 'Menunggu persetujuan CEO'}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-sm text-caption leading-relaxed">
             Keputusan ada di tangan approver. Anda akan mendapat notifikasi saat keputusan diambil.
           </p>
         </div>
       </div>
       {mrf.canRecall ? (
         <button
-          className="btn-ghost w-full text-slate-600 hover:bg-slate-100 dark:hover:bg-[#1c2333]"
+          className="btn-ghost w-full text-body hover:bg-subtle"
           disabled={busy}
           onClick={() => {
             if (window.confirm('Tarik kembali MRF ini ke Draft?')) void run(() => recallMrf(mrf.id));
@@ -318,7 +318,7 @@ function ActionPanel({
           <Undo2 size={15} /> Tarik Kembali
         </button>
       ) : (
-        <div className="rounded-lg bg-slate-50 dark:bg-[#0c1018] px-3 py-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+        <div className="rounded-lg bg-subtle px-3 py-2 text-xs text-caption leading-relaxed">
           Anda tidak memiliki tindakan pada MRF ini saat ini.
         </div>
       )}
@@ -351,18 +351,18 @@ function ApprovalStepper({ mrf, isManagerCreated }: { mrf: Mrf; isManagerCreated
   const DOT: Record<StepState, string> = {
     done:   'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-900/40',
     active: 'bg-brand-600 ring-4 ring-brand-100 dark:ring-brand-900/40',
-    pending:'bg-slate-200 dark:bg-slate-700',
+    pending:'bg-muted',
   };
   const LABEL: Record<StepState, string> = {
     done:   'text-emerald-700 dark:text-emerald-400 font-semibold',
     active: 'text-brand-700 dark:text-brand-400 font-semibold',
-    pending:'text-slate-400 dark:text-slate-500',
+    pending:'text-caption',
   };
 
   if (mrf.status === 'cancelled' || mrf.status === 'revision') return null;
 
   return (
-    <ol className="hidden items-center rounded-xl border border-slate-200 dark:border-[#1c2333] bg-white dark:bg-[#0f1520] px-5 py-3 lg:flex">
+    <ol className="hidden items-center rounded-xl border border-line bg-panel px-5 py-3 lg:flex">
       {steps.map((s, i) => (
         <li key={i} className="flex flex-1 items-center">
           <div className="flex flex-col items-center gap-1">
@@ -370,7 +370,7 @@ function ApprovalStepper({ mrf, isManagerCreated }: { mrf: Mrf; isManagerCreated
             <span className={`text-[11px] ${LABEL[s.state]}`}>{s.label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`mb-4 h-0.5 flex-1 mx-1 ${s.state === 'done' ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-slate-200 dark:bg-slate-700'}`} />
+            <div className={`mb-4 h-0.5 flex-1 mx-1 ${s.state === 'done' ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-muted'}`} />
           )}
         </li>
       ))}
