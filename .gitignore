@@ -4,7 +4,7 @@ dist
 *.local
 .env
 api/config/env.php
-storage/
+/storage/
 uploads/
 *.tsbuildinfo
 *.tar.gz
