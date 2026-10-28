@@ -21,7 +21,7 @@ interface FormPelamarModalProps {
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="bg-slate-800 px-4 py-2.5">
+    <div className="bg-canvas px-4 py-2.5">
       <p className="text-xs font-semibold uppercase tracking-widest text-white">{title}</p>
     </div>
   );
@@ -29,7 +29,7 @@ function SectionHeader({ title }: { title: string }) {
 
 function SectionBody({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-white px-4 py-4 dark:bg-[#0f1520]">
+    <div className="bg-panel px-4 py-4">
       {children}
     </div>
   );
@@ -37,13 +37,13 @@ function SectionBody({ children }: { children: React.ReactNode }) {
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs text-slate-500 dark:text-slate-400">{children}</p>
+    <p className="text-xs text-caption">{children}</p>
   );
 }
 
 function FieldValue({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-0.5 text-sm font-medium text-slate-900 dark:text-white">{children}</p>
+    <p className="mt-0.5 text-sm font-medium text-ink">{children}</p>
   );
 }
 
@@ -73,16 +73,16 @@ export function FormPelamarModal({
       {applicant && (
         <div className="flex flex-col gap-0 -mx-6 -mt-5">
           {/* Header section */}
-          <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50 px-6 py-4 dark:border-[#1c2333] dark:bg-[#0c1018]">
+          <div className="flex items-start justify-between gap-4 border-b border-line bg-subtle px-6 py-4">
             <div className="min-w-0 flex-1">
-              <p className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{applicant.fullName}</p>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{applicant.email}</p>
+              <p className="text-lg font-bold text-ink leading-tight">{applicant.fullName}</p>
+              <p className="mt-0.5 text-sm text-caption">{applicant.email}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
                   Form Terisi
                 </span>
                 {detail && (
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-caption">
                     Disubmit:{' '}
                     {new Date(detail.submittedAt).toLocaleDateString('id-ID', {
                       day: '2-digit',
@@ -111,7 +111,7 @@ export function FormPelamarModal({
           <div className="max-h-[60vh] overflow-y-auto">
             {loading && (
               <div className="flex items-center justify-center py-12">
-                <span className="text-sm text-slate-400">Memuat data form...</span>
+                <span className="text-sm text-caption">Memuat data form...</span>
               </div>
             )}
 
@@ -122,7 +122,7 @@ export function FormPelamarModal({
             )}
 
             {detail && (
-              <div className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+              <div className="divide-y divide-line">
                 {/* 1. IDENTITAS DIRI */}
                 <section>
                   <SectionHeader title="Identitas Diri" />
@@ -134,10 +134,10 @@ export function FormPelamarModal({
                           <img
                             src={photoUrl}
                             alt="Foto pelamar"
-                            className="h-[100px] w-[80px] rounded border border-slate-200 object-cover dark:border-[#1c2333]"
+                            className="h-[100px] w-[80px] rounded border border-line object-cover"
                           />
                         ) : (
-                          <div className="flex h-[100px] w-[80px] items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-400 dark:border-[#1c2333] dark:bg-[#0c1018]">
+                          <div className="flex h-[100px] w-[80px] items-center justify-center rounded border border-dashed border-line bg-subtle text-xs text-caption">
                             No photo
                           </div>
                         )}
@@ -193,18 +193,18 @@ export function FormPelamarModal({
                   <SectionHeader title="Riwayat Pendidikan Formal" />
                   <SectionBody>
                     {detail.formData.pendidikan_formal.length === 0 ? (
-                      <p className="text-sm text-slate-400">-</p>
+                      <p className="text-sm text-caption">-</p>
                     ) : (
-                      <div className="overflow-x-auto rounded border border-slate-100 dark:border-[#1c2333]">
+                      <div className="overflow-x-auto rounded border border-line">
                         <table className="min-w-full text-left text-sm">
-                          <thead className="border-b border-slate-100 bg-slate-50 dark:border-[#1c2333] dark:bg-[#0c1018]">
+                          <thead className="border-b border-line bg-subtle">
                             <tr>
                               {['Tingkat', 'Sekolah/Universitas', 'Jurusan', 'Tahun Lulus', 'IPK/Nilai'].map((h) => (
                                 <th key={h} className="th">{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                          <tbody className="divide-y divide-line">
                             {detail.formData.pendidikan_formal.map((p, i) => (
                               <tr key={i}>
                                 <td className="td">{p.tingkat || '-'}</td>
@@ -226,11 +226,11 @@ export function FormPelamarModal({
                   <SectionHeader title="Riwayat Pendidikan Non Formal" />
                   <SectionBody>
                     {detail.formData.pendidikan_non_formal.length === 0 ? (
-                      <p className="text-sm text-slate-400">-</p>
+                      <p className="text-sm text-caption">-</p>
                     ) : (
                       <ul className="list-disc space-y-1 pl-5">
                         {detail.formData.pendidikan_non_formal.map((item, i) => (
-                          <li key={i} className="text-sm text-slate-700 dark:text-slate-300">{item}</li>
+                          <li key={i} className="text-sm text-body">{item}</li>
                         ))}
                       </ul>
                     )}
@@ -242,18 +242,18 @@ export function FormPelamarModal({
                   <SectionHeader title="Pengalaman Kerja" />
                   <SectionBody>
                     {detail.formData.pengalaman_kerja.length === 0 ? (
-                      <p className="text-sm text-slate-400">-</p>
+                      <p className="text-sm text-caption">-</p>
                     ) : (
-                      <div className="overflow-x-auto rounded border border-slate-100 dark:border-[#1c2333]">
+                      <div className="overflow-x-auto rounded border border-line">
                         <table className="min-w-full text-left text-sm">
-                          <thead className="border-b border-slate-100 bg-slate-50 dark:border-[#1c2333] dark:bg-[#0c1018]">
+                          <thead className="border-b border-line bg-subtle">
                             <tr>
                               {['Perusahaan', 'Periode', 'Jabatan', 'Gaji Terakhir'].map((h) => (
                                 <th key={h} className="th">{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                          <tbody className="divide-y divide-line">
                             {detail.formData.pengalaman_kerja.map((k, i) => (
                               <tr key={i}>
                                 <td className="td">{k.nama_perusahaan || '-'}</td>
@@ -276,13 +276,13 @@ export function FormPelamarModal({
                   <SectionHeader title="Penguasaan Bahasa" />
                   <SectionBody>
                     {detail.formData.penguasaan_bahasa.length === 0 ? (
-                      <p className="text-sm text-slate-400">-</p>
+                      <p className="text-sm text-caption">-</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {detail.formData.penguasaan_bahasa.map((b, i) => (
                           <span
                             key={i}
-                            className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-[#1c2333] dark:text-slate-300"
+                            className="rounded-full bg-subtle px-3 py-1 text-xs font-medium text-body"
                           >
                             {b}
                           </span>
@@ -297,7 +297,7 @@ export function FormPelamarModal({
                   <SectionHeader title="Soft Skill" />
                   <SectionBody>
                     {detail.formData.soft_skill.length === 0 ? (
-                      <p className="text-sm text-slate-400">-</p>
+                      <p className="text-sm text-caption">-</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {detail.formData.soft_skill.map((s, i) => (
@@ -318,18 +318,18 @@ export function FormPelamarModal({
                   <SectionHeader title="Pengalaman Organisasi" />
                   <SectionBody>
                     {detail.formData.pengalaman_organisasi.length === 0 ? (
-                      <p className="text-sm text-slate-400">-</p>
+                      <p className="text-sm text-caption">-</p>
                     ) : (
-                      <div className="overflow-x-auto rounded border border-slate-100 dark:border-[#1c2333]">
+                      <div className="overflow-x-auto rounded border border-line">
                         <table className="min-w-full text-left text-sm">
-                          <thead className="border-b border-slate-100 bg-slate-50 dark:border-[#1c2333] dark:bg-[#0c1018]">
+                          <thead className="border-b border-line bg-subtle">
                             <tr>
                               {['Organisasi', 'Periode', 'Jabatan', 'Tugas'].map((h) => (
                                 <th key={h} className="th">{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                          <tbody className="divide-y divide-line">
                             {detail.formData.pengalaman_organisasi.map((o, i) => (
                               <tr key={i}>
                                 <td className="td">{o.nama_organisasi || '-'}</td>
@@ -352,25 +352,25 @@ export function FormPelamarModal({
                     <div className="space-y-4">
                       <div>
                         <FieldLabel>Sumber Informasi Lowongan</FieldLabel>
-                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                        <p className="mt-1 text-sm text-body">
                           {detail.formData.info_lainnya.sumber_info || '-'}
                         </p>
                       </div>
                       <div>
                         <FieldLabel>Pengetahuan tentang Gaharu Sempana Group</FieldLabel>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-body">
                           {detail.formData.info_lainnya.tentang_gsg || '-'}
                         </p>
                       </div>
                       <div>
                         <FieldLabel>Alasan Bergabung</FieldLabel>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-body">
                           {detail.formData.info_lainnya.alasan_bergabung || '-'}
                         </p>
                       </div>
                       <div>
                         <FieldLabel>Misi dan Kontribusi ke Perusahaan</FieldLabel>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-body">
                           {detail.formData.info_lainnya.misi_kontribusi || '-'}
                         </p>
                       </div>
@@ -382,7 +382,7 @@ export function FormPelamarModal({
                 <section>
                   <SectionHeader title="Ekspektasi Gaji" />
                   <SectionBody>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-2xl font-bold text-ink">
                       {rupiahFmt.format(detail.expectedSalary)}
                     </p>
                   </SectionBody>
@@ -393,7 +393,7 @@ export function FormPelamarModal({
                   <SectionHeader title="Tanda Tangan" />
                   <SectionBody>
                     {detail.formData.kota_tanda_tangan && (
-                      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+                      <p className="mb-3 text-sm text-caption">
                         Dibuat di {detail.formData.kota_tanda_tangan},{' '}
                         {new Date(detail.submittedAt).toLocaleDateString('id-ID', {
                           day: '2-digit',
@@ -406,10 +406,10 @@ export function FormPelamarModal({
                       <img
                         src={signatureUrl}
                         alt="Tanda tangan"
-                        className="max-h-28 rounded border border-slate-200 bg-white p-2 dark:border-[#1c2333]"
+                        className="max-h-28 rounded border border-line bg-[#f8fafc] p-2"
                       />
                     ) : (
-                      <p className="text-sm text-slate-400">Tanda tangan tidak tersedia.</p>
+                      <p className="text-sm text-caption">Tanda tangan tidak tersedia.</p>
                     )}
                   </SectionBody>
                 </section>
@@ -418,7 +418,7 @@ export function FormPelamarModal({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 dark:border-[#1c2333]">
+          <div className="flex items-center justify-between border-t border-line px-6 py-4">
             <div>
               {userRole === 'super_admin' && applicant?.status === 'form_submitted' && onShortlist && (
                 <button
