@@ -33,22 +33,22 @@ export function FileViewerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-950/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-canvas/95 backdrop-blur-sm">
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-900 px-5 py-3">
-        <h2 className="text-sm font-semibold text-white">{title}</h2>
+      <div className="flex shrink-0 items-center justify-between border-b border-line bg-panel px-5 py-3">
+        <h2 className="text-sm font-semibold text-ink">{title}</h2>
         <div className="flex items-center gap-2">
           {blobUrl && (
             <button
               onClick={handleDownload}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+              className="btn-secondary !min-h-9 !px-3 !py-1.5 !text-xs"
             >
               <Download size={13} /> Unduh
             </button>
           )}
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="icon-button !h-9 !w-9" aria-label="Tutup pratinjau"
           >
             <X size={18} />
           </button>
@@ -61,7 +61,7 @@ export function FileViewerModal({
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
               <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-              <p className="text-sm text-slate-400">Memuat berkas...</p>
+              <p className="text-sm text-caption">Memuat berkas...</p>
             </div>
           </div>
         )}
@@ -75,7 +75,7 @@ export function FileViewerModal({
         )}
         {!loading && !blobUrl && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-slate-400">Berkas tidak dapat dimuat.</p>
+            <p className="text-sm text-caption">Berkas tidak dapat dimuat.</p>
           </div>
         )}
       </div>

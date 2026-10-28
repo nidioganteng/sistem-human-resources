@@ -49,7 +49,7 @@ export function RupiahInput({
 
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-medium text-slate-400 select-none dark:text-slate-500">
+      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-medium text-caption select-none">
         Rp
       </span>
       <input

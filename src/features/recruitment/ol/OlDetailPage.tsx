@@ -194,7 +194,7 @@ export default function OlDetailPage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-slate-400">Memuat...</p>;
+  if (loading) return <p className="text-sm text-caption">Memuat...</p>;
   if (error) return <Alert variant="error">{error}</Alert>;
   if (!ol) return null;
 
@@ -209,7 +209,7 @@ export default function OlDetailPage() {
   return (
     <div className="space-y-5">
       <button
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-caption hover:text-body"
         onClick={() => navigate(-1)}
       >
         <ArrowLeft size={15} /> Kembali
@@ -242,42 +242,42 @@ export default function OlDetailPage() {
         )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#0c1018]">
-            <p className="text-xs text-slate-500 dark:text-slate-500">Posisi</p>
-            <p className="mt-0.5 font-semibold text-slate-900 dark:text-white">{ol.position}</p>
+          <div className="rounded-xl bg-subtle p-4">
+            <p className="text-xs text-caption">Posisi</p>
+            <p className="mt-0.5 font-semibold text-ink">{ol.position}</p>
           </div>
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#0c1018]">
-            <p className="text-xs text-slate-500 dark:text-slate-500">Gaji</p>
-            <p className="mt-0.5 font-semibold text-slate-900 dark:text-white">{formatRupiah(ol.salary)}</p>
+          <div className="rounded-xl bg-subtle p-4">
+            <p className="text-xs text-caption">Gaji</p>
+            <p className="mt-0.5 font-semibold text-ink">{formatRupiah(ol.salary)}</p>
           </div>
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#0c1018]">
-            <p className="text-xs text-slate-500 dark:text-slate-500">Tanggal Mulai</p>
-            <p className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+          <div className="rounded-xl bg-subtle p-4">
+            <p className="text-xs text-caption">Tanggal Mulai</p>
+            <p className="mt-0.5 font-semibold text-ink">
               {ol.startDate ? formatDate(ol.startDate) : '-'}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#0c1018]">
-            <p className="text-xs text-slate-500 dark:text-slate-500">Tanda Tangan</p>
-            <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">
+          <div className="rounded-xl bg-subtle p-4">
+            <p className="text-xs text-caption">Tanda Tangan</p>
+            <p className="mt-0.5 text-sm text-body">
               HR: {ol.hasHrSignature ? 'Ada' : 'Belum'} &nbsp;&middot;&nbsp; CEO: {ol.hasCeoSignature ? 'Ada' : 'Belum'}
             </p>
           </div>
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-caption">
             Isi Surat
           </p>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-[#1c2333] dark:bg-[#0c1018]">
-            <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{ol.body}</p>
+          <div className="rounded-xl border border-line bg-subtle px-4 py-3">
+            <p className="whitespace-pre-wrap text-sm text-body">{ol.body}</p>
           </div>
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-caption">
             Linimasa
           </p>
-          <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
+          <ul className="space-y-1 text-sm text-body">
             <li>Dibuat: {formatDateTime(ol.createdAt)}</li>
             {ol.sentAt && <li>Dikirim ke kandidat: {formatDateTime(ol.sentAt)}</li>}
             {ol.respondBefore && <li>Batas respons: {formatDate(ol.respondBefore)}</li>}
@@ -286,7 +286,7 @@ export default function OlDetailPage() {
         </div>
 
         {isHr && ol.status === 'sent' && (
-          <div className="border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+          <div className="border-t border-line pt-4">
             <button
               className="btn-secondary text-sm"
               disabled={busy}
@@ -294,12 +294,12 @@ export default function OlDetailPage() {
             >
               {busy ? 'Mengirim...' : 'Kirim Ulang Email'}
             </button>
-            <p className="mt-1 text-xs text-slate-400">Kirim ulang ke kandidat tanpa mengubah token atau batas respons.</p>
+            <p className="mt-1 text-xs text-caption">Kirim ulang ke kandidat tanpa mengubah token atau batas respons.</p>
           </div>
         )}
 
         {(canEdit || canSubmit || canSend || canApprove || canRevise) && (
-          <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+          <div className="flex flex-wrap gap-2 border-t border-line pt-4">
             {canEdit && (
               <button className="btn-secondary" onClick={openEditModal}>
                 Edit OL
@@ -382,7 +382,7 @@ export default function OlDetailPage() {
               onChange={(e) => setEditBody(e.target.value)}
             />
           </div>
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+          <div className="flex justify-end gap-2 border-t border-line pt-4">
             <button className="btn-secondary" onClick={() => setShowEdit(false)}>Batal</button>
             <button className="btn-primary" disabled={busy} onClick={() => void handleSaveEdit()}>
               {busy ? 'Menyimpan...' : 'Simpan'}
@@ -394,7 +394,7 @@ export default function OlDetailPage() {
       {/* Modal konfirmasi ajukan ke CEO */}
       <Modal open={showConfirmSubmit} onClose={() => setShowConfirmSubmit(false)} title="Ajukan ke CEO?" size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-caption">
             Offering Letter akan dikirim ke CEO untuk ditinjau dan disetujui.
           </p>
           <div className="flex justify-end gap-2">
@@ -409,7 +409,7 @@ export default function OlDetailPage() {
       {/* Modal konfirmasi approve (CEO) */}
       <Modal open={showConfirmApprove} onClose={() => setShowConfirmApprove(false)} title="Setujui Offering Letter?" size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-caption">
             Tanda tangan CEO akan dilekatkan dan OL siap dikirim ke kandidat oleh HR.
           </p>
           <div className="flex justify-end gap-2">
@@ -446,7 +446,7 @@ export default function OlDetailPage() {
       {/* Modal konfirmasi kirim ke kandidat */}
       <Modal open={showConfirmSend} onClose={() => setShowConfirmSend(false)} title="Kirim ke Kandidat?" size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-caption">
             Email Offering Letter akan dikirim ke kandidat. Kandidat punya waktu 5 hari kerja untuk merespons.
           </p>
           <div className="flex justify-end gap-2">
@@ -458,7 +458,7 @@ export default function OlDetailPage() {
         </div>
       </Modal>
 
-      <Link to="/offering-letters" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600">
+      <Link to="/offering-letters" className="inline-flex items-center gap-1.5 text-sm text-caption hover:text-body">
         <ArrowLeft size={13} /> Daftar Offering Letter
       </Link>
     </div>

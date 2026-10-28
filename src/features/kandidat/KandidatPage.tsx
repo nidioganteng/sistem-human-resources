@@ -118,7 +118,7 @@ export default function KandidatPage() {
       )}
 
       {loading && (
-        <div className="mt-8 text-center text-sm text-slate-500">Memuat...</div>
+        <div className="mt-8 text-center text-sm text-caption">Memuat...</div>
       )}
 
       {!loading && !error && filtered.length === 0 && (
@@ -139,13 +139,13 @@ export default function KandidatPage() {
         <div className="mt-6 space-y-6">
           {grouped.map(group => (
             <div key={group.label}>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-caption">
                 {group.label} ({group.items.length})
               </h2>
               <div className="card overflow-hidden p-0">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500">
+                    <tr className="border-b border-line bg-subtle text-xs text-caption">
                       <th className="px-4 py-2.5 text-left font-medium">Nama</th>
                       <th className="px-4 py-2.5 text-left font-medium">Posisi</th>
                       <th className="px-4 py-2.5 text-left font-medium">Divisi</th>
@@ -155,7 +155,7 @@ export default function KandidatPage() {
                       <th className="px-4 py-2.5"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-line">
                     {group.items.map(item => (
                       <CandidateRow key={item.id} item={item} />
                     ))}
@@ -168,7 +168,7 @@ export default function KandidatPage() {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <p className="mt-4 text-xs text-slate-400">
+        <p className="mt-4 text-xs text-caption">
           Total {filtered.length} kandidat ditampilkan
           {filtered.length !== items.length ? ` dari ${items.length}` : ''}.
         </p>
@@ -183,11 +183,11 @@ function CandidateRow({ item }: { item: CandidateItem }) {
   });
 
   return (
-    <tr className="hover:bg-slate-50/50 transition-colors">
-      <td className="px-4 py-3 font-medium text-slate-800">{item.fullName}</td>
-      <td className="px-4 py-3 text-slate-600">{item.vacancyPosition}</td>
-      <td className="px-4 py-3 text-slate-600">{item.vacancyDivision}</td>
-      <td className="px-4 py-3 text-slate-600">
+    <tr className="hover:bg-subtle/50 transition-colors">
+      <td className="px-4 py-3 font-medium text-ink">{item.fullName}</td>
+      <td className="px-4 py-3 text-body">{item.vacancyPosition}</td>
+      <td className="px-4 py-3 text-body">{item.vacancyDivision}</td>
+      <td className="px-4 py-3 text-body">
         {item.selectionTrack ? TRACK_LABELS[item.selectionTrack] ?? item.selectionTrack : '-'}
       </td>
       <td className="px-4 py-3">
@@ -195,7 +195,7 @@ function CandidateRow({ item }: { item: CandidateItem }) {
           {APPLICANT_STATUS_LABELS[item.status] ?? item.status}
         </Badge>
       </td>
-      <td className="px-4 py-3 text-slate-500">{updatedDate}</td>
+      <td className="px-4 py-3 text-caption">{updatedDate}</td>
       <td className="px-4 py-3 text-right">
         <Link
           to={`/lowongan/${item.vacancyId}`}

@@ -1,121 +1,93 @@
-import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { BrandLogo } from '@/shared/ui/BrandLogo';
+import { useEffect, useRef, useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Briefcase, FileText, Home, LogOut, Mail, Menu, Moon, Shield, Sun, UserCheck, Users, X,
+  Briefcase, ChevronRight, FileText, Home, LogOut, Mail, Menu,
+  Moon, PanelLeftClose, PanelLeftOpen, Shield, Sun, UserCheck, Users, X,
 } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useTheme } from '@/shared/ThemeContext';
 import { menuFor } from '@/auth/permissions';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  'home':       <Home size={18} />,
-  'file-text':  <FileText size={18} />,
-  'briefcase':  <Briefcase size={18} />,
-  'users':      <Users size={18} />,
-  'user-check': <UserCheck size={18} />,
-  'shield':     <Shield size={18} />,
-  'mail':       <Mail size={18} />,
+  home: <Home size={19} />, 'file-text': <FileText size={19} />,
+  briefcase: <Briefcase size={19} />, users: <Users size={19} />,
+  'user-check': <UserCheck size={19} />, shield: <Shield size={19} />, mail: <Mail size={19} />,
 };
+const GROUPS = [
+  { label: 'Workspace', paths: ['/'] },
+  { label: 'Rekrutmen', paths: ['/mrf', '/lowongan', '/kandidat', '/offering-letters'] },
+  { label: 'Organisasi', paths: ['/karyawan', '/pengguna'] },
+];
 
-function SidebarContent({ onClose }: { onClose?: () => void }) {
+function Sidebar({ compact = false, onCollapse, onClose }: {
+  compact?: boolean;
+  onCollapse?: () => void;
+  onClose?: () => void;
+}) {
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
   if (!user) return null;
-
-  const handleLogout = () => {
-    if (onClose) onClose();
-    logout();
-  };
+  const menus = menuFor(user.role);
 
   return (
-    <div className="flex h-full flex-col bg-slate-900 dark:bg-[#0c1018]">
-      {/* Header logo */}
-      <div className="flex items-center justify-between px-5 py-5">
-        <div className="flex items-center gap-3">
-          <img
-            src="/logo-gsg.png"
-            alt="Logo GSG"
-            className="h-8 w-8 object-contain"
-          />
-          <div>
-            <div className="font-heading text-sm font-bold tracking-tight text-white">
-              SISTEM HR<span className="text-brand-400">.</span>
-            </div>
-            <div className="text-[10px] text-slate-500">Gaharu Sempana Group</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={toggle}
-            title={theme === 'dark' ? 'Mode terang' : 'Mode gelap'}
-            className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-300"
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-300"
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
+    <div className={`workspace-sidebar ${compact ? 'is-compact' : ''}`}>
+      <div className="sidebar-brand">
+        <NavLink to="/" onClick={onClose} aria-label="Sistem HR, Beranda" className="flex min-w-0 items-center gap-3">
+          <span className="brand-mark"><BrandLogo alt="Logo GSG" className="h-8 w-8 object-contain" /></span>
+          {!compact && <div className="min-w-0"><div className="brand-wordmark">SISTEM HR<span className="text-accent">.</span></div><p className="mt-0.5 text-[10px] text-caption">Gaharu Sempana Group</p></div>}
+        </NavLink>
+        {onClose && <button type="button" className="icon-button !h-8 !w-8" onClick={onClose} aria-label="Tutup sidebar"><X size={17} /></button>}
       </div>
 
-      <div className="mx-4 h-px bg-white/8" />
+      <div className="sidebar-workspace" title={compact ? 'Gaharu Sempana Group' : undefined}>
+        <span className="workspace-initial">G</span>
+        {!compact && <div className="min-w-0"><p className="truncate text-xs font-semibold text-ink">Gaharu Sempana Group</p><p className="mt-1 text-[10px] text-caption">Human Resource Management</p></div>}
+      </div>
 
-      <nav className="flex-1 space-y-0.5 px-3 py-4">
-        {menuFor(user.role).map((m) => (
-          <NavLink
-            key={m.to}
-            to={m.to}
-            end={m.to === '/'}
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
-                isActive
-                  ? 'bg-white/10 text-white'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <span className={isActive ? 'text-brand-400' : 'text-slate-600'}>
-                  {ICON_MAP[m.icon]}
-                </span>
-                {m.label}
-                {isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-400" />
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
+      <nav aria-label="Navigasi utama" className="sidebar-menu">
+        {GROUPS.map((group) => {
+          const items = menus.filter((m) => group.paths.includes(m.to));
+          if (!items.length) return null;
+          return (
+            <div key={group.label} className="sidebar-group" role="group" aria-label={group.label}>
+              {!compact && <p className="sidebar-group-label">{group.label}</p>}
+              {items.map((m) => (
+                <NavLink key={m.to} to={m.to} end={m.to === '/'} onClick={onClose}
+                  title={compact ? m.label : undefined} aria-label={compact ? m.label : undefined}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'is-active' : ''}`}>
+                  <span className="sidebar-link-icon">{ICON_MAP[m.icon]}</span>
+                  {!compact && <><span className="flex-1">{m.label}</span><ChevronRight size={14} className="sidebar-link-arrow" /></>}
+                </NavLink>
+              ))}
+            </div>
+          );
+        })}
       </nav>
 
-      <div className="mx-4 h-px bg-white/8" />
-
-      <div className="px-4 py-4">
-        <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-white">{user.name}</div>
-            <div className="text-[11px] text-slate-500">
-              {user.roleLabel}{user.division ? ` · ${user.division}` : ''}
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            title="Keluar"
-            className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/5 hover:text-red-400"
-          >
-            <LogOut size={15} />
+      <div className="sidebar-bottom">
+        {compact ? (
+          <button type="button" className="sidebar-utility" onClick={toggle}
+            aria-label={theme === 'dark' ? 'Mode terang' : 'Mode gelap'} title={theme === 'dark' ? 'Mode terang' : 'Mode gelap'}>
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+        ) : (
+          <button type="button" className="theme-toggle" role="switch" aria-checked={theme === 'dark'} aria-label="Mode gelap" onClick={toggle}>
+            <span className="flex items-center gap-2.5">
+              {theme === 'dark' ? <Moon size={17} /> : <Sun size={17} />}
+              <span>{theme === 'dark' ? 'Mode gelap' : 'Mode terang'}</span>
+            </span>
+            <span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb" /></span>
+          </button>
+        )}
+        <div className="sidebar-account">
+          <span className="account-avatar" title={compact ? `${user.name} (${user.roleLabel})` : undefined}>{user.name.charAt(0).toUpperCase()}</span>
+          {!compact && <><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-ink">{user.name}</p><p className="mt-1 truncate text-[10px] text-caption">{user.roleLabel}{user.division ? ` · ${user.division}` : ''}</p></div><button type="button" onClick={logout} className="sidebar-exit" aria-label="Keluar" title="Keluar"><LogOut size={16} /></button></>}
         </div>
+        {compact && <button type="button" onClick={logout} className="sidebar-utility is-danger" aria-label="Keluar" title="Keluar"><LogOut size={18} /></button>}
+        {onCollapse && <button type="button" onClick={onCollapse} className="sidebar-collapse" aria-label={compact ? 'Perluas sidebar' : 'Perkecil sidebar'} title={compact ? 'Perluas sidebar' : 'Perkecil sidebar'}>
+          {compact ? <PanelLeftOpen size={18} /> : <><PanelLeftClose size={17} /><span>Perkecil sidebar</span></>}
+        </button>}
       </div>
     </div>
   );
@@ -123,55 +95,64 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export default function AppShell() {
   const { user } = useAuth();
-  const { theme, toggle } = useTheme();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [compact, setCompact] = useState(() => {
+    try { return localStorage.getItem('hr-sidebar-compact') === 'true'; } catch { return false; }
+  });
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => { setMobileOpen(false); }, [location.pathname, location.search]);
+  useEffect(() => {
+    try { localStorage.setItem('hr-sidebar-compact', String(compact)); } catch { /* Navigation works without storage. */ }
+  }, [compact]);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    drawerRef.current?.querySelector<HTMLElement>('a, button')?.focus();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); setMobileOpen(false); }
+      if (e.key !== 'Tab') return;
+      const nodes = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled)') ?? []);
+      const first = nodes[0], last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+    };
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const handleResize = () => { if (desktop.matches) setMobileOpen(false); };
+    desktop.addEventListener('change', handleResize);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener('keydown', handleKey);
+      desktop.removeEventListener('change', handleResize);
+      (previous?.isConnected ? previous : triggerRef.current)?.focus();
+    };
+  }, [mobileOpen]);
+
   if (!user) return null;
-
+  const current = menuFor(user.role).find((m) => m.to === '/' ? location.pathname === '/' : location.pathname.startsWith(m.to));
   return (
-    <div className="flex h-screen bg-gray-50 font-sans text-slate-800 dark:bg-[#080c12] dark:text-slate-100">
-      <aside className="hidden w-60 shrink-0 flex-col md:flex">
-        <SidebarContent />
-      </aside>
-
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="absolute inset-y-0 left-0 w-64 shadow-2xl">
-            <SidebarContent onClose={() => setMobileOpen(false)} />
-          </aside>
-        </div>
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3 dark:border-[#1c2333] dark:bg-[#0c1018] md:hidden">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
-            >
-              <Menu size={20} />
-            </button>
-            <div className="flex items-center gap-2">
-              <img src="/logo-gsg.png" alt="Logo GSG" className="h-7 w-7 object-contain dark:brightness-0 dark:invert" />
-              <span className="font-heading text-sm font-bold tracking-tight text-gray-900 dark:text-white">
-                SISTEM HR<span className="text-brand-600 dark:text-brand-400">.</span>
-              </span>
-            </div>
+    <div className={`workspace-shell ${compact ? 'sidebar-compact' : ''}`}>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-5 focus:top-5 focus:z-[100] focus:rounded-xl focus:bg-panel focus:p-3">Lewati navigasi</a>
+      <aside className="desktop-sidebar" aria-label="Sidebar"><Sidebar compact={compact} onCollapse={() => setCompact(!compact)} /></aside>
+      {mobileOpen && <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+        <div id="mobile-sidebar" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Menu navigasi" className="mobile-sidebar"><Sidebar onClose={() => setMobileOpen(false)} /></div>
+      </div>}
+      <div className="workspace-content">
+        <div className="workspace-context">
+          <div className="flex min-w-0 items-center gap-3">
+            <button ref={triggerRef} type="button" onClick={() => setMobileOpen(true)} className="icon-button lg:hidden" aria-label="Buka sidebar" aria-expanded={mobileOpen} aria-controls="mobile-sidebar"><Menu size={19} /></button>
+            <div className="flex items-center gap-2 text-xs"><span className="hidden text-caption sm:inline">Workspace</span><ChevronRight size={13} className="hidden text-caption sm:block" /><span className="font-medium text-body">{current?.label ?? 'Detail'}</span></div>
           </div>
-          <button
-            onClick={toggle}
-            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-        </header>
-
-        <main className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-6">
-          <Outlet />
-        </main>
+          <span className="workspace-role"><Shield size={12} /><span className="max-w-40 truncate">{user.roleLabel}{user.division ? ` · ${user.division}` : ''}</span></span>
+        </div>
+        <main id="main-content" className="workspace-main"><div key={location.pathname} className="page-enter"><Outlet /></div></main>
+        <footer className="workspace-footer"><span>Gaharu Sempana Group</span><span>Sistem Manajemen Sumber Daya Manusia</span></footer>
       </div>
     </div>
   );

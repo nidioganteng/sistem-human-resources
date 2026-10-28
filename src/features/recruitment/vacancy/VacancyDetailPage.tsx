@@ -473,7 +473,7 @@ export default function VacancyDetailPage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-slate-400">Memuat...</p>;
+  if (loading) return <p className="text-sm text-caption">Memuat...</p>;
   if (error) return <Alert variant="error">{error}</Alert>;
   if (!vacancy) return null;
 
@@ -490,7 +490,7 @@ export default function VacancyDetailPage() {
     <div className="space-y-5">
       <Link
         to={currentUser?.role === 'manajer' ? '/kandidat' : '/lowongan'}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-caption hover:text-body"
       >
         <ArrowLeft size={15} /> {currentUser?.role === 'manajer' ? 'Kandidat' : 'Daftar Lowongan'}
       </Link>
@@ -559,8 +559,8 @@ export default function VacancyDetailPage() {
         </div>
 
         {vacancy.status === 'open' && currentUser?.role === 'hr' && (
-          <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <span className="min-w-0 flex-1 break-all font-mono text-xs text-slate-500">{applyUrl}</span>
+          <div className="flex items-center gap-3 rounded-xl bg-subtle px-4 py-3">
+            <span className="min-w-0 flex-1 break-all font-mono text-xs text-caption">{applyUrl}</span>
             <button className="btn-secondary flex shrink-0 items-center gap-1.5 !py-1.5 text-xs" onClick={handleCopy}>
               <Copy size={13} />
               {copied ? 'Disalin!' : 'Salin'}
@@ -576,7 +576,7 @@ export default function VacancyDetailPage() {
       )}
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-700">
+        <h2 className="text-sm font-semibold text-body">
           Menunggu Screening ({newApplicants.length})
         </h2>
         <div className="card !p-0 overflow-hidden">
@@ -589,24 +589,24 @@ export default function VacancyDetailPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
-                <thead className="border-b border-slate-100 bg-slate-50">
+                <thead className="border-b border-line bg-subtle">
                   <tr>
                     {['Nama', 'Email', 'Nomor HP', 'Tanggal Daftar', ''].map((h) => (
                       <th key={h} className="th">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                <tbody className="divide-y divide-line">
                   {newApplicants.map((a) => (
                     <tr
                       key={a.id}
-                      className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-[#1a2030]"
+                      className="cursor-pointer transition-colors hover:bg-subtle"
                       onClick={() => setSelected(a)}
                     >
-                      <td className="td font-medium text-slate-900 dark:text-white">{a.fullName}</td>
-                      <td className="td text-slate-500 dark:text-slate-400">{a.email}</td>
-                      <td className="td text-slate-500 dark:text-slate-400">{a.phone}</td>
-                      <td className="td text-xs text-slate-400 dark:text-slate-500">
+                      <td className="td font-medium text-ink">{a.fullName}</td>
+                      <td className="td text-caption">{a.email}</td>
+                      <td className="td text-caption">{a.phone}</td>
+                      <td className="td text-xs text-caption">
                         {new Date(a.createdAt).toLocaleDateString('id-ID', {
                           day: '2-digit', month: 'short', year: 'numeric',
                         })}
@@ -626,7 +626,7 @@ export default function VacancyDetailPage() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-700">
+        <h2 className="text-sm font-semibold text-body">
           Form Pelamar Masuk ({formSubmittedApplicants.length})
         </h2>
         <div className="card !p-0 overflow-hidden">
@@ -639,19 +639,19 @@ export default function VacancyDetailPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
-                <thead className="border-b border-slate-100 bg-slate-50">
+                <thead className="border-b border-line bg-subtle">
                   <tr>
                     {['Nama', 'Email', 'Tanggal Submit', ''].map((h) => (
                       <th key={h} className="th">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                <tbody className="divide-y divide-line">
                   {formSubmittedApplicants.map((a) => (
-                    <tr key={a.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#1a2030]">
-                      <td className="td font-medium text-slate-900 dark:text-white">{a.fullName}</td>
-                      <td className="td text-slate-500 dark:text-slate-400">{a.email}</td>
-                      <td className="td text-xs text-slate-400 dark:text-slate-500">
+                    <tr key={a.id} className="transition-colors hover:bg-subtle">
+                      <td className="td font-medium text-ink">{a.fullName}</td>
+                      <td className="td text-caption">{a.email}</td>
+                      <td className="td text-xs text-caption">
                         {new Date(a.createdAt).toLocaleDateString('id-ID', {
                           day: '2-digit', month: 'short', year: 'numeric',
                         })}
@@ -674,7 +674,7 @@ export default function VacancyDetailPage() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-700">
+        <h2 className="text-sm font-semibold text-body">
           Kandidat Shortlist &amp; Seleksi ({selectionApplicants.length})
         </h2>
         <div className="card !p-0 overflow-hidden">
@@ -687,24 +687,24 @@ export default function VacancyDetailPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
-                <thead className="border-b border-slate-100 bg-slate-50">
+                <thead className="border-b border-line bg-subtle">
                   <tr>
                     {['Nama', 'Email', 'Status', 'Track', ''].map((h) => (
                       <th key={h} className="th">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+                <tbody className="divide-y divide-line">
                   {selectionApplicants.map((a) => (
-                    <tr key={a.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#1a2030]">
-                      <td className="td font-medium text-slate-900 dark:text-white">{a.fullName}</td>
-                      <td className="td text-slate-500 dark:text-slate-400">{a.email}</td>
+                    <tr key={a.id} className="transition-colors hover:bg-subtle">
+                      <td className="td font-medium text-ink">{a.fullName}</td>
+                      <td className="td text-caption">{a.email}</td>
                       <td className="td">
                         <Badge variant={APPLICANT_BADGE[a.status] ?? 'default'}>
                           {APPLICANT_STATUS_LABELS[a.status]}
                         </Badge>
                       </td>
-                      <td className="td text-xs text-slate-500 dark:text-slate-400">
+                      <td className="td text-xs text-caption">
                         {a.selectionTrack === 'fast'
                           ? 'Fast'
                           : a.selectionTrack === 'normal'
@@ -764,7 +764,7 @@ export default function VacancyDetailPage() {
                           </button>
                         )}
                         {a.status === 'not_selected' && (
-                          <span className="text-xs text-slate-400">Tidak dipilih</span>
+                          <span className="text-xs text-caption">Tidak dipilih</span>
                         )}
                       </td>
                     </tr>
@@ -778,22 +778,22 @@ export default function VacancyDetailPage() {
 
       {otherApplicants.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-700">Riwayat Pelamar</h2>
+          <h2 className="text-sm font-semibold text-body">Riwayat Pelamar</h2>
           <div className="card !p-0 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
-                <thead className="border-b border-slate-100 bg-slate-50">
+                <thead className="border-b border-line bg-subtle">
                   <tr>
                     {['Nama', 'Email', 'Status'].map((h) => (
                       <th key={h} className="th">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line">
                   {otherApplicants.map((a) => (
-                    <tr key={a.id} className="transition-colors hover:bg-slate-50">
-                      <td className="td font-medium text-slate-900">{a.fullName}</td>
-                      <td className="td text-slate-500">{a.email}</td>
+                    <tr key={a.id} className="transition-colors hover:bg-subtle">
+                      <td className="td font-medium text-ink">{a.fullName}</td>
+                      <td className="td text-caption">{a.email}</td>
                       <td className="td">
                         <Badge variant={APPLICANT_BADGE[a.status] ?? 'default'}>
                           {APPLICANT_STATUS_LABELS[a.status]}
@@ -818,82 +818,82 @@ export default function VacancyDetailPage() {
         {selected && (
           <div className="space-y-5">
             {/* Info dasar */}
-            <div className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 dark:bg-[#0c1018]">
+            <div className="grid grid-cols-2 gap-4 rounded-xl bg-subtle p-4">
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-500">Nama Lengkap</p>
-                <p className="mt-0.5 font-semibold text-slate-900 dark:text-white">{selected.fullName}</p>
+                <p className="text-xs text-caption">Nama Lengkap</p>
+                <p className="mt-0.5 font-semibold text-ink">{selected.fullName}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-500">Tanggal Daftar</p>
-                <p className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                <p className="text-xs text-caption">Tanggal Daftar</p>
+                <p className="mt-0.5 font-semibold text-ink">
                   {new Date(selected.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-500">Email</p>
-                <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{selected.email}</p>
+                <p className="text-xs text-caption">Email</p>
+                <p className="mt-0.5 text-sm text-body">{selected.email}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-500">Nomor HP</p>
-                <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{selected.phone}</p>
+                <p className="text-xs text-caption">Nomor HP</p>
+                <p className="mt-0.5 text-sm text-body">{selected.phone}</p>
               </div>
             </div>
 
             {/* Pesan dari pelamar */}
             {selected.message && (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-[#1c2333] dark:bg-[#0c1018]">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pesan dari Pelamar</p>
-                <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{selected.message}</p>
+              <div className="rounded-xl border border-line bg-subtle px-4 py-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-caption">Pesan dari Pelamar</p>
+                <p className="whitespace-pre-wrap text-sm text-body">{selected.message}</p>
               </div>
             )}
 
             {/* Berkas */}
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Berkas Lamaran</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-caption">Berkas Lamaran</p>
               <div className="flex flex-col gap-2">
                 {selected.hasCv && (
                   <button
                     onClick={() => void handleOpenFile('cv')}
                     disabled={fileLoading === 'cv'}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-[#1c2333] dark:bg-[#0f1520] dark:text-slate-200 dark:hover:bg-[#1a2030]"
+                    className="flex items-center gap-3 rounded-xl border border-line bg-panel px-4 py-3 text-sm font-medium text-body transition-colors hover:bg-subtle disabled:opacity-60"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500 dark:bg-red-900/20">
                       <FileText size={18} />
                     </span>
                     <span className="flex-1 text-left">
                       <span className="block">Curriculum Vitae (CV)</span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">PDF</span>
+                      <span className="text-xs text-caption">PDF</span>
                     </span>
-                    <Download size={15} className="text-slate-400" />
-                    {fileLoading === 'cv' && <span className="text-xs text-slate-400">Membuka...</span>}
+                    <Download size={15} className="text-caption" />
+                    {fileLoading === 'cv' && <span className="text-xs text-caption">Membuka...</span>}
                   </button>
                 )}
                 {selected.hasPortfolio && (
                   <button
                     onClick={() => void handleOpenFile('portfolio')}
                     disabled={fileLoading === 'portfolio'}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-[#1c2333] dark:bg-[#0f1520] dark:text-slate-200 dark:hover:bg-[#1a2030]"
+                    className="flex items-center gap-3 rounded-xl border border-line bg-panel px-4 py-3 text-sm font-medium text-body transition-colors hover:bg-subtle disabled:opacity-60"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500 dark:bg-blue-900/20">
                       <FileText size={18} />
                     </span>
                     <span className="flex-1 text-left">
                       <span className="block">Portofolio</span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">PDF</span>
+                      <span className="text-xs text-caption">PDF</span>
                     </span>
-                    <Download size={15} className="text-slate-400" />
-                    {fileLoading === 'portfolio' && <span className="text-xs text-slate-400">Membuka...</span>}
+                    <Download size={15} className="text-caption" />
+                    {fileLoading === 'portfolio' && <span className="text-xs text-caption">Membuka...</span>}
                   </button>
                 )}
                 {!selected.hasCv && !selected.hasPortfolio && (
-                  <p className="text-sm text-slate-400 dark:text-slate-500">Tidak ada berkas tersedia.</p>
+                  <p className="text-sm text-caption">Tidak ada berkas tersedia.</p>
                 )}
               </div>
             </div>
 
             {/* Tombol aksi - hanya HR */}
             {selected.status === 'new' && currentUser?.role === 'hr' && (
-              <div className="flex gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+              <div className="flex gap-2 border-t border-line pt-4">
                 <button
                   className="btn-danger flex-1"
                   disabled={busy === selected.id}
@@ -961,25 +961,25 @@ export default function VacancyDetailPage() {
 
             {/* Riwayat catatan */}
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-caption">
                 Riwayat Seleksi
               </p>
               {selectionLoading ? (
-                <p className="text-sm text-slate-400">Memuat...</p>
+                <p className="text-sm text-caption">Memuat...</p>
               ) : selectionRecords.length === 0 ? (
-                <p className="text-sm text-slate-400">Belum ada catatan seleksi.</p>
+                <p className="text-sm text-caption">Belum ada catatan seleksi.</p>
               ) : (
-                <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-[#1c2333] dark:border-[#1c2333]">
+                <div className="divide-y divide-line rounded-xl border border-line">
                   {selectionRecords.map((rec) => (
                     <div key={rec.id} className="flex items-start justify-between gap-3 px-4 py-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-800 dark:text-white">
+                        <p className="text-sm font-medium text-ink">
                           {STAGE_LABELS[rec.stage] ?? rec.stage}
                         </p>
                         {rec.notes && (
-                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{rec.notes}</p>
+                          <p className="mt-0.5 text-xs text-caption">{rec.notes}</p>
                         )}
-                        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                        <p className="mt-0.5 text-xs text-caption">
                           {new Date(rec.recordedAt).toLocaleDateString('id-ID', {
                             day: '2-digit', month: 'short', year: 'numeric',
                             hour: '2-digit', minute: '2-digit',
@@ -997,13 +997,13 @@ export default function VacancyDetailPage() {
 
             {/* Form tambah catatan baru - hanya jika status masih selection */}
             {selectionApplicant.status === 'selection' && (
-              <div className="space-y-3 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <div className="space-y-3 border-t border-line pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-caption">
                   Tambah Catatan Baru
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    <label className="mb-1 block text-xs font-medium text-body">
                       Tahap
                     </label>
                     <select
@@ -1016,7 +1016,7 @@ export default function VacancyDetailPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    <label className="mb-1 block text-xs font-medium text-body">
                       Hasil
                     </label>
                     <select
@@ -1030,7 +1030,7 @@ export default function VacancyDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-1 block text-xs font-medium text-body">
                     Catatan (opsional)
                   </label>
                   <textarea
@@ -1059,7 +1059,7 @@ export default function VacancyDetailPage() {
             )}
 
             {selectionApplicant.status !== 'selection' && (
-              <div className="flex justify-end border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+              <div className="flex justify-end border-t border-line pt-4">
                 <button className="btn-secondary" onClick={() => setSelectionApplicant(null)}>Tutup</button>
               </div>
             )}
@@ -1074,7 +1074,7 @@ export default function VacancyDetailPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-caption">
             Tautan pendaftaran akan langsung tidak aktif. Lowongan masih bisa dibuka kembali nanti.
           </p>
           <div className="flex justify-end gap-2">
@@ -1091,8 +1091,8 @@ export default function VacancyDetailPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
-            Lowongan akan diarsipkan. Status berubah ke <strong className="text-slate-700">Diarsipkan</strong>{' '}
+          <p className="text-sm text-caption">
+            Lowongan akan diarsipkan. Status berubah ke <strong className="text-body">Diarsipkan</strong>{' '}
             dan tidak bisa dibuka kembali. Data pelamar masih tersimpan hingga Anda mengunduh arsip.
           </p>
           <div className="flex justify-end gap-2">
@@ -1111,10 +1111,10 @@ export default function VacancyDetailPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
-            Lamaran dari <strong className="text-slate-700">{confirmReject?.fullName}</strong> akan ditolak
+          <p className="text-sm text-caption">
+            Lamaran dari <strong className="text-body">{confirmReject?.fullName}</strong> akan ditolak
             dan email penolakan akan dikirim secara otomatis.
-            Data pelamar akan <strong className="text-slate-700">dihapus permanen</strong> dari server.
+            Data pelamar akan <strong className="text-body">dihapus permanen</strong> dari server.
           </p>
           <p className="text-xs text-red-500">Tindakan ini tidak dapat dibatalkan.</p>
           <div className="flex justify-end gap-2">
@@ -1173,7 +1173,7 @@ export default function VacancyDetailPage() {
               onChange={(e) => setOlBody(e.target.value)}
             />
           </div>
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-[#1c2333]">
+          <div className="flex justify-end gap-2 border-t border-line pt-4">
             <button className="btn-secondary" onClick={() => setShowOlModal(false)}>Batal</button>
             <button
               className="btn-primary"
@@ -1193,9 +1193,9 @@ export default function VacancyDetailPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-caption">
             Semua data pelamar (CSV + berkas CV dan portofolio) akan dikemas dalam satu file ZIP dan diunduh.
-            Setelah unduhan selesai, <strong className="text-slate-700">seluruh data pelamar dan lowongan ini akan dihapus permanen dari server</strong>.
+            Setelah unduhan selesai, <strong className="text-body">seluruh data pelamar dan lowongan ini akan dihapus permanen dari server</strong>.
             Pastikan file ZIP berhasil tersimpan sebelum melanjutkan.
           </p>
           <p className="text-xs text-amber-600">

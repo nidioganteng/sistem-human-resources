@@ -60,14 +60,14 @@ export default function MrfFormPage() {
 
   const onSubmit = (e: FormEvent) => { e.preventDefault(); void save(true); };
 
-  if (loading) return <div className="text-sm text-slate-400 dark:text-slate-500">Memuat...</div>;
+  if (loading) return <div className="text-sm text-caption">Memuat...</div>;
 
   const route = user.role === 'pic' ? 'Manajer divisi, lalu CEO' : 'langsung ke CEO';
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <Link to="/mrf" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white">
+        <Link to="/mrf" className="inline-flex items-center gap-1.5 text-sm font-medium text-caption hover:text-body dark:hover:text-white">
           <ArrowLeft size={15} /> Daftar MRF
         </Link>
         <h1 className="page-title mt-2">{editId === null ? 'Buat MRF' : 'Ubah MRF'}</h1>

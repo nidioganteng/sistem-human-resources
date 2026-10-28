@@ -1,3 +1,4 @@
+import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle2, ChevronLeft, ChevronRight, Plus, Trash2, Upload } from 'lucide-react';
@@ -77,40 +78,11 @@ const STEPS: { label: string }[] = [
 // ── Background ────────────────────────────────────────────────────────────────
 
 function BG({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="relative min-h-screen overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 35%, #2563eb 60%, #0ea5e9 100%)' }}
-    >
-      <div className="pointer-events-none absolute inset-0">
-        <div className="animate-drift absolute -top-20 -left-20 h-72 w-72 rounded-full bg-white/5 blur-2xl" style={{ animationDelay: '0s' }} />
-        <div className="animate-drift absolute top-1/3 -right-24 h-80 w-80 rounded-full bg-sky-300/10 blur-3xl" style={{ animationDelay: '3s' }} />
-        <div className="animate-drift absolute -bottom-24 left-1/4 h-96 w-96 rounded-full bg-blue-300/10 blur-3xl" style={{ animationDelay: '1.5s' }} />
-        <div className="animate-float-slow absolute top-16 left-10 h-14 w-14 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm" style={{ animationDelay: '0s' }} />
-        <div className="animate-float-medium absolute top-32 right-16 h-10 w-10 rotate-45 border border-white/20 bg-white/10" style={{ animationDelay: '1s' }} />
-        <div className="animate-float-slow absolute bottom-40 left-16 h-8 w-8 rounded-full border border-white/20 bg-white/10" style={{ animationDelay: '2s' }} />
-        <div className="animate-float-medium absolute bottom-24 right-12 h-16 w-16 rounded-2xl border border-white/15 bg-white/[0.08]" style={{ animationDelay: '0.5s' }} />
-        <svg className="absolute right-0 top-0 h-full opacity-10" viewBox="0 0 400 800" fill="none">
-          <circle cx="350" cy="150" r="120" stroke="white" strokeWidth="1" />
-          <circle cx="350" cy="150" r="200" stroke="white" strokeWidth="0.5" />
-          <circle cx="50" cy="650" r="90" stroke="white" strokeWidth="1" />
-          <circle cx="50" cy="650" r="160" stroke="white" strokeWidth="0.5" />
-        </svg>
-        <svg className="absolute inset-0 h-full w-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="1.5" fill="white" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#dots)" />
-        </svg>
-      </div>
-      <div className="relative z-10">{children}</div>
-    </div>
-  );
+  return <div className="public-page relative isolate overflow-hidden">
+    <div className="ambient-strands" aria-hidden="true" />
+    <div className="relative">{children}</div>
+  </div>;
 }
-
-// ── Step indicator ────────────────────────────────────────────────────────────
 
 function StepIndicator({ current }: { current: FormStep }) {
   return (
@@ -129,7 +101,7 @@ function StepIndicator({ current }: { current: FormStep }) {
                     ? 'bg-brand-500 text-white'
                     : active
                     ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/40 ring-4 ring-brand-100'
-                    : 'border-2 border-slate-200 bg-white text-slate-400',
+                    : 'border-2 border-line bg-panel text-caption',
                 ].join(' ')}
               >
                 {done ? <CheckCircle2 size={16} /> : idx}
@@ -137,7 +109,7 @@ function StepIndicator({ current }: { current: FormStep }) {
               <p
                 className={[
                   'w-14 text-center text-[11px] font-semibold leading-tight transition-colors',
-                  active ? 'text-brand-600' : done ? 'text-slate-500' : 'text-slate-400',
+                  active ? 'text-brand-600' : done ? 'text-caption' : 'text-caption',
                 ].join(' ')}
               >
                 {s.label}
@@ -147,7 +119,7 @@ function StepIndicator({ current }: { current: FormStep }) {
               <div
                 className={[
                   'mx-1 mt-[18px] h-0.5 flex-1 transition-all duration-300',
-                  done ? 'bg-brand-400' : 'bg-slate-200',
+                  done ? 'bg-brand-400' : 'bg-muted',
                 ].join(' ')}
               />
             )}
@@ -171,7 +143,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+    <label className="mb-1.5 block text-xs font-semibold text-caption uppercase tracking-wide">
       {children}{required && <span className="ml-0.5 text-red-500 normal-case font-bold">*</span>}
     </label>
   );
@@ -245,12 +217,12 @@ function SignatureCanvas({ onCapture }: { onCapture: (dataUrl: string) => void }
 
   return (
     <div className="space-y-2">
-      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
+      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-line bg-[#f8fafc]">
         <canvas
           ref={canvasRef}
           width={480}
           height={160}
-          className="w-full touch-none cursor-crosshair"
+          className="w-full touch-none cursor-crosshair" aria-label="Area tanda tangan"
           onMouseDown={start}
           onMouseMove={move}
           onMouseUp={end}
@@ -261,7 +233,7 @@ function SignatureCanvas({ onCapture }: { onCapture: (dataUrl: string) => void }
         />
         {!hasDrawn && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <p className="text-sm text-slate-300">Tanda tangan di sini</p>
+            <p className="text-sm text-[#64748b]">Tanda tangan di sini</p>
           </div>
         )}
       </div>
@@ -517,7 +489,7 @@ export default function FormPelamarPage() {
   if (pageState === 'loading') {
     return (
       <BG>
-        <div className="flex min-h-screen items-center justify-center">
+        <div className="flex min-h-[100dvh] items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-white/30 border-t-white" />
             <p className="text-sm text-white/70">Memuat formulir...</p>
@@ -530,15 +502,15 @@ export default function FormPelamarPage() {
   if (pageState === 'error') {
     return (
       <BG>
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-[100dvh] items-center justify-center p-4">
           <div className="apply-card w-full max-w-md p-8 text-center space-y-3">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
               <svg className="h-7 w-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="font-semibold text-slate-800">Form Tidak Tersedia</p>
-            <p className="text-sm text-slate-500">{loadError}</p>
+            <p className="font-semibold text-ink">Form Tidak Tersedia</p>
+            <p className="text-sm text-caption">{loadError}</p>
           </div>
         </div>
       </BG>
@@ -548,10 +520,10 @@ export default function FormPelamarPage() {
   if (pageState === 'success') {
     return (
       <BG>
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-[100dvh] items-center justify-center p-4">
           <div className="apply-card w-full max-w-md overflow-hidden">
-            <div className="px-8 py-6" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' }}>
-              <p className="text-xs font-semibold uppercase tracking-widest text-white/60">Gaharu Sempana Group</p>
+            <div className="px-8 py-6" style={{ background: 'var(--primary)' }}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Gaharu Sempana Group</p>
               <p className="text-lg font-bold text-white">Form Pelamar Digital</p>
             </div>
             <div className="px-8 py-10 text-center space-y-4">
@@ -561,11 +533,11 @@ export default function FormPelamarPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Form Berhasil Dikirim!</h1>
-                <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                  Terima kasih, <strong className="text-slate-700">{info?.applicantName}</strong>!
+                <h1 className="text-xl font-bold text-ink">Form Berhasil Dikirim!</h1>
+                <p className="mt-2 text-sm text-caption leading-relaxed">
+                  Terima kasih, <strong className="text-body">{info?.applicantName}</strong>!
                   Data Anda sudah kami terima untuk posisi{' '}
-                  <strong className="text-slate-700">{info?.vacancyPosition}</strong>.
+                  <strong className="text-body">{info?.vacancyPosition}</strong>.
                   Tim HR akan menghubungi Anda untuk langkah selanjutnya.
                 </p>
               </div>
@@ -580,7 +552,7 @@ export default function FormPelamarPage() {
 
   return (
     <BG>
-      <div className="flex min-h-screen flex-col items-center justify-start px-4 py-10 sm:py-14">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-start px-4 py-10 sm:py-14">
 
         {/* Kartu utama - satu kartu untuk semua */}
         <div ref={cardRef} className="apply-card w-full max-w-2xl overflow-hidden">
@@ -588,22 +560,21 @@ export default function FormPelamarPage() {
           {/* Header kartu */}
           <div
             className="flex items-center justify-between gap-4 px-8 py-6"
-            style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' }}
+            style={{ background: 'var(--primary)' }}
           >
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-white/50">Form Pelamar Digital</p>
               <p className="mt-1 text-xl font-bold leading-tight text-white">{info?.vacancyPosition}</p>
-              <p className="mt-0.5 text-sm text-white/60">Divisi {info?.vacancyDivision} &middot; {info?.applicantName}</p>
+              <p className="mt-0.5 text-sm text-white/70">Divisi {info?.vacancyDivision} &middot; {info?.applicantName}</p>
             </div>
-            <img
-              src="/logo-gsg.png"
+            <BrandLogo onDark
               alt="GSG"
               className="h-10 w-auto shrink-0 object-contain opacity-80"
             />
           </div>
 
           {/* Step indicator */}
-          <div className="border-b border-slate-100 bg-slate-50/60 px-8 py-5">
+          <div className="border-b border-line bg-subtle/60 px-8 py-5">
             <StepIndicator current={step} />
           </div>
 
@@ -713,10 +684,10 @@ export default function FormPelamarPage() {
                   <FieldLabel>Foto Diri (opsional, maks. 500 KB)</FieldLabel>
                   <div
                     onClick={() => photoInputRef.current?.click()}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 transition-colors hover:border-brand-400 hover:bg-brand-50/30"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-line bg-[#f8fafc] px-4 py-3 transition-colors hover:border-brand-400 hover:bg-brand-50/30"
                   >
-                    <Upload size={16} className="shrink-0 text-slate-400" />
-                    <span className="text-sm text-slate-500">
+                    <Upload size={16} className="shrink-0 text-caption" />
+                    <span className="text-sm text-caption">
                       {photoFile ? photoFile.name : 'Klik untuk pilih foto (JPEG/PNG/WebP)'}
                     </span>
                     {photoFile && (
@@ -745,7 +716,7 @@ export default function FormPelamarPage() {
                   )}
                   <div className="space-y-3">
                     {formData.pendidikan_formal.map((row, idx) => (
-                      <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                      <div key={idx} className="relative rounded-xl border border-line bg-subtle p-4 space-y-3">
                         {formData.pendidikan_formal.length > 1 && (
                           <button type="button" onClick={() => removePendidikanFormal(idx)}
                             className="absolute right-3 top-3 rounded-lg p-1 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
@@ -793,10 +764,10 @@ export default function FormPelamarPage() {
                   </button>
                 </Section>
 
-                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+                <div className="mx-6 border-t border-line sm:mx-8" />
 
                 <Section title="Pendidikan Non Formal">
-                  <p className="text-xs text-slate-400">Kursus, training, diklat, sertifikasi, dll. (opsional)</p>
+                  <p className="text-xs text-caption">Kursus, training, diklat, sertifikasi, dll. (opsional)</p>
                   {formData.pendidikan_non_formal.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <input className="apply-input flex-1" value={item}
@@ -820,9 +791,9 @@ export default function FormPelamarPage() {
             {step === 3 && (
               <>
                 <Section title="Pengalaman Kerja">
-                  <p className="text-xs text-slate-400">Opsional. Tambahkan pengalaman kerja sebelumnya jika ada.</p>
+                  <p className="text-xs text-caption">Opsional. Tambahkan pengalaman kerja sebelumnya jika ada.</p>
                   {formData.pengalaman_kerja.map((row, idx) => (
-                    <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                    <div key={idx} className="relative rounded-xl border border-line bg-subtle p-4 space-y-3">
                       <button type="button" onClick={() => removePengalamanKerja(idx)}
                         className="absolute right-3 top-3 rounded-lg p-1 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
                         <Trash2 size={14} />
@@ -866,12 +837,12 @@ export default function FormPelamarPage() {
                   </button>
                 </Section>
 
-                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+                <div className="mx-6 border-t border-line sm:mx-8" />
 
                 <Section title="Pengalaman Organisasi">
-                  <p className="text-xs text-slate-400">Opsional.</p>
+                  <p className="text-xs text-caption">Opsional.</p>
                   {formData.pengalaman_organisasi.map((row, idx) => (
-                    <div key={idx} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                    <div key={idx} className="relative rounded-xl border border-line bg-subtle p-4 space-y-3">
                       <button type="button" onClick={() => removeOrganisasi(idx)}
                         className="absolute right-3 top-3 rounded-lg p-1 text-red-300 transition-colors hover:bg-red-50 hover:text-red-500">
                         <Trash2 size={14} />
@@ -935,7 +906,7 @@ export default function FormPelamarPage() {
                   </button>
                 </Section>
 
-                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+                <div className="mx-6 border-t border-line sm:mx-8" />
 
                 <Section title="Soft Skill">
                   <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -947,11 +918,11 @@ export default function FormPelamarPage() {
                             'flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-all',
                             checked
                               ? 'border-brand-300 bg-brand-50 text-brand-700 shadow-sm'
-                              : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-brand-200 hover:bg-white',
+                              : 'border-line bg-subtle text-body hover:border-brand-200 hover:bg-panel',
                           ].join(' ')}>
                           <div className={[
                             'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                            checked ? 'border-brand-600 bg-brand-600' : 'border-slate-300 bg-white',
+                            checked ? 'border-brand-600 bg-brand-600' : 'border-line bg-panel',
                           ].join(' ')}>
                             {checked && (
                               <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -967,7 +938,7 @@ export default function FormPelamarPage() {
                   </div>
                 </Section>
 
-                <div className="mx-6 border-t border-slate-100 sm:mx-8" />
+                <div className="mx-6 border-t border-line sm:mx-8" />
 
                 <Section title="Informasi Tambahan">
                   <div>
@@ -1034,7 +1005,7 @@ export default function FormPelamarPage() {
                           'rounded-lg px-4 py-2 text-xs font-semibold transition-all',
                           signatureTab === tab
                             ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
-                            : 'border border-slate-200 bg-slate-50 text-slate-600 hover:bg-white',
+                            : 'border border-line bg-subtle text-body hover:bg-panel',
                         ].join(' ')}>
                         {tab === 'gambar' ? 'Gambar di layar' : 'Upload foto tanda tangan'}
                       </button>
@@ -1045,9 +1016,9 @@ export default function FormPelamarPage() {
                   ) : (
                     <div>
                       <div onClick={() => signatureInputRef.current?.click()}
-                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 transition-colors hover:border-brand-400 hover:bg-brand-50/30">
-                        <Upload size={16} className="shrink-0 text-slate-400" />
-                        <span className="text-sm text-slate-500">
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-line bg-[#f8fafc] px-4 py-3 transition-colors hover:border-brand-400 hover:bg-brand-50/30">
+                        <Upload size={16} className="shrink-0 text-caption" />
+                        <span className="text-sm text-caption">
                           {signatureFile ? signatureFile.name : 'Klik untuk pilih foto tanda tangan (maks. 500 KB)'}
                         </span>
                         {signatureFile && (
@@ -1070,17 +1041,17 @@ export default function FormPelamarPage() {
                   </div>
                 )}
 
-                <p className="text-xs leading-relaxed text-slate-400">
+                <p className="text-xs leading-relaxed text-caption">
                   Dengan mengklik tombol di bawah, Anda menyatakan bahwa semua data yang diisi adalah benar dan dapat dipertanggungjawabkan.
                 </p>
               </Section>
             )}
 
             {/* ── Navigasi ─────────────────────────────────────────── */}
-            <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-5 sm:px-8">
+            <div className="flex items-center justify-between gap-3 border-t border-line px-6 py-5 sm:px-8">
               {step > 1 ? (
                 <button type="button" onClick={goBack}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50">
+                  className="flex items-center gap-1.5 rounded-xl border border-line bg-panel px-5 py-2.5 text-sm font-semibold text-body transition-colors hover:bg-subtle">
                   <ChevronLeft size={16} /> Kembali
                 </button>
               ) : (
@@ -1088,7 +1059,7 @@ export default function FormPelamarPage() {
               )}
 
               <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-400">{step} / {STEPS.length}</span>
+                <span className="text-xs text-caption">{step} / {STEPS.length}</span>
                 {step < 5 ? (
                   <button type="button" onClick={goNext}
                     className="apply-btn flex items-center gap-1.5 px-7">

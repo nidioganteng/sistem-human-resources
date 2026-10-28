@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  css: { devSourcemap: true },
   resolve: {
     // '/src' dibaca Vite relatif ke root project. Pasangannya ada di tsconfig.json (paths).
     alias: { '@': '/src' },

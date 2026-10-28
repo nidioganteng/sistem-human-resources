@@ -31,7 +31,7 @@ const STATUS_BAR_COLORS: Partial<Record<MrfStatus, string>> = {
   pending_ceo:     'bg-amber-500',
   revision:        'bg-orange-400',
   approved:        'bg-emerald-500',
-  cancelled:       'bg-slate-300',
+  cancelled:       'bg-muted',
 };
 
 const STATUS_LABELS: Partial<Record<MrfStatus, string>> = {
@@ -79,79 +79,39 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1e2d4a] to-[#0f1a2e] px-7 py-6">
-        {/* dekorasi titik-titik halus */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-        {/* gradien blur kanan */}
-        <span className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-brand-600/20 blur-3xl" />
-
-        {/* ikon dekoratif kanan */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-white/40">
-          <FileText size={22} strokeWidth={1.5} />
-        </div>
-
-        <div className="relative">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Clock size={13} />
-            {fmtToday()}
-          </div>
-          <h1 className="mt-2 text-2xl font-bold text-white">
-            {fmtGreeting()},{' '}
-            <span className="text-brand-300">{user.name.split(' ')[0]}</span>!
-          </h1>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-slate-400">
-            <span>
+      <section className="dashboard-hero glow-panel">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="section-pill"><Clock size={12} />{fmtToday()}</div>
+            <h1 className="mt-5 text-2xl font-semibold tracking-tight text-ink md:text-[32px]">
+              {fmtGreeting()}, <span className="gradient-text">{user.name.split(' ')[0]}.</span>
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-caption">
               {!loading && !err && action.length > 0
-                ? `${action.length} MRF menunggu tindakan Anda`
+                ? `${action.length} MRF menunggu tindakan Anda.`
                 : !loading && !err
                 ? 'Semua MRF sudah ditindak lanjuti. Kerja bagus!'
-                : 'Sistem HR · Gaharu Sempana Group'}
-            </span>
-            <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white/70">
-              {user.roleLabel}
-            </span>
+                : 'Sistem HR Gaharu Sempana Group'}
+            </p>
           </div>
-          {(canCreateMrf(user.role) || (!loading && !err && action.length > 0)) && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {canCreateMrf(user.role) && (
-                <Link
-                  to="/mrf/baru"
-                  className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-brand-700"
-                >
-                  <Plus size={15} /> Buat MRF
-                </Link>
-              )}
-              {!loading && !err && action.length > 0 && (
-                <Link
-                  to="/mrf?filter=action"
-                  className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/15"
-                >
-                  Tinjau Sekarang <ArrowRight size={14} />
-                </Link>
-              )}
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2 self-end">
+            {canCreateMrf(user.role) && <Link to="/mrf/baru" className="btn-primary"><Plus size={15} /> Buat MRF</Link>}
+            {!loading && !err && action.length > 0 && <Link to="/mrf?filter=action" className="btn-secondary">Tinjau Sekarang <ArrowRight size={15} /></Link>}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* ── Stat cards ── */}
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-[#1c2333]" />
+            <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted" />
           ))}
         </div>
       ) : err ? (
         <ErrorState onRetry={load} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
           <BigStatCard
             label="Total MRF"
             value={total}
@@ -163,7 +123,7 @@ export default function DashboardPage() {
             label="Perlu Tindakan"
             value={action.length}
             icon={<Zap size={20} />}
-            iconClass="bg-white/20 text-white"
+            iconClass="bg-accent-soft text-accent"
             highlight
             to="/mrf?filter=action"
           />
@@ -186,17 +146,17 @@ export default function DashboardPage() {
 
       {/* ── Body: two-column ── */}
       {!loading && !err && (
-        <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_272px]">
 
           {/* Left column */}
           <div className="space-y-5">
 
             {/* Menunggu Anda */}
             <div className="card !p-0 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-[#1c2333]">
+              <div className="flex items-center justify-between border-b border-line px-5 py-4">
                 <div>
-                  <h2 className="font-semibold text-slate-900 dark:text-white">Menunggu Anda</h2>
-                  <p className="text-xs text-slate-500 mt-0.5 dark:text-gray-400">
+                  <h2 className="font-semibold text-ink">Menunggu Anda</h2>
+                  <p className="text-xs text-caption mt-0.5">
                     {action.length > 0
                       ? `${action.length} MRF memerlukan tindakan Anda`
                       : 'Semua sudah ditindak lanjuti'}
@@ -213,30 +173,30 @@ export default function DashboardPage() {
                     <CheckCircle size={22} />
                   </span>
                   <div>
-                    <p className="font-semibold text-slate-700 dark:text-slate-300">Tidak ada yang menunggu Anda</p>
-                    <p className="mt-0.5 text-sm text-slate-400 dark:text-gray-500">Kami akan memberi tahu saat ada pengajuan baru.</p>
+                    <p className="font-semibold text-body">Tidak ada yang menunggu Anda</p>
+                    <p className="mt-0.5 text-sm text-caption">Kami akan memberi tahu saat ada pengajuan baru.</p>
                   </div>
                 </div>
               ) : (
-                <ul className="divide-y divide-slate-50 dark:divide-gray-700">
+                <ul className="divide-y divide-line">
                   {action.map((m) => (
                     <li key={m.id}>
                       <Link
                         to={`/mrf/${m.id}`}
-                        className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-gray-700/50"
+                        className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-subtle"
                       >
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
                           <FileText size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-semibold text-slate-900 dark:text-white">{m.position}</p>
-                          <p className="text-xs text-slate-500 dark:text-gray-400">
+                          <p className="truncate font-semibold text-ink">{m.position}</p>
+                          <p className="text-xs text-caption">
                             {m.division} &nbsp;·&nbsp; {m.requester.name}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-3">
                           <StatusBadge status={m.status} size="sm" />
-                          <ArrowRight size={15} className="text-slate-300 dark:text-gray-600" />
+                          <ArrowRight size={15} className="text-caption" />
                         </div>
                       </Link>
                     </li>
@@ -248,15 +208,15 @@ export default function DashboardPage() {
             {/* MRF Terkini */}
             {recent.length > 0 && (
               <div className="card !p-0 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-[#1c2333]">
-                  <h2 className="font-semibold text-slate-900 dark:text-white">MRF Terkini</h2>
+                <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                  <h2 className="font-semibold text-ink">MRF Terkini</h2>
                   <Link to="/mrf" className="flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400">
                     Lihat semua <ArrowRight size={13} />
                   </Link>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left">
-                    <thead className="border-b border-slate-50 bg-slate-50/70 dark:border-[#1c2333] dark:bg-[#1c2333]/50">
+                    <thead className="border-b border-line bg-subtle/70">
                       <tr>
                         <th className="th">Kode</th>
                         <th className="th">Posisi</th>
@@ -264,12 +224,12 @@ export default function DashboardPage() {
                         <th className="th">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 dark:divide-gray-700">
+                    <tbody className="divide-y divide-line">
                       {recent.map((m) => (
-                        <tr key={m.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-gray-700/50">
-                          <td className="td tabular-nums text-xs text-slate-500 dark:text-gray-400">{m.code}</td>
+                        <tr key={m.id} className="transition-colors hover:bg-subtle">
+                          <td className="td tabular-nums text-xs text-caption">{m.code}</td>
                           <td className="td">
-                            <Link to={`/mrf/${m.id}`} className="font-medium text-slate-900 hover:text-brand-700 dark:text-white dark:hover:text-brand-400">
+                            <Link to={`/mrf/${m.id}`} className="font-medium text-ink hover:text-brand-700 dark:text-white dark:hover:text-brand-400">
                               {m.position}
                             </Link>
                             {m.needsMyAction && (
@@ -278,7 +238,7 @@ export default function DashboardPage() {
                               </span>
                             )}
                           </td>
-                          <td className="td text-slate-500 dark:text-gray-400">{m.division}</td>
+                          <td className="td text-caption">{m.division}</td>
                           <td className="td"><StatusBadge status={m.status} size="sm" /></td>
                         </tr>
                       ))}
@@ -295,15 +255,15 @@ export default function DashboardPage() {
             {/* Ringkasan status */}
             {byStatus.length > 0 && (
               <div className="card space-y-4">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Ringkasan Status</h3>
+                <h3 className="font-semibold text-ink">Ringkasan Status</h3>
                 <div className="space-y-3">
                   {byStatus.map((s) => (
                     <div key={s.status}>
                       <div className="mb-1 flex items-center justify-between text-xs">
-                        <span className="text-slate-600 dark:text-gray-400">{s.label}</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">{s.count}</span>
+                        <span className="text-body">{s.label}</span>
+                        <span className="font-semibold text-ink">{s.count}</span>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-[#1c2333]">
+                      <div className="h-1.5 w-full rounded-full bg-subtle">
                         <div
                           className={`h-1.5 rounded-full ${s.color}`}
                           style={{ width: total > 0 ? `${(s.count / total) * 100}%` : '0%' }}
@@ -317,7 +277,7 @@ export default function DashboardPage() {
 
             {/* Aksi cepat */}
             <div className="card space-y-2">
-              <h3 className="font-semibold text-slate-900 dark:text-white">Aksi Cepat</h3>
+              <h3 className="font-semibold text-ink">Aksi Cepat</h3>
               <QuickLink to="/mrf" icon={<FileText size={16} />} label="Daftar MRF" />
               {canCreateMrf(user.role) && (
                 <QuickLink to="/mrf/baru" icon={<Plus size={16} />} label="Buat MRF Baru" primary />
@@ -331,21 +291,21 @@ export default function DashboardPage() {
             </div>
 
             {/* Info peran */}
-            <div className="relative overflow-hidden rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-[#1c2333] dark:bg-[#0f1520]">
+            <div className="relative overflow-hidden rounded-2xl border border-brand-100 bg-brand-50 p-4">
               <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl bg-gradient-to-r from-brand-500 via-brand-400 to-brand-600" />
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">{user.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="font-semibold text-ink">{user.name}</p>
+                  <p className="text-xs text-caption">
                     {user.roleLabel}{user.division ? ` · ${user.division}` : ''}
                   </p>
                 </div>
               </div>
-              <div className="mt-3 h-px bg-brand-100 dark:bg-[#1c2333]" />
-              <p className="mt-3 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+              <div className="mt-3 h-px bg-brand-100" />
+              <p className="mt-3 text-xs leading-relaxed text-caption">
                 {user.role === 'pic' && 'Anda dapat membuat dan mengajukan MRF untuk divisi Anda.'}
                 {user.role === 'manajer' && 'Anda dapat menyetujui atau meminta revisi MRF dari PIC divisi Anda.'}
                 {user.role === 'hr' && 'Anda dapat membuka lowongan dari MRF yang sudah disetujui CEO.'}
@@ -374,12 +334,7 @@ function BigStatCard({
   return (
     <Link
       to={to}
-      className={`group flex flex-col gap-3 rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md ${
-        highlight
-          ? 'border-brand-600 bg-brand-600 text-white dark:border-brand-700 dark:bg-brand-700'
-          : 'border-slate-200 bg-white dark:border-[#1c2333] dark:bg-[#0f1520]'
-      }`}
-      style={highlight ? undefined : { boxShadow: '0 1px 2px rgb(15 23 42 / 0.04)' }}
+      className={`metric-card group ${highlight ? 'is-highlight' : ''}`}
     >
       <div className="flex items-center justify-between">
         <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClass}`}>
@@ -387,12 +342,12 @@ function BigStatCard({
         </span>
         <ArrowRight
           size={15}
-          className={`transition-transform group-hover:translate-x-0.5 ${highlight ? 'text-white/60' : 'text-slate-300 dark:text-gray-600'}`}
+          className="text-caption transition-transform group-hover:translate-x-0.5"
         />
       </div>
       <div>
-        <p className={`text-3xl font-bold ${highlight ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{value}</p>
-        <p className={`mt-0.5 text-xs font-medium ${highlight ? 'text-blue-100' : 'text-slate-500 dark:text-gray-400'}`}>{label}</p>
+        <p className="text-3xl font-bold tracking-tight text-ink tabular-nums">{value}</p>
+        <p className="mt-1 text-xs font-medium text-caption">{label}</p>
       </div>
     </Link>
   );
@@ -410,10 +365,10 @@ function QuickLink({ to, icon, label, primary = false }: {
       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
         primary
           ? 'bg-brand-600 text-white hover:bg-brand-700'
-          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+          : 'text-body hover:bg-subtle hover:text-ink dark:hover:text-white'
       }`}
     >
-      <span className={primary ? 'text-white' : 'text-slate-400 dark:text-gray-500'}>{icon}</span>
+      <span className={primary ? 'text-white' : 'text-caption'}>{icon}</span>
       {label}
     </Link>
   );
@@ -426,8 +381,8 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
         <ServerOff size={22} />
       </span>
       <div>
-        <p className="font-semibold text-slate-800">Gagal memuat data</p>
-        <p className="mt-0.5 text-sm text-slate-500">Server tidak dapat dihubungi. Periksa koneksi Anda.</p>
+        <p className="font-semibold text-ink">Gagal memuat data</p>
+        <p className="mt-0.5 text-sm text-caption">Server tidak dapat dihubungi. Periksa koneksi Anda.</p>
       </div>
       <button type="button" className="btn-primary mt-1" onClick={onRetry}>
         <RefreshCw size={15} /> Coba lagi

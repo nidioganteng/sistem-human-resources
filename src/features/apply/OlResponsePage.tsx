@@ -17,7 +17,7 @@ type ResponseResult = 'accept' | 'decline' | 'contact' | null;
 function OlCard({ ol, children }: { ol: OfferingLetter; children?: React.ReactNode }) {
   return (
     <div className="apply-card mx-auto w-full max-w-2xl overflow-hidden">
-      <div className="px-8 py-6 border-b border-slate-100" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' }}>
+      <div className="px-8 py-6 border-b border-line" style={{ background: 'var(--primary)' }}>
         <div className="flex items-center gap-3">
           <Building2 size={24} className="text-white/80 shrink-0" />
           <div>
@@ -31,16 +31,16 @@ function OlCard({ ol, children }: { ol: OfferingLetter; children?: React.ReactNo
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <p className="apply-label">Posisi</p>
-            <p className="font-semibold text-slate-900">{ol.position}</p>
+            <p className="font-semibold text-ink">{ol.position}</p>
           </div>
           <div>
             <p className="apply-label">Gaji</p>
-            <p className="font-semibold text-slate-900">{formatRupiah(ol.salary)}</p>
+            <p className="font-semibold text-ink">{formatRupiah(ol.salary)}</p>
           </div>
           {ol.startDate && (
             <div>
               <p className="apply-label">Tanggal Mulai</p>
-              <p className="font-semibold text-slate-900">{formatDate(ol.startDate)}</p>
+              <p className="font-semibold text-ink">{formatDate(ol.startDate)}</p>
             </div>
           )}
           {ol.respondBefore && (
@@ -53,12 +53,12 @@ function OlCard({ ol, children }: { ol: OfferingLetter; children?: React.ReactNo
 
         <div>
           <p className="apply-label">Isi Surat</p>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="whitespace-pre-wrap text-sm text-slate-700">{ol.body}</p>
+          <div className="rounded-xl border border-line bg-subtle px-4 py-3">
+            <p className="whitespace-pre-wrap text-sm text-body">{ol.body}</p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+        <div className="flex flex-wrap gap-3 text-xs text-caption">
           {ol.hasHrSignature && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
               <CheckCircle2 size={13} /> Ditandatangani oleh HR
@@ -129,8 +129,8 @@ export default function OlResponsePage() {
 
   const BG = ({ children }: { children: React.ReactNode }) => (
     <div
-      className="relative min-h-screen overflow-hidden flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%)' }}
+      className="relative min-h-[100dvh] overflow-hidden flex items-center justify-center p-4"
+      style={{ background: 'var(--ambient)' }}
     >
       {children}
     </div>
@@ -139,7 +139,7 @@ export default function OlResponsePage() {
   if (pageState === 'loading') {
     return (
       <BG>
-        <p className="text-slate-500">Memuat...</p>
+        <p className="text-caption">Memuat...</p>
       </BG>
     );
   }
@@ -149,8 +149,8 @@ export default function OlResponsePage() {
       <BG>
         <div className="apply-card mx-auto w-full max-w-md px-8 py-10 text-center space-y-3">
           <XCircle size={40} className="mx-auto text-red-400" />
-          <h1 className="text-lg font-bold text-slate-800">Tautan Tidak Valid</h1>
-          <p className="text-sm text-slate-500">{errorMsg}</p>
+          <h1 className="text-lg font-bold text-ink">Tautan Tidak Valid</h1>
+          <p className="text-sm text-caption">{errorMsg}</p>
         </div>
       </BG>
     );
@@ -195,8 +195,8 @@ export default function OlResponsePage() {
       <BG>
         <div className="apply-card mx-auto w-full max-w-md px-8 py-10 text-center space-y-3">
           <div className="mx-auto w-fit">{msg.icon}</div>
-          <h1 className="text-lg font-bold text-slate-800">{msg.title}</h1>
-          <p className="text-sm text-slate-500">{msg.desc}</p>
+          <h1 className="text-lg font-bold text-ink">{msg.title}</h1>
+          <p className="text-sm text-caption">{msg.desc}</p>
         </div>
       </BG>
     );
@@ -231,7 +231,7 @@ export default function OlResponsePage() {
                 <XCircle size={18} /> Tolak
               </button>
               <button
-                className="apply-btn !bg-slate-700 hover:!bg-slate-800"
+                className="apply-btn !bg-[#334155] hover:!bg-[#1e293b]"
                 disabled={busy}
                 onClick={() => setConfirmAction('contact')}
               >
@@ -240,15 +240,15 @@ export default function OlResponsePage() {
             </div>
           ) : (
             <div className="apply-card mx-auto max-w-2xl px-6 py-5 space-y-3">
-              <p className="text-sm font-semibold text-slate-800">
+              <p className="text-sm font-semibold text-ink">
                 {confirmAction === 'accept' && 'Konfirmasi: Anda akan menyetujui tawaran ini.'}
                 {confirmAction === 'decline' && 'Konfirmasi: Anda akan menolak tawaran ini.'}
                 {confirmAction === 'contact' && 'Konfirmasi: Anda ingin dihubungi oleh HR.'}
               </p>
-              <p className="text-xs text-slate-500">Tindakan ini tidak dapat dibatalkan.</p>
+              <p className="text-xs text-caption">Tindakan ini tidak dapat dibatalkan.</p>
               <div className="flex gap-3">
                 <button
-                  className="apply-btn flex-1 !bg-slate-200 !text-slate-700 hover:!bg-slate-300"
+                  className="apply-btn-ghost flex-1"
                   disabled={busy}
                   onClick={() => setConfirmAction(null)}
                 >
@@ -260,7 +260,7 @@ export default function OlResponsePage() {
                       ? '!bg-emerald-600 hover:!bg-emerald-700'
                       : confirmAction === 'decline'
                         ? '!bg-red-600 hover:!bg-red-700'
-                        : '!bg-slate-700 hover:!bg-slate-800'
+                        : '!bg-[#334155] hover:!bg-[#1e293b]'
                   }`}
                   disabled={busy}
                   onClick={() => void handleRespond(confirmAction)}
