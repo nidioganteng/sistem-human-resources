@@ -58,7 +58,7 @@ export default function OlListPage() {
       {error && <Alert variant="error">{error}</Alert>}
 
       {loading ? (
-        <p className="text-sm text-slate-400">Memuat...</p>
+        <p className="text-sm text-caption">Memuat...</p>
       ) : displayItems.length === 0 ? (
         <div className="card">
           <EmptyState
@@ -75,23 +75,23 @@ export default function OlListPage() {
         <div className="card !p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full text-left">
-              <thead className="border-b border-slate-100 bg-slate-50 dark:border-[#1c2333] dark:bg-[#0c1018]">
+              <thead className="border-b border-line bg-subtle">
                 <tr>
                   {['Posisi', 'Status', 'Dibuat', ''].map((h) => (
                     <th key={h} className="th">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+              <tbody className="divide-y divide-line">
                 {displayItems.map((ol) => (
-                  <tr key={ol.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#1a2030]">
-                    <td className="td font-medium text-slate-900 dark:text-white">{ol.position}</td>
+                  <tr key={ol.id} className="transition-colors hover:bg-subtle">
+                    <td className="td font-medium text-ink">{ol.position}</td>
                     <td className="td">
                       <Badge variant={STATUS_BADGE[ol.status]}>
                         {OL_STATUS_LABELS[ol.status]}
                       </Badge>
                     </td>
-                    <td className="td text-xs text-slate-400 dark:text-slate-500">
+                    <td className="td text-xs text-caption">
                       {formatDate(ol.createdAt)}
                     </td>
                     <td className="td text-right">
