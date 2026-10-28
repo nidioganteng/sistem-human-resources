@@ -6,6 +6,7 @@ import { ApiError } from '@/services/api';
 import { createEmployee, listEmployees } from './karyawanService';
 import type { Employee } from './types';
 import { EMPLOYMENT_STATUS_LABELS } from './types';
+import { Tabs } from '@/shared/ui/Tabs';
 import { RupiahInput } from '@/shared/ui/RupiahInput';
 
 type Tab = 'PKWT' | 'PKWTT';
@@ -19,7 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
 function statusBadge(status: string): string {
   if (status === 'active') return 'rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-400';
   if (status === 'onboarding') return 'rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-400/15 dark:text-amber-400';
-  return 'rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-700/60 dark:text-slate-400';
+  return 'rounded-full bg-subtle px-2.5 py-0.5 text-xs font-semibold text-caption';
 }
 
 interface AddForm {
@@ -99,7 +100,7 @@ export default function KaryawanPage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-slate-400 dark:text-slate-500">Memuat...</p>;
+  if (loading) return <p className="text-sm text-caption">Memuat...</p>;
   if (error) return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>;
 
   return (
@@ -116,52 +117,42 @@ export default function KaryawanPage() {
         )}
       </div>
 
-      <div className="flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 w-fit">
-        {(['PKWT', 'PKWTT'] as Tab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-all ${
-              activeTab === tab
-                ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-            }`}
-          >
-            {EMPLOYMENT_STATUS_LABELS[tab]}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={(['PKWT', 'PKWTT'] as Tab[]).map((tab) => ({ key: tab, label: EMPLOYMENT_STATUS_LABELS[tab] }))}
+        active={activeTab}
+        onChange={(key) => setActiveTab(key as Tab)}
+      />
 
       {filtered.length === 0 ? (
-        <div className="card text-center text-sm text-slate-400 dark:text-slate-500 py-10">
+        <div className="card text-center text-sm text-caption py-10">
           Belum ada karyawan {EMPLOYMENT_STATUS_LABELS[activeTab]}.
         </div>
       ) : (
         <div className="card overflow-hidden !p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-100 dark:border-white/10">
+              <thead className="border-b border-line dark:border-white/10">
                 <tr>
                   {['Nama', 'Posisi', 'Divisi', 'Status', 'Tanggal Mulai', ''].map((h) => (
                     <th key={h} className="th">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-line dark:divide-white/5">
                 {filtered.map((e) => (
                   <tr
                     key={e.id}
-                    className="transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                    className="transition-colors hover:bg-subtle dark:hover:bg-white/[0.02]"
                   >
-                    <td className="td font-medium text-slate-900 dark:text-slate-100">{e.fullName}</td>
-                    <td className="td text-slate-600 dark:text-slate-300">{e.position}</td>
-                    <td className="td text-slate-500 dark:text-slate-400">{e.division ?? '-'}</td>
+                    <td className="td font-medium text-ink">{e.fullName}</td>
+                    <td className="td text-body">{e.position}</td>
+                    <td className="td text-caption">{e.division ?? '-'}</td>
                     <td className="td">
                       <span className={statusBadge(e.status)}>
                         {STATUS_LABELS[e.status]}
                       </span>
                     </td>
-                    <td className="td text-xs text-slate-400 dark:text-slate-500">
+                    <td className="td text-xs text-caption">
                       {e.contractStart
                         ? new Date(e.contractStart).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
                         : '-'}
@@ -184,12 +175,12 @@ export default function KaryawanPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-lg space-y-4 dark:!bg-slate-800">
+          <div className="card w-full max-w-lg space-y-4 dark:!bg-canvas">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Tambah Karyawan</h2>
+              <h2 className="text-base font-bold text-ink">Tambah Karyawan</h2>
               <button
                 onClick={() => { setShowModal(false); setForm(emptyForm); setFormError(''); }}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-slate-300"
+                className="rounded-lg p-1.5 text-caption hover:bg-subtle hover:text-body dark:hover:bg-white/5"
               >
                 <X size={18} />
               </button>
