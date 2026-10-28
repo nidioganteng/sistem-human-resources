@@ -27,7 +27,7 @@ const STATUS_LABELS: Record<string, string> = {
 function statusBadge(status: string): string {
   if (status === 'active') return 'rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-400';
   if (status === 'onboarding') return 'rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-400/15 dark:text-amber-400';
-  return 'rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-500 dark:bg-slate-700/60 dark:text-slate-400';
+  return 'rounded-full bg-subtle px-3 py-1 text-sm font-semibold text-caption';
 }
 
 interface EditForm {
@@ -210,7 +210,7 @@ export default function EmployeeDetailPage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-slate-400 dark:text-slate-500">Memuat...</p>;
+  if (loading) return <p className="text-sm text-caption">Memuat...</p>;
   if (error) return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>;
   if (!employee) return null;
 
@@ -240,10 +240,10 @@ export default function EmployeeDetailPage() {
       <div className="card space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="font-heading text-xl font-bold text-slate-900 dark:text-white">
+            <h1 className="font-heading text-xl font-bold text-ink">
               {employee.fullName}
             </h1>
-            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-sm text-caption">
               {employee.position}
               {employee.division ? ` · ${employee.division}` : ''}
             </p>
@@ -272,15 +272,15 @@ export default function EmployeeDetailPage() {
             { label: 'Divalidasi', value: employee.validatedAt ? formatDate(employee.validatedAt) : '-' },
           ].map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</p>
-              <p className="mt-0.5 text-sm text-slate-800 dark:text-slate-200">{value}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-caption">{label}</p>
+              <p className="mt-0.5 text-sm text-ink">{value}</p>
             </div>
           ))}
         </div>
 
         {isHr && employee.status === 'onboarding' && (
-          <div className="space-y-3 border-t border-slate-100 pt-4 dark:border-white/10">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tindakan Onboarding</h2>
+          <div className="space-y-3 border-t border-line pt-4 dark:border-white/10">
+            <h2 className="text-sm font-semibold text-body">Tindakan Onboarding</h2>
             <div className="flex flex-wrap gap-2">
               <button
                 className="btn-secondary text-xs !py-1.5"
@@ -301,8 +301,8 @@ export default function EmployeeDetailPage() {
             </div>
 
             {onboardingUrl && (
-              <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 dark:bg-white/5">
-                <span className="min-w-0 flex-1 break-all font-mono text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-3 rounded-xl bg-subtle px-4 py-3 dark:bg-white/5">
+                <span className="min-w-0 flex-1 break-all font-mono text-xs text-caption">
                   {onboardingUrl}
                 </span>
                 <button
@@ -320,15 +320,15 @@ export default function EmployeeDetailPage() {
 
       {employee.personalData != null && (
         <div className="card space-y-3">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Data Pribadi</h2>
+          <h2 className="text-sm font-semibold text-body">Data Pribadi</h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
             {Object.entries(PERSONAL_DATA_LABELS).map(([key, label]) => {
               const val = employee.personalData?.[key];
               if (!val) return null;
               return (
                 <div key={key}>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</p>
-                  <p className="mt-0.5 text-sm text-slate-800 dark:text-slate-200">{val}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-caption">{label}</p>
+                  <p className="mt-0.5 text-sm text-ink">{val}</p>
                 </div>
               );
             })}
@@ -337,20 +337,20 @@ export default function EmployeeDetailPage() {
       )}
 
       <div className="card space-y-3">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Dokumen</h2>
+        <h2 className="text-sm font-semibold text-body">Dokumen</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {allDocTypes.map((dt) => {
             const has = uploadedDocTypes.has(dt);
             return (
               <div
                 key={dt}
-                className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5 dark:border-white/10"
+                className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5 dark:border-white/10"
               >
                 <div>
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  <p className="text-sm font-medium text-ink">
                     {DOC_TYPE_LABELS[dt]}
                   </p>
-                  <span className={`text-xs font-semibold ${has ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                  <span className={`text-xs font-semibold ${has ? 'text-emerald-600 dark:text-emerald-400' : 'text-caption'}`}>
                     {has ? 'Ada' : 'Belum'}
                   </span>
                 </div>
@@ -370,17 +370,17 @@ export default function EmployeeDetailPage() {
 
       {confirmValidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-sm space-y-4 dark:!bg-slate-800">
+          <div className="card w-full max-w-sm space-y-4 dark:!bg-canvas">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Validasi Karyawan?</h2>
+              <h2 className="text-base font-bold text-ink">Validasi Karyawan?</h2>
               <button
                 onClick={() => setConfirmValidate(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-slate-300"
+                className="rounded-lg p-1.5 text-caption hover:bg-subtle hover:text-body dark:hover:bg-white/5"
               >
                 <X size={18} />
               </button>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-caption">
               Karyawan akan berpindah ke status Aktif dan datanya dapat dibaca oleh Simatra.
               Tindakan ini tidak dapat dibatalkan lewat sistem.
             </p>
@@ -394,12 +394,12 @@ export default function EmployeeDetailPage() {
 
       {showEdit && editForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 dark:!bg-slate-800">
-            <div className="flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800 z-10 pb-2">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Edit Data Karyawan</h2>
+          <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 dark:!bg-canvas">
+            <div className="flex items-center justify-between sticky top-0 bg-panel z-10 pb-2">
+              <h2 className="text-base font-bold text-ink">Edit Data Karyawan</h2>
               <button
                 onClick={() => setShowEdit(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-slate-300"
+                className="rounded-lg p-1.5 text-caption hover:bg-subtle hover:text-body dark:hover:bg-white/5"
               >
                 <X size={18} />
               </button>
@@ -412,7 +412,7 @@ export default function EmployeeDetailPage() {
             )}
 
             <form onSubmit={(e) => void handleEditSubmit(e)} className="space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Data Kontrak</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-caption">Data Kontrak</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="field-label">NIK</label>
@@ -458,7 +458,7 @@ export default function EmployeeDetailPage() {
                 </div>
               </div>
 
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-2">Data Pribadi</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-caption pt-2">Data Pribadi</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="field-label">Tanggal Lahir</label>
