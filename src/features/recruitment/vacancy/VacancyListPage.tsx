@@ -72,7 +72,7 @@ export default function VacancyListPage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-slate-400">Memuat...</p>;
+  if (loading) return <p className="text-sm text-caption">Memuat...</p>;
   if (error) return <Alert variant="error">{error}</Alert>;
 
   const activeVacancies   = vacancies.filter((v) => v.status === 'open' || v.status === 'closed');
@@ -101,7 +101,7 @@ export default function VacancyListPage() {
 
       {/* Seksi lowongan aktif dan ditutup */}
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-700">Aktif &amp; Ditutup</h2>
+        <h2 className="text-sm font-semibold text-body">Aktif &amp; Ditutup</h2>
         <div className="card !p-0 overflow-hidden">
           {activeVacancies.length === 0 ? (
             <EmptyState
@@ -117,7 +117,7 @@ export default function VacancyListPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
-                <thead className="border-b border-slate-100 bg-slate-50">
+                <thead className="border-b border-line bg-subtle">
                   <tr>
                     {['Posisi', 'Divisi', 'Status', 'Pelamar Baru', 'Total', 'MRF', ''].map((h, i) => (
                       <th key={i} className={`th ${h === 'Pelamar Baru' || h === 'Total' ? 'text-right' : ''}`}>
@@ -126,11 +126,11 @@ export default function VacancyListPage() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line">
                   {activeVacancies.map((v) => (
-                    <tr key={v.id} className="transition-colors hover:bg-slate-50">
-                      <td className="td font-medium text-slate-900">{v.position}</td>
-                      <td className="td text-slate-500">{v.division}</td>
+                    <tr key={v.id} className="transition-colors hover:bg-subtle">
+                      <td className="td font-medium text-ink">{v.position}</td>
+                      <td className="td text-caption">{v.division}</td>
                       <td className="td">
                         <Badge variant={v.status === 'open' ? 'green' : 'default'}>
                           {v.status === 'open' ? 'Terbuka' : 'Ditutup'}
@@ -140,11 +140,11 @@ export default function VacancyListPage() {
                         {v.pendingCount > 0 ? (
                           <span className="font-bold text-brand-700">{v.pendingCount}</span>
                         ) : (
-                          <span className="text-slate-400">0</span>
+                          <span className="text-caption">0</span>
                         )}
                       </td>
-                      <td className="td text-right text-slate-500">{v.totalCount}</td>
-                      <td className="td font-mono text-xs text-slate-400">{v.mrfCode ?? '-'}</td>
+                      <td className="td text-right text-caption">{v.totalCount}</td>
+                      <td className="td font-mono text-xs text-caption">{v.mrfCode ?? '-'}</td>
                       <td className="td text-right">
                         <Link
                           to={`/lowongan/${v.id}`}
@@ -164,7 +164,7 @@ export default function VacancyListPage() {
 
       {/* Seksi arsip */}
       <div className="space-y-2">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-body">
           <Archive size={15} /> Arsip
         </h2>
         <div className="card !p-0 overflow-hidden">
@@ -177,7 +177,7 @@ export default function VacancyListPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
-                <thead className="border-b border-slate-100 bg-slate-50">
+                <thead className="border-b border-line bg-subtle">
                   <tr>
                     {['Posisi', 'Divisi', 'MRF', 'Total Pelamar', ''].map((h, i) => (
                       <th key={i} className={`th ${h === 'Total Pelamar' ? 'text-right' : ''}`}>
@@ -186,13 +186,13 @@ export default function VacancyListPage() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line">
                   {archivedVacancies.map((v) => (
-                    <tr key={v.id} className="transition-colors hover:bg-slate-50">
-                      <td className="td font-medium text-slate-900">{v.position}</td>
-                      <td className="td text-slate-500">{v.division}</td>
-                      <td className="td font-mono text-xs text-slate-400">{v.mrfCode ?? '-'}</td>
-                      <td className="td text-right text-slate-500">{v.totalCount}</td>
+                    <tr key={v.id} className="transition-colors hover:bg-subtle">
+                      <td className="td font-medium text-ink">{v.position}</td>
+                      <td className="td text-caption">{v.division}</td>
+                      <td className="td font-mono text-xs text-caption">{v.mrfCode ?? '-'}</td>
+                      <td className="td text-right text-caption">{v.totalCount}</td>
                       <td className="td text-right">
                         <button
                           className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 disabled:opacity-50"
@@ -223,16 +223,16 @@ export default function VacancyListPage() {
           {actionError && <Alert variant="error">{actionError}</Alert>}
 
           {mrfs.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-caption">
               Tidak ada MRF yang disetujui dan belum memiliki lowongan terbuka.
             </p>
           ) : (
-            <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200">
+            <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
               {mrfs.map((m) => (
                 <li key={m.id} className="flex items-center justify-between px-4 py-3">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">{m.position}</p>
-                    <p className="text-xs text-slate-400">{m.division} &middot; {m.code}</p>
+                    <p className="text-sm font-medium text-ink">{m.position}</p>
+                    <p className="text-xs text-caption">{m.division} &middot; {m.code}</p>
                   </div>
                   <button
                     className="btn-primary !py-1.5 text-xs"
@@ -260,10 +260,10 @@ export default function VacancyListPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
-            Semua data pelamar <strong className="text-slate-700">{confirmDownload?.position}</strong> (CSV + berkas CV dan portofolio)
+          <p className="text-sm text-caption">
+            Semua data pelamar <strong className="text-body">{confirmDownload?.position}</strong> (CSV + berkas CV dan portofolio)
             akan dikemas dalam satu file ZIP dan diunduh. Setelah unduhan selesai,{' '}
-            <strong className="text-slate-700">seluruh data pelamar dan lowongan ini akan dihapus permanen dari server</strong>.
+            <strong className="text-body">seluruh data pelamar dan lowongan ini akan dihapus permanen dari server</strong>.
             Pastikan file ZIP berhasil tersimpan sebelum melanjutkan.
           </p>
           <p className="text-xs text-amber-600">Tindakan ini tidak dapat dibatalkan.</p>
