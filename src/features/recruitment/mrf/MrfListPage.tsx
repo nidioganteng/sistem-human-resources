@@ -93,11 +93,11 @@ export default function MrfListPage() {
       {error && <Alert variant="error">{error}</Alert>}
 
       <div className="card !p-0 overflow-hidden">
-        <Tabs tabs={tabs} active={activeTab} onChange={changeTab} />
+        <div className="px-4 pt-4 pb-1"><Tabs tabs={tabs} active={activeTab} onChange={changeTab} /></div>
 
-        <div className="flex items-center gap-3 border-b border-slate-100 dark:border-[#1c2333] px-4 py-3">
+        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-caption" />
             <input
               type="search"
               placeholder="Cari kode MRF atau posisi"
@@ -111,17 +111,17 @@ export default function MrfListPage() {
 
         <div className="overflow-x-auto">
           <table className="min-w-full text-left">
-            <thead className="border-b border-slate-100 dark:border-[#1c2333] bg-slate-50 dark:bg-[#0c1018]">
+            <thead className="border-b border-line bg-subtle">
               <tr>
                 {['Kode', 'Posisi', 'Divisi', 'Kebutuhan', 'Pemohon', 'Status', 'Diperbarui'].map((h) => (
                   <th key={h} className="th">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-[#1c2333]">
+            <tbody className="divide-y divide-line">
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-caption">
                     Memuat...
                   </td>
                 </tr>
@@ -139,15 +139,15 @@ export default function MrfListPage() {
               {filtered.map((m) => (
                 <tr
                   key={m.id}
-                  className={`cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-[#1a2030] ${
+                  className={`cursor-pointer transition-colors hover:bg-blue-50  ${
                     m.needsMyAction ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
                   }`}
                   onClick={() => { window.location.href = `/mrf/${m.id}`; }}
                 >
-                  <td className="td tabular-nums text-slate-500 dark:text-slate-500">{m.code}</td>
+                  <td className="td tabular-nums text-caption">{m.code}</td>
                   <td className="td">
                     <Link
-                      className="font-semibold text-slate-900 hover:text-brand-700 dark:text-white dark:hover:text-brand-400"
+                      className="font-semibold text-ink hover:text-brand-700 dark:text-white dark:hover:text-brand-400"
                       to={`/mrf/${m.id}`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -159,21 +159,21 @@ export default function MrfListPage() {
                       </span>
                     )}
                   </td>
-                  <td className="td text-slate-600 dark:text-slate-400">{m.division}</td>
-                  <td className="td whitespace-nowrap text-slate-600 dark:text-slate-400">{m.headcount} org · {m.employmentStatus}</td>
+                  <td className="td text-body">{m.division}</td>
+                  <td className="td whitespace-nowrap text-body">{m.headcount} org · {m.employmentStatus}</td>
                   <td className="td">
-                    <span className="text-slate-900 dark:text-white">{m.requester.name}</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-500">{m.requester.roleLabel}</span>
+                    <span className="text-ink">{m.requester.name}</span>
+                    <span className="block text-xs text-caption">{m.requester.roleLabel}</span>
                   </td>
                   <td className="td"><StatusBadge status={m.status} /></td>
-                  <td className="td whitespace-nowrap text-right text-slate-400 dark:text-slate-600">{fmtDate(m.updatedAt)}</td>
+                  <td className="td whitespace-nowrap text-right text-caption">{fmtDate(m.updatedAt)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-[#1c2333] px-5 py-3 text-xs text-slate-500 dark:text-slate-500">
+        <div className="border-t border-line px-5 py-3 text-xs text-caption">
           {loading ? 'Memuat...' : `${filtered.length} MRF ditampilkan`}
         </div>
       </div>
