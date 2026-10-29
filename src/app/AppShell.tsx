@@ -45,7 +45,7 @@ function Sidebar({ compact = false, onCollapse, onClose }: {
         {!compact && <div className="min-w-0"><p className="truncate text-xs font-semibold text-ink">Gaharu Sempana Group</p><p className="mt-1 text-[10px] text-caption">Human Resource Management</p></div>}
       </div>
 
-      <nav aria-label="Navigasi utama" className="sidebar-menu">
+      <nav aria-label="Navigasi utama" className="sidebar-menu scrollbar-hide">
         {GROUPS.map((group) => {
           const items = menus.filter((m) => group.paths.includes(m.to));
           if (!items.length) return null;
