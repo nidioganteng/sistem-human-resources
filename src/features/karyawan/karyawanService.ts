@@ -5,7 +5,7 @@ export interface CreateEmployeeData {
   fullName: string;
   position: string;
   division: string;
-  employmentStatus: 'PKWT' | 'PKWTT';
+  employmentStatus: 'PKWT' | 'PKWTT' | 'FREELANCE';
   salary?: number | null;
   applicantId?: number | null;
   contractStart?: string | null;
@@ -18,7 +18,7 @@ export interface UpdateEmployeeData {
   phone: string;
   position: string;
   division: string;
-  employmentStatus: 'PKWT' | 'PKWTT';
+  employmentStatus: 'PKWT' | 'PKWTT' | 'FREELANCE';
   salary?: number | null;
   contractStart?: string | null;
   contractEnd?: string | null;
@@ -40,7 +40,7 @@ export const updateEmployee = (id: number, data: UpdateEmployeeData): Promise<Em
 export const generateOnboardingLink = (
   id: number,
   appBaseUrl: string,
-): Promise<Employee & { onboardingUrl: string }> =>
+): Promise<Employee & { onboardingUrl: string; emailQueued: boolean }> =>
   post(`/employees/${id}/generate-link`, { appBaseUrl });
 
 export const validateEmployee = (id: number): Promise<Employee> =>
@@ -60,6 +60,9 @@ export const getOnboardingPublic = (
   position: string;
   division: string | null;
   status: string;
+  nik: string | null;
+  email: string | null;
+  phone: string | null;
   personalData: Record<string, string> | null;
   documents: { docType: string }[];
 }> => apiFetch(`/onboarding/${token}`);
