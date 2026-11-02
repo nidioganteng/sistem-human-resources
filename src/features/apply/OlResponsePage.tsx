@@ -84,7 +84,7 @@ export default function OlResponsePage() {
   const [ol, setOl] = useState<OfferingLetter | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [responseResult, setResponseResult] = useState<ResponseResult>(null);
-  const [confirmAction, setConfirmAction] = useState<'accept' | 'decline' | 'contact' | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'decline' | 'contact' | null>(()=>{const a=new URLSearchParams(window.location.search).get('action');return a==='accept'||a==='decline'||a==='contact'?a:null;});
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
 
@@ -186,7 +186,7 @@ export default function OlResponsePage() {
 
   if (ol && responseResult) {
     const messages: Record<string, { icon: React.ReactNode; title: string; desc: string }> = {
-      accept:  { icon: <CheckCircle2 size={40} className="text-emerald-500" />, title: 'Terima kasih!', desc: 'Lamaran Anda diterima. Tim HR kami akan menghubungi Anda segera.' },
+      accept:  { icon: <CheckCircle2 size={40} className="text-emerald-500" />, title: 'Terima kasih!', desc: 'Penawaran berhasil Anda terima. Tim HR akan melanjutkan onboarding dan mengirimkan tautan untuk melengkapi data serta dokumen karyawan.' },
       decline: { icon: <XCircle size={40} className="text-red-400" />, title: 'Tawaran Ditolak', desc: 'Anda telah menolak tawaran ini. Terima kasih atas waktu Anda.' },
       contact: { icon: <Phone size={40} className="text-brand-500" />, title: 'Permintaan Diterima', desc: 'Kami akan menghubungi Anda segera untuk mendiskusikan penawaran ini.' },
     };
@@ -208,6 +208,7 @@ export default function OlResponsePage() {
         <div className="w-full max-w-2xl space-y-5">
           <OlCard ol={ol} />
 
+          <a href={`/api/ol/${token}/pdf`} className="apply-btn-ghost mx-auto w-fit" download>Unduh Offering Letter PDF</a>
           {actionError && (
             <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {actionError}
