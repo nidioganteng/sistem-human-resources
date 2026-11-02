@@ -29,6 +29,10 @@ final class SmtpMailer implements Mailer
             'X-Mailer: PHP/' . PHP_VERSION,
         ]);
 
+        if (!str_contains($body, '<p>')) {
+            $body = nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));
+            $body = preg_replace('~https?://[^\s<]+~', '<a href="$0">$0</a>', $body) ?? $body;
+        }
         $encodedBody = chunk_split(base64_encode($body));
 
         $result = mail($to, $encodedSubject, $encodedBody, $headers);
