@@ -142,6 +142,10 @@ final class OfferingLetter
             throw new DomainRuleViolation('Offering Letter ini tidak sedang dalam status terkirim.');
         }
 
+        if ($this->respondBefore === null || $this->respondBefore < new DateTimeImmutable()) {
+            throw new DomainRuleViolation('Batas respons Offering Letter sudah berakhir. Hubungi HR.');
+        }
+
         $this->status      = match ($action) {
             'accept'  => OfferingLetterStatus::Accepted,
             'decline' => OfferingLetterStatus::Declined,
