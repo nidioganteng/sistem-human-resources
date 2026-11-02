@@ -17,6 +17,7 @@ import OlResponsePage from '@/features/apply/OlResponsePage';
 import EmployeeDetailPage from '@/features/karyawan/EmployeeDetailPage';
 import OnboardingPage from '@/features/onboarding/OnboardingPage';
 import AppShell from './AppShell';
+import WorkforcePage from '@/features/workforce/WorkforcePage';
 import ProtectedRoute from './ProtectedRoute';
 
 export default function AppRoutes() {
@@ -41,6 +42,14 @@ export default function AppRoutes() {
           <Route path="kandidat" element={<KandidatPage />} />
           <Route path="karyawan" element={<KaryawanPage />} />
           <Route path="karyawan/:id" element={<EmployeeDetailPage />} />
+          <Route path="kedisiplinan" element={<WorkforcePage module="discipline" />} />
+          <Route path="karier" element={<WorkforcePage module="career" />} />
+          <Route path="offboarding" element={<WorkforcePage module="offboarding" />} />
+          <Route path="talent-pool" element={<WorkforcePage module="talent" />} />
+          <Route path="persetujuan-data" element={<WorkforcePage module="changes" />} />
+          <Route path="notifikasi" element={<WorkforcePage module="notifications" />} />
+          <Route path="profil" element={<WorkforcePage module="profile" />} />
+          <Route path="arsip-lowongan" element={<WorkforcePage module="archives" />} />
           <Route path="pengguna" element={<PenggunaPage />} />
           <Route path="offering-letters" element={<OlListPage />} />
           <Route path="offering-letters/:id" element={<OlDetailPage />} />
