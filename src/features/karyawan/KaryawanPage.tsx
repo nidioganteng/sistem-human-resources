@@ -9,7 +9,7 @@ import { EMPLOYMENT_STATUS_LABELS } from './types';
 import { Tabs } from '@/shared/ui/Tabs';
 import { RupiahInput } from '@/shared/ui/RupiahInput';
 
-type Tab = 'PKWT' | 'PKWTT';
+type Tab = 'PKWT' | 'PKWTT' | 'FREELANCE';
 
 const STATUS_LABELS: Record<string, string> = {
   onboarding: 'Onboarding',
@@ -27,7 +27,7 @@ interface AddForm {
   fullName: string;
   position: string;
   division: string;
-  employmentStatus: 'PKWT' | 'PKWTT';
+  employmentStatus: 'PKWT' | 'PKWTT' | 'FREELANCE';
   salary: string;
   contractStart: string;
   contractEnd: string;
@@ -118,7 +118,7 @@ export default function KaryawanPage() {
       </div>
 
       <Tabs
-        tabs={(['PKWT', 'PKWTT'] as Tab[]).map((tab) => ({ key: tab, label: EMPLOYMENT_STATUS_LABELS[tab] }))}
+        tabs={(['PKWT', 'PKWTT', 'FREELANCE'] as Tab[]).map((tab) => ({ key: tab, label: EMPLOYMENT_STATUS_LABELS[tab] }))}
         active={activeTab}
         onChange={(key) => setActiveTab(key as Tab)}
       />
@@ -219,10 +219,10 @@ export default function KaryawanPage() {
                 <select
                   className="field-input"
                   value={form.employmentStatus}
-                  onChange={(e) => setForm((f) => ({ ...f, employmentStatus: e.target.value as 'PKWT' | 'PKWTT' }))}
+                  onChange={(e) => setForm((f) => ({ ...f, employmentStatus: e.target.value as 'PKWT' | 'PKWTT' | 'FREELANCE' }))}
                 >
                   <option value="PKWT">Kontrak (PKWT)</option>
-                  <option value="PKWTT">Tetap (PKWTT)</option>
+                  <option value="PKWTT">Tetap (PKWTT)</option><option value="FREELANCE">Tenaga ahli / Freelance</option>
                 </select>
               </div>
               <div>

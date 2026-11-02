@@ -43,7 +43,7 @@ final class EmployeeController
         if ($position === '') {
             throw new HttpException(422, 'Posisi wajib diisi.');
         }
-        if (!in_array($employmentStatus, ['PKWT', 'PKWTT'], true)) {
+        if (!in_array($employmentStatus, ['PKWT', 'PKWTT', 'FREELANCE'], true)) {
             throw new HttpException(422, 'Status kepegawaian tidak valid.');
         }
 
@@ -83,7 +83,7 @@ final class EmployeeController
         if ($position === '') {
             throw new HttpException(422, 'Posisi wajib diisi.');
         }
-        if (!in_array($employmentStatus, ['PKWT', 'PKWTT'], true)) {
+        if (!in_array($employmentStatus, ['PKWT', 'PKWTT', 'FREELANCE'], true)) {
             throw new HttpException(422, 'Status kepegawaian tidak valid.');
         }
 

@@ -1,8 +1,8 @@
 # Sistem HR | Gaharu Sempana Group
 
-Sistem HR untuk rekrutmen karyawan PKWT dan database karyawan. Dasar kebutuhan: SOP 007.02/SOP-GSG/V/2026 dan hasil diskusi dengan klien.
+Sistem HR untuk rekrutmen, administrasi karyawan PKWT/PKWTT/freelance, dan siklus kerja karyawan. Dasar kebutuhan: SOP 007.02/SOP-GSG/V/2026 dan hasil diskusi dengan klien.
 
-**Stack:** React 18 + TypeScript + Vite + Tailwind (frontend statis) · PHP 8.1+ tanpa framework dan tanpa Composer (API) · MySQL.
+**Stack:** React 18 + TypeScript + Vite + Tailwind (frontend statis) · PHP 8.1+ tanpa framework, Composer untuk PDF FPDF (API) · MySQL.
 Hostinger Premium tidak menjalankan Node.js, jadi frontend dibuild menjadi file statis dan backend berupa folder `api/`.
 
 ## Status modul
@@ -11,10 +11,14 @@ Hostinger Premium tidak menjalankan Node.js, jadi frontend dibuild menjadi file 
 | --- | --- |
 | Login, 4 peran (CEO, HR, Manajer, PIC) | Selesai |
 | MRF digital (PIC > Manajer > CEO, revisi dengan komentar, riwayat) | Selesai |
-| Lowongan, pendaftaran, screening HR | Berikutnya |
-| Form Pelamar digital | Berikutnya |
-| Offering Letter | Berikutnya |
-| Database karyawan, talent pool, view untuk Simatra | Berikutnya (skema sudah ada di `database/schema.sql`) |
+| Lowongan, QR, pendaftaran, screening HR | Diimplementasikan |
+| Form Pelamar digital, foto, tanda tangan, PDF | Diimplementasikan |
+| Offering Letter, tanda tangan HR/CEO, PDF dan respons kandidat | Diimplementasikan |
+| Karyawan, onboarding, talent pool, disiplin, karier, offboarding | Diimplementasikan |
+| Persetujuan data, enkripsi, notifikasi, arsip | Diimplementasikan |
+| API payroll | Tersedia; koneksi eksternal perlu konfigurasi |
+
+Rincian implementasi v2, migrasi, worker, integrasi dan kebijakan terbuka: [Panduan HR v2](docs/hr-spec-v2.md).
 
 ## Jalankan di laptop
 
@@ -24,16 +28,19 @@ DBngin menjalankan server MySQL; TablePlus hanya dipakai untuk melihat dan menge
 
 ```bash
 npm ci
+composer install --working-dir=api
 cp api/config/env.php.example api/config/env.php
 mkdir -p storage
 ```
 
-Isi `api/config/env.php`: `APP_ENV = 'local'`, kredensial `DB_*`, `JWT_SECRET` acak (minimal 32 karakter), dan `STORAGE_PATH` berupa jalur absolut folder `storage` proyek. Buat JWT secret dengan `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`. Untuk DBngin di laptop ini gunakan host `127.0.0.1`, port `3307`, database `sistem_hr`, user `root`, password kosong (sesuaikan jika pengaturan DBngin berbeda). Ekstensi PHP yang dipakai: `pdo_mysql`, `mbstring`, `fileinfo`, dan `zip` untuk arsip unduhan.
+Isi `api/config/env.php`: `APP_ENV = 'local'`, kredensial `DB_*`, `JWT_SECRET` acak (minimal 32 karakter), `DATA_ENCRYPTION_KEY` acak 64 karakter hex (buat terpisah dari JWT), dan `STORAGE_PATH` berupa jalur absolut folder `storage` proyek. Buat JWT secret dengan `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`. Untuk DBngin di laptop ini gunakan host `127.0.0.1`, port `3307`, database `sistem_hr`, user `root`, password kosong (sesuaikan jika pengaturan DBngin berbeda). Ekstensi PHP yang dipakai: `pdo_mysql`, `mbstring`, `fileinfo`, `openssl`, `gd`, `iconv`, dan `zip` untuk arsip unduhan.
 
 ```bash
 npm run db:migrate -- --create                     # membuat database lokal dan mengimpor skema
 php api/bin/seed-dev.php password-dev-123           # 4 akun contoh; hanya untuk APP_ENV = 'local'
 npm run dev:all                                    # PHP di :8001 dan Vite di :5174
+# Terminal terpisah:
+npm run worker                                     # email lokal ditulis ke terminal
 ```
 
 Buka http://localhost:5174. Akun contoh: `admin@gaharusempana.com` (CEO), `hr@gaharusempana.com`, `manajer@gaharusempana.com`, dan `pic@gaharusempana.com` (Sipil), dengan password yang diberikan ke seed. Seed memperbarui password akun contoh yang sudah ada; jalankan hanya saat diperlukan.
@@ -83,4 +90,4 @@ Nama status MRF dan aturan di atas adalah usulan yang belum dikonfirmasi klien (
 
 - Pembatasan percobaan login (rate limiting).
 - Reset password. Sementara akun dibuat dan diganti lewat `bin/create-user.php`.
-- Pengelolaan pengguna lewat UI.
+- Sinkronisasi nyata SIMANTRA/keuangan/Sidamon dan transport email produksi perlu dikonfigurasi.

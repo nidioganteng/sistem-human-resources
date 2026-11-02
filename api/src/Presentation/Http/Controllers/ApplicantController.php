@@ -76,6 +76,13 @@ final class ApplicantController
         return Response::json($data);
     }
 
+    public function pdf(Request $req, array $p): Response
+    {
+        $pdf = $this->applicants->formPdf($req->requireUser(),(int)$p['id']);
+        header('Content-Type: application/pdf'); header('Content-Disposition: attachment; filename="form-pelamar-' . (int)$p['id'] . '.pdf"');
+        header('Cache-Control: private, no-store'); echo $pdf; exit();
+    }
+
     /** POST /applicants/{id}/approve */
     /** @param array<string,string> $p */
     public function approve(Request $req, array $p): Response

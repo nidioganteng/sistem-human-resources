@@ -12,8 +12,8 @@ interface FormPelamarModalProps {
   photoUrl: string | null;
   signatureUrl: string | null;
   onClose: () => void;
-  onExportDocx: () => void;
-  exportingDocx: boolean;
+  onExportPdf: () => void;
+  exportingPdf: boolean;
   userRole?: string;
   onShortlist?: () => void;
   shortlisting?: boolean;
@@ -22,7 +22,7 @@ interface FormPelamarModalProps {
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="bg-canvas px-4 py-2.5">
-      <p className="text-xs font-semibold uppercase tracking-widest text-white">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-widest text-ink">{title}</p>
     </div>
   );
 }
@@ -62,8 +62,8 @@ export function FormPelamarModal({
   photoUrl,
   signatureUrl,
   onClose,
-  onExportDocx,
-  exportingDocx,
+  onExportPdf,
+  exportingPdf,
   userRole,
   onShortlist,
   shortlisting = false,
@@ -98,11 +98,11 @@ export function FormPelamarModal({
             <div className="flex shrink-0 items-center gap-2">
               <button
                 className="btn-secondary flex items-center gap-1.5 !py-1.5 text-xs disabled:opacity-60"
-                onClick={onExportDocx}
-                disabled={exportingDocx || !detail}
+                onClick={onExportPdf}
+                disabled={exportingPdf || !detail}
               >
                 <Download size={13} />
-                {exportingDocx ? 'Mengekspor...' : 'Ekspor DOCX'}
+                {exportingPdf ? 'Mengekspor...' : 'Unduh PDF resmi'}
               </button>
             </div>
           </div>
@@ -420,7 +420,7 @@ export function FormPelamarModal({
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-line px-6 py-4">
             <div>
-              {userRole === 'super_admin' && applicant?.status === 'form_submitted' && onShortlist && (
+              {['super_admin','hr','manajer'].includes(userRole ?? '') && applicant?.status === 'form_submitted' && onShortlist && (
                 <button
                   className="btn-primary !py-1.5 text-xs disabled:opacity-60"
                   onClick={onShortlist}

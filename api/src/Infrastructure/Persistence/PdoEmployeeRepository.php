@@ -7,13 +7,14 @@ use App\Domain\Employee\Employee;
 use App\Domain\Employee\EmployeeRepository;
 use App\Domain\Employee\EmployeeStatus;
 use DateTimeImmutable;
+use App\Infrastructure\Security\DataCipher;
 use PDO;
 
 final class PdoEmployeeRepository implements EmployeeRepository
 {
     private const FMT = 'Y-m-d H:i:s';
 
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo, private DataCipher $cipher) {}
 
     public function find(int $id): ?Employee
     {
@@ -48,7 +49,9 @@ final class PdoEmployeeRepository implements EmployeeRepository
             $st->execute();
         }
 
-        return array_map(fn (array $r) => $this->hydrate($r), $st->fetchAll());
+        $employees = array_map(fn (array $r) => $this->hydrate($r), $st->fetchAll());
+        usort($employees, static fn (Employee $a, Employee $b) => strcasecmp($a->fullName(),$b->fullName()));
+        return $employees;
     }
 
     public function findByApplicant(int $applicantId): ?Employee
@@ -62,67 +65,29 @@ final class PdoEmployeeRepository implements EmployeeRepository
 
     public function save(Employee $e): void
     {
+        $private = [
+            'nik' => $e->nik(), 'full_name' => $e->fullName(), 'email' => $e->email(),
+            'phone' => $e->phone(), 'salary' => $e->salary(), 'personal_data' => $e->personalData(),
+        ];
+        $values = [
+            'applicant_id' => $e->applicantId(), 'onboarding_token' => $e->onboardingToken(),
+            'token_expires_at' => $e->tokenExpiresAt()?->format(self::FMT),
+            'nik' => null, 'full_name' => 'Terenkripsi', 'email' => null, 'phone' => null, 'personal_data' => null, 'salary' => null,
+            'private_data' => $this->cipher->encrypt($private),
+            'nik_hash' => $e->nik() ? $this->cipher->fingerprint($e->nik()) : null,
+            'position' => $e->position(), 'division' => $e->division(), 'employment_status' => $e->employmentStatus(),
+            'contract_start' => $e->contractStart(), 'contract_end' => $e->contractEnd(),
+            'status' => $e->status()->value, 'validated_at' => $e->validatedAt()?->format(self::FMT),
+            'validated_by' => $e->validatedBy(), 'updated_at' => $e->updatedAt()->format(self::FMT),
+        ];
         if ($e->id() === null) {
-            $st = $this->pdo->prepare(
-                'INSERT INTO employees
-                    (applicant_id, onboarding_token, token_expires_at, nik, full_name,
-                     email, phone, personal_data, position, division, employment_status,
-                     salary, contract_start, contract_end, status, validated_at,
-                     validated_by, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            );
-            $st->execute([
-                $e->applicantId(),
-                $e->onboardingToken(),
-                $e->tokenExpiresAt()?->format(self::FMT),
-                $e->nik(),
-                $e->fullName(),
-                $e->email(),
-                $e->phone(),
-                $e->personalData() !== null ? json_encode($e->personalData(), JSON_UNESCAPED_UNICODE) : null,
-                $e->position(),
-                $e->division(),
-                $e->employmentStatus(),
-                $e->salary(),
-                $e->contractStart(),
-                $e->contractEnd(),
-                $e->status()->value,
-                $e->validatedAt()?->format(self::FMT),
-                $e->validatedBy(),
-                $e->createdAt()->format(self::FMT),
-                $e->updatedAt()->format(self::FMT),
-            ]);
+            $values['created_at'] = $e->createdAt()->format(self::FMT);
+            $sql = 'INSERT INTO employees (`' . implode('`,`', array_keys($values)) . '`) VALUES (' . implode(',', array_fill(0,count($values),'?')) . ')';
+            $this->pdo->prepare($sql)->execute(array_values($values));
             $e->assignId((int) $this->pdo->lastInsertId());
         } else {
-            $st = $this->pdo->prepare(
-                'UPDATE employees SET
-                    onboarding_token = ?, token_expires_at = ?,
-                    nik = ?, full_name = ?, email = ?, phone = ?, personal_data = ?,
-                    position = ?, division = ?, employment_status = ?, salary = ?,
-                    contract_start = ?, contract_end = ?,
-                    status = ?, validated_at = ?, validated_by = ?, updated_at = ?
-                 WHERE id = ?',
-            );
-            $st->execute([
-                $e->onboardingToken(),
-                $e->tokenExpiresAt()?->format(self::FMT),
-                $e->nik(),
-                $e->fullName(),
-                $e->email(),
-                $e->phone(),
-                $e->personalData() !== null ? json_encode($e->personalData(), JSON_UNESCAPED_UNICODE) : null,
-                $e->position(),
-                $e->division(),
-                $e->employmentStatus(),
-                $e->salary(),
-                $e->contractStart(),
-                $e->contractEnd(),
-                $e->status()->value,
-                $e->validatedAt()?->format(self::FMT),
-                $e->validatedBy(),
-                $e->updatedAt()->format(self::FMT),
-                $e->id(),
-            ]);
+            $sql = 'UPDATE employees SET ' . implode(',', array_map(static fn ($key) => "`{$key}` = ?", array_keys($values))) . ' WHERE id = ?';
+            $this->pdo->prepare($sql)->execute([...array_values($values), $e->id()]);
         }
     }
 
@@ -197,6 +162,11 @@ final class PdoEmployeeRepository implements EmployeeRepository
     /** @param array<string,mixed> $r */
     private function hydrate(array $r): Employee
     {
+        if (!empty($r['private_data'])) {
+            $private = $this->cipher->decrypt($r['private_data']);
+            $private['personal_data'] = isset($private['personal_data']) ? json_encode($private['personal_data'], JSON_THROW_ON_ERROR) : null;
+            $r = array_replace($r, $private);
+        }
         $personalData = null;
         if ($r['personal_data'] !== null) {
             $decoded = json_decode((string) $r['personal_data'], true);

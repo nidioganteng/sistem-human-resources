@@ -12,6 +12,13 @@ final class OfferingLetterController
 {
     public function __construct(private OfferingLetterUseCases $ols) {}
 
+    public function pdf(Request $req, array $p): Response
+    {
+        $pdf = $this->ols->pdf($req->requireUser(),(int)$p['id']);
+        header('Content-Type: application/pdf'); header('Content-Disposition: attachment; filename="offering-letter.pdf"');
+        header('Cache-Control: private, no-store'); echo $pdf; exit();
+    }
+
     /** GET /offering-letters */
     /** @param array<string,string> $p */
     public function list(Request $req, array $p): Response

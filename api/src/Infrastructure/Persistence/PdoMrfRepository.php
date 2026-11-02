@@ -25,7 +25,8 @@ final class PdoMrfRepository implements MrfRepository
 
     public function save(Mrf $m): void
     {
-        $this->pdo->beginTransaction();
+        $ownsTransaction = !$this->pdo->inTransaction();
+        if ($ownsTransaction) $this->pdo->beginTransaction();
         try {
             $s = $m->spec();
 
@@ -68,9 +69,9 @@ final class PdoMrfRepository implements MrfRepository
                 ]);
             }
 
-            $this->pdo->commit();
+            if ($ownsTransaction) $this->pdo->commit();
         } catch (Throwable $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($ownsTransaction && $this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
             throw $e;

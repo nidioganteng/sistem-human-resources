@@ -14,10 +14,11 @@ const MAX_BYTES = MAX_MB * 1024 * 1024;
 
 const DOC_FIELDS: Array<{ key: string; label: string; required: boolean }> = [
   { key: 'ktp', label: 'KTP', required: true },
-  { key: 'bpjs', label: 'BPJS', required: false },
-  { key: 'ijazah', label: 'Ijazah', required: false },
-  { key: 'foto', label: 'Pasfoto', required: false },
-  { key: 'npwp', label: 'NPWP', required: false },
+  { key: 'kk', label: 'Kartu Keluarga', required: true },
+  { key: 'bpjs', label: 'BPJS', required: true },
+  { key: 'ijazah', label: 'Ijazah', required: true },
+  { key: 'foto', label: 'Pasfoto', required: true },
+  { key: 'npwp', label: 'NPWP', required: true },
   { key: 'lainnya', label: 'Dokumen Lainnya', required: false },
 ];
 
@@ -50,6 +51,7 @@ export default function OnboardingPage() {
   const [bpjsNumber, setBpjsNumber] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
 
+  const [payroll, setPayroll] = useState<Record<string,string>>({});
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -63,9 +65,13 @@ export default function OnboardingPage() {
     getOnboardingPublic(token)
       .then((data) => {
         setInfo(data);
+        setNik(data.nik ?? '');
+        setEmail(data.email ?? '');
+        setPhone(data.phone ?? '');
 
         if (data.personalData) {
           const pd = data.personalData;
+          setPayroll({ptkp_status:pd.ptkp_status??'',bank_name:pd.bank_name??'',bank_account:pd.bank_account??'',bank_account_name:pd.bank_account_name??''});
           if (pd['birth_date']) setBirthDate(pd['birth_date']);
           if (pd['birth_place']) setBirthPlace(pd['birth_place']);
           if (pd['address']) setAddress(pd['address']);
@@ -97,17 +103,13 @@ export default function OnboardingPage() {
     if (!birthPlace.trim()) errs['birth_place'] = 'Tempat lahir wajib diisi.';
     if (!address.trim()) errs['address'] = 'Alamat wajib diisi.';
 
-    const ktpFile = files['ktp'];
-    if (!ktpFile) {
-      errs['ktp'] = 'KTP wajib diunggah.';
-    } else {
-      if (ktpFile.size > MAX_BYTES) errs['ktp'] = `KTP melebihi batas ${MAX_MB} MB.`;
+    for (const doc of DOC_FIELDS) {
+      const file = files[doc.key];
+      const existing = info?.documents.some((d) => d.docType === doc.key);
+      if (doc.required && !file && !existing) errs[doc.key] = `${doc.label} wajib diunggah.`;
+      const max = doc.key === 'foto' ? 500 * 1024 : MAX_BYTES;
+      if (file && file.size > max) errs[doc.key] = `${doc.label} melebihi batas ${doc.key === 'foto' ? '500 KB' : '2 MB'}.`;
     }
-
-    Object.entries(files).forEach(([key, file]) => {
-      if (!file || key === 'ktp') return;
-      if (file.size > MAX_BYTES) errs[key] = `${key.toUpperCase()} melebihi batas ${MAX_MB} MB.`;
-    });
 
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -126,6 +128,7 @@ export default function OnboardingPage() {
         email: email.trim(),
         phone: phone.trim(),
         personalData: {
+          ...payroll,
           birth_date: birthDate,
           birth_place: birthPlace.trim(),
           address: address.trim(),
@@ -406,6 +409,7 @@ export default function OnboardingPage() {
             {/* Divider */}
             <div className="mx-6 my-6 border-t border-line sm:mx-8" />
 
+            <div className="px-6 pb-6 sm:px-8"><h2 className="mb-4 text-base font-bold text-ink">Data payroll</h2><div className="grid gap-4 sm:grid-cols-2">{Object.entries({ptkp_status:'Status PTKP',bank_name:'Nama bank',bank_account:'Nomor rekening',bank_account_name:'Nama pemilik rekening'}).map(([key,label])=><div key={key}><label htmlFor={`payroll-${key}`} className="apply-label">{label}</label><input id={`payroll-${key}`} className="apply-input" value={payroll[key]??''} onChange={e=>setPayroll({...payroll,[key]:e.target.value})}/></div>)}</div></div>
             {/* Seksi Dokumen */}
             <div className="px-6 pb-6 sm:px-8">
               <div className="mb-5 flex items-center gap-3">
@@ -416,7 +420,7 @@ export default function OnboardingPage() {
                 </div>
                 <div>
                   <h2 className="font-heading text-base font-bold text-ink">Unggah Dokumen</h2>
-                  <p className="text-xs text-caption">Format: PDF, JPG, atau PNG. Maks. {MAX_MB} MB per berkas.</p>
+                  <p className="text-xs text-caption">Format: PDF, JPG, atau PNG. Dokumen maks. {MAX_MB} MB; pasfoto JPEG/PNG maks. 500 KB.</p>
                 </div>
               </div>
 

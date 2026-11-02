@@ -13,7 +13,7 @@ use finfo;
 final class PublicOnboardingController
 {
     private const MAX_DOC_BYTES   = 2 * 1024 * 1024; // 2 MB untuk PDF
-    private const MAX_IMAGE_BYTES = 1 * 1024 * 1024; // 1 MB untuk gambar
+    private const MAX_IMAGE_BYTES = 500 * 1024; // 500 KB untuk pasfoto
     private const ALLOWED_MIMES   = ['application/pdf', 'image/jpeg', 'image/png'];
 
     public function __construct(
@@ -47,8 +47,8 @@ final class PublicOnboardingController
         $phone        = trim((string) ($b['phone'] ?? ''));
         $personalData = isset($b['personalData']) && is_array($b['personalData']) ? $b['personalData'] : [];
 
-        if ($nik === '') {
-            throw new HttpException(422, 'NIK wajib diisi.');
+        if (!preg_match('/^[0-9]{16}$/D', $nik)) {
+            throw new HttpException(422, 'NIK harus 16 digit.');
         }
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new HttpException(422, 'Alamat email tidak valid.');
@@ -75,8 +75,12 @@ final class PublicOnboardingController
             throw new HttpException(422, 'docType wajib diisi.');
         }
 
+        if (!in_array($docType, ['ktp','kk','npwp','bpjs','ijazah','foto','lainnya'], true)) {
+            throw new HttpException(422, 'Jenis dokumen tidak valid.');
+        }
+        $this->employees->getPublic($p['token']);
         $fileData = $req->files['file'] ?? [];
-        $tmpPath  = $this->validateUploadedFile($fileData);
+        $tmpPath  = $this->validateUploadedFile($fileData, $docType);
 
         $ext      = $this->mimeToExtension($tmpPath);
         $filePath = $this->storage->storeUpload($tmpPath, 'employee-docs', $ext);
@@ -92,7 +96,7 @@ final class PublicOnboardingController
      *
      * @param array<string,mixed> $file
      */
-    private function validateUploadedFile(array $file): string
+    private function validateUploadedFile(array $file, string $docType): string
     {
         $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
 
@@ -116,7 +120,10 @@ final class PublicOnboardingController
         }
 
         $size    = (int) ($file['size'] ?? 0);
-        $maxSize = $mime === 'application/pdf' ? self::MAX_DOC_BYTES : self::MAX_IMAGE_BYTES;
+        if ($docType === 'foto' && !in_array($mime, ['image/jpeg','image/png'], true)) {
+            throw new HttpException(422, 'Pasfoto harus JPEG atau PNG.');
+        }
+        $maxSize = $docType === 'foto' ? self::MAX_IMAGE_BYTES : self::MAX_DOC_BYTES;
 
         if ($size > $maxSize) {
             $maxMb = $maxSize / (1024 * 1024);

@@ -20,7 +20,7 @@ const STATUS_BADGE: Partial<Record<string, 'default' | 'green' | 'red' | 'amber'
 };
 
 const PIPELINE_STATUSES = [
-  'shortlisted', 'selection', 'offer_pending',
+  'form_submitted', 'shortlisted', 'selection', 'offer_pending',
   'offered', 'accepted', 'hired', 'not_selected', 'declined',
 ] as const;
 
@@ -30,6 +30,7 @@ const TRACK_LABELS: Record<string, string> = {
 };
 
 const STATUS_GROUPS: { label: string; statuses: string[] }[] = [
+  { label: 'Menunggu Review', statuses: ['form_submitted'] },
   { label: 'Kandidat Aktif',    statuses: ['shortlisted', 'selection'] },
   { label: 'Tahap Penawaran',   statuses: ['offer_pending', 'offered', 'accepted'] },
   { label: 'Bergabung',         statuses: ['hired'] },
@@ -71,7 +72,7 @@ export default function KandidatPage() {
       <h1 className="page-title">Kandidat</h1>
       <p className="page-subtitle mt-1">
         Daftar kandidat dalam pipeline seleksi
-        {user?.role === 'manajer' && user.division ? ` - Divisi ${user.division}` : ''}
+        {['manajer','pic'].includes(user?.role ?? '') && user?.division ? ` - Divisi ${user.division}` : ''}
       </p>
 
       {error && (
@@ -128,7 +129,7 @@ export default function KandidatPage() {
             title="Belum ada kandidat"
             description={
               allActive
-                ? 'Kandidat akan muncul di sini setelah HR melakukan shortlist dari Form Pelamar.'
+                ? 'Kandidat muncul setelah Form Pelamar selesai diisi dan siap direview.'
                 : 'Tidak ada kandidat yang sesuai filter yang dipilih.'
             }
           />

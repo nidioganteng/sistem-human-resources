@@ -31,12 +31,18 @@ function statusBadge(status: string): string {
 }
 
 interface EditForm {
+  ptkp_status: string;
+  bank_name: string;
+  bank_account: string;
+  bank_account_name: string;
+  payment_hold_note: string;
+
   nik: string;
   email: string;
   phone: string;
   position: string;
   division: string;
-  employmentStatus: 'PKWT' | 'PKWTT';
+  employmentStatus: 'PKWT' | 'PKWTT' | 'FREELANCE';
   salary: string;
   contractStart: string;
   contractEnd: string;
@@ -53,6 +59,11 @@ interface EditForm {
 function employeeToForm(e: Employee): EditForm {
   const pd = e.personalData ?? {};
   return {
+    ptkp_status: pd['ptkp_status'] ?? '',
+    bank_name: pd['bank_name'] ?? '',
+    bank_account: pd['bank_account'] ?? '',
+    bank_account_name: pd['bank_account_name'] ?? '',
+    payment_hold_note: pd['payment_hold_note'] ?? '',
     nik: e.nik ?? '',
     email: e.email ?? '',
     phone: e.phone ?? '',
@@ -125,6 +136,7 @@ export default function EmployeeDetailPage() {
       const res = await generateOnboardingLink(employee.id, window.location.origin);
       setOnboardingUrl(res.onboardingUrl);
       setEmployee({ ...employee, hasOnboardingToken: true });
+      setActionMsg({type:'ok',text:res.emailQueued ? 'Tautan onboarding dibuat dan email masuk antrean pengiriman ke karyawan.' : 'Tautan onboarding dibuat. Salin tautan dan bagikan kepada karyawan.'});
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal membuat tautan.' });
     } finally {
@@ -182,6 +194,12 @@ export default function EmployeeDetailPage() {
         contractStart: editForm.contractStart !== '' ? editForm.contractStart : null,
         contractEnd: editForm.contractEnd !== '' ? editForm.contractEnd : null,
         personalData: {
+          ...employee?.personalData,
+          ptkp_status: editForm.ptkp_status,
+          bank_name: editForm.bank_name,
+          bank_account: editForm.bank_account,
+          bank_account_name: editForm.bank_account_name,
+          payment_hold_note: editForm.payment_hold_note,
           birth_date: editForm.birth_date,
           birth_place: editForm.birth_place,
           address: editForm.address,
@@ -194,7 +212,7 @@ export default function EmployeeDetailPage() {
       });
       setEmployee(updated);
       setShowEdit(false);
-      setActionMsg({ type: 'ok', text: 'Data karyawan berhasil diperbarui.' });
+      setActionMsg({ type: 'ok', text: updated.changePending ? 'Perubahan diajukan. Data aktif menunggu persetujuan CEO.' : 'Data karyawan berhasil diperbarui.' });
     } catch (e) {
       setEditError(e instanceof ApiError ? e.message : 'Gagal memperbarui data.');
     } finally {
@@ -214,7 +232,7 @@ export default function EmployeeDetailPage() {
   if (error) return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>;
   if (!employee) return null;
 
-  const hasSubmittedData = employee.nik != null && employee.email != null;
+  const hasSubmittedData = Boolean(employee.nik?.trim() && employee.email?.trim());
   const allDocTypes = ['ktp', 'npwp', 'bpjs', 'ijazah', 'foto', 'lainnya'];
   const uploadedDocTypes = new Set(employee.documents.map((d) => d.docType));
 
@@ -338,6 +356,7 @@ export default function EmployeeDetailPage() {
 
       <div className="card space-y-3">
         <h2 className="text-sm font-semibold text-body">Dokumen</h2>
+        {employee.status === 'onboarding' && <p className="text-xs text-caption">{['ktp','kk','npwp','bpjs','ijazah','foto'].filter(type=>uploadedDocTypes.has(type)).length} dari 6 dokumen wajib tersedia. Status tetap Onboarding sampai HR memeriksa dan memvalidasi kelengkapannya.</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {allDocTypes.map((dt) => {
             const has = uploadedDocTypes.has(dt);
@@ -354,7 +373,7 @@ export default function EmployeeDetailPage() {
                     {has ? 'Ada' : 'Belum'}
                   </span>
                 </div>
-                {has && isHr && (
+                {has && (user?.role === 'hr' || user?.role === 'super_admin') && (
                   <button
                     className="text-xs text-sky-700 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
                     onClick={() => void handleOpenDoc(dt)}
@@ -436,9 +455,9 @@ export default function EmployeeDetailPage() {
                 </div>
                 <div>
                   <label className="field-label">Status Kepegawaian</label>
-                  <select className="field-input" value={editForm.employmentStatus} onChange={(e) => setEditForm((f) => f ? { ...f, employmentStatus: e.target.value as 'PKWT' | 'PKWTT' } : f)}>
+                  <select className="field-input" value={editForm.employmentStatus} onChange={(e) => setEditForm((f) => f ? { ...f, employmentStatus: e.target.value as 'PKWT' | 'PKWTT' | 'FREELANCE' } : f)}>
                     <option value="PKWT">Kontrak (PKWT)</option>
-                    <option value="PKWTT">Tetap (PKWTT)</option>
+                    <option value="PKWTT">Tetap (PKWTT)</option><option value="FREELANCE">Tenaga ahli / Freelance</option>
                   </select>
                 </div>
                 <div>
@@ -458,6 +477,8 @@ export default function EmployeeDetailPage() {
                 </div>
               </div>
 
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-caption pt-2">Data Payroll</h3>
+              <div className="grid gap-3 sm:grid-cols-2">{(['ptkp_status','bank_name','bank_account','bank_account_name','payment_hold_note'] as const).map(key=><div key={key}><label htmlFor={`edit-${key}`} className="field-label">{PERSONAL_DATA_LABELS[key]}</label><input id={`edit-${key}`} className="field-input" value={editForm[key]} onChange={e=>setEditForm(f=>f?{...f,[key]:e.target.value}:f)}/></div>)}</div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-caption pt-2">Data Pribadi</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>

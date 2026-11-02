@@ -19,6 +19,9 @@ jobs:
         with:
           php-version: '8.2'
 
+      - name: Install dependency PDF backend
+        run: composer install --working-dir=api --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
       - name: Cek sintaks PHP
         run: find api -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
 

@@ -16,8 +16,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 };
 const GROUPS = [
   { label: 'Workspace', paths: ['/'] },
-  { label: 'Rekrutmen', paths: ['/mrf', '/lowongan', '/kandidat', '/offering-letters'] },
-  { label: 'Organisasi', paths: ['/karyawan', '/pengguna'] },
+  { label: 'Rekrutmen', paths: ['/mrf', '/lowongan', '/kandidat', '/offering-letters','/talent-pool','/arsip-lowongan'] },
+  { label: 'Organisasi', paths: ['/karyawan','/kedisiplinan','/karier','/offboarding','/persetujuan-data','/notifikasi','/profil','/pengguna'] },
 ];
 
 function Sidebar({ compact = false, onCollapse, onClose }: {

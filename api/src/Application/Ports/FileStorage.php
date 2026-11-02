@@ -17,6 +17,8 @@ interface FileStorage
      * @param  string $extension Ekstensi tanpa titik, mis. 'pdf'
      * @return string            Jalur relatif dari STORAGE_PATH, mis. 'cv/abc123.pdf'
      */
+    public function storeContent(string $category, string $extension, string $content): string;
+
     public function storeUpload(string $tmpPath, string $category, string $extension): string;
 
     /** Hapus berkas di jalur relatif. Diam-diam abaikan jika berkas tidak ada. */

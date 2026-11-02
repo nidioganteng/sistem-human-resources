@@ -89,8 +89,8 @@ final class Applicant
     /** CEO (super_admin) memberi shortlist pada pelamar yang sudah mengisi Form Pelamar. */
     public function shortlist(User $actor): void
     {
-        if ($actor->role !== Role::SuperAdmin) {
-            throw new NotAllowed('Hanya CEO yang dapat melakukan shortlist kandidat.');
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer)) {
+            throw new NotAllowed('Shortlist dilakukan oleh HR, CEO, atau Manajer divisi.');
         }
         if ($this->status !== ApplicantStatus::FormSubmitted) {
             throw new DomainRuleViolation('Shortlist hanya dapat dilakukan pada pelamar berstatus Form Terisi.');
@@ -121,8 +121,8 @@ final class Applicant
      */
     public function recordSelectionResult(User $actor, string $stage, string $result): void
     {
-        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
-            throw new NotAllowed('Hanya HR atau CEO yang dapat mencatat hasil seleksi.');
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer, Role::Pic)) {
+            throw new NotAllowed('Anda tidak memiliki akses mencatat hasil seleksi.');
         }
         if ($this->status !== ApplicantStatus::Selection) {
             throw new DomainRuleViolation('Pencatatan hasil seleksi hanya dapat dilakukan pada kandidat berstatus Seleksi.');

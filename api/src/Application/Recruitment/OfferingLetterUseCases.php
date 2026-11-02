@@ -5,6 +5,8 @@ namespace App\Application\Recruitment;
 
 use App\Application\Ports\FileStorage;
 use App\Application\Ports\Mailer;
+use App\Application\Ports\{WorkforceStore, DocumentRenderer};
+use App\Application\Workforce\Notifications;
 use App\Domain\Identity\Role;
 use App\Domain\Identity\User;
 use App\Domain\Identity\UserRepository;
@@ -28,6 +30,9 @@ final class OfferingLetterUseCases
         private FileStorage $storage,
         private Mailer $mailer,
         private UserRepository $users,
+        private WorkforceStore $workflows,
+        private Notifications $notifications,
+        private DocumentRenderer $documents,
     ) {}
 
     /** @return array<string,mixed> */
@@ -116,8 +121,11 @@ final class OfferingLetterUseCases
             ? new DateTimeImmutable($startDate)
             : null;
 
+        $hrSignature = $this->users->findById($actor->id)?->signaturePath;
+        if (!$hrSignature) throw new DomainRuleViolation('Unggah tanda tangan HR di Profil sebelum membuat Offering Letter.');
         $ol = OfferingLetter::open($actor, $applicantId, $position, $salary, $startDateObj, $body);
         $this->ols->save($ol);
+        $this->workflows->update('offering_letters',(int)$ol->id(),['hr_signature_path'=>$hrSignature]);
 
         return OfferingLetterView::from($ol, ...$this->resolveSignaturePaths($ol));
     }
@@ -149,6 +157,7 @@ final class OfferingLetterUseCases
         $ol = $this->loadForHr($actor, $id);
         $ol->submit($actor);
         $this->ols->save($ol);
+        $this->notifications->toRoles(['super_admin'],'offering_approval','Offering Letter menunggu persetujuan',['offerId'=>$id,'message'=>$ol->position()]);
 
         return OfferingLetterView::from($ol, ...$this->resolveSignaturePaths($ol));
     }
@@ -165,8 +174,12 @@ final class OfferingLetterUseCases
             throw new NotFound('Offering Letter tidak ditemukan.');
         }
 
-        $ol->approve($actor);
-        $this->ols->save($ol);
+        $ceoSignature = $this->users->findById($actor->id)?->signaturePath;
+        if (!$ceoSignature) throw new DomainRuleViolation('Unggah tanda tangan CEO di Profil sebelum menyetujui Offering Letter.');
+        $this->workflows->transaction(function () use ($ol,$actor,$ceoSignature,$id) {
+            $ol->approve($actor); $this->ols->save($ol);
+            $this->workflows->update('offering_letters',$id,['ceo_signature_path'=>$ceoSignature]);
+        });
 
         return OfferingLetterView::from($ol, ...$this->resolveSignaturePaths($ol));
     }
@@ -192,6 +205,8 @@ final class OfferingLetterUseCases
     /** @return array<string,mixed> */
     public function send(User $actor, int $id, string $appBaseUrl): array
     {
+        return $this->workflows->transaction(function () use ($actor,$id,$appBaseUrl): array {
+        $this->workflows->find('offering_letters',$id,true);
         $ol = $this->loadForHr($actor, $id);
 
         $applicant = $this->applicants->find($ol->applicantId());
@@ -219,17 +234,14 @@ final class OfferingLetterUseCases
             $respondBefore,
         );
 
-        try {
             $this->mailer->send(
                 $applicant->email(),
                 'Offering Letter - Gaharu Sempana Group',
                 $body,
             );
-        } catch (\Throwable $e) {
-            error_log('[sistem-hr] Gagal mengirim Offering Letter ke ' . $applicant->email() . ': ' . $e->getMessage());
-        }
 
         return OfferingLetterView::from($ol, ...$this->resolveSignaturePaths($ol));
+            });
     }
 
     /** @return array<string,mixed> */
@@ -254,15 +266,11 @@ final class OfferingLetterUseCases
             $ol->respondBefore() ?? new DateTimeImmutable('+7 days'),
         );
 
-        try {
             $this->mailer->send(
                 $applicant->email(),
                 'Offering Letter - Gaharu Sempana Group',
                 $body,
             );
-        } catch (\Throwable $e) {
-            error_log('[sistem-hr] Gagal mengirim ulang Offering Letter ke ' . $applicant->email() . ': ' . $e->getMessage());
-        }
 
         return OfferingLetterView::from($ol, ...$this->resolveSignaturePaths($ol));
     }
@@ -278,18 +286,27 @@ final class OfferingLetterUseCases
             throw new NotFound('Tautan Offering Letter ini sudah kedaluwarsa.');
         }
 
-        return OfferingLetterView::from($ol);
+        return OfferingLetterView::from($ol, ...$this->resolveSignaturePaths($ol));
     }
 
     public function respond(string $token, string $action): void
     {
+        $this->workflows->transaction(function () use ($token,$action): void {
         $ol = $this->ols->findByToken($token);
         if ($ol === null) {
             throw new NotFound('Offering Letter tidak ditemukan atau tautan tidak valid.');
         }
 
+        $this->workflows->find('offering_letters',(int)$ol->id(),true);
+        $ol = $this->ols->find((int)$ol->id());
+        $this->workflows->find('applicants',$ol->applicantId(),true);
         if ($action === 'contact') {
-            // Aksi hubungi admin: tidak mengubah status, hanya dikembalikan sebagai konfirmasi.
+            if ($ol->status() !== OfferingLetterStatus::Sent || !$ol->respondBefore() || $ol->respondBefore() < new DateTimeImmutable()) {
+                throw new DomainRuleViolation('Tawaran tidak lagi aktif.');
+            }
+            $candidate = $this->applicants->find($ol->applicantId());
+            $this->notifications->toRoles(['hr'],'offer_negotiation','Kandidat meminta dihubungi HR',
+                ['offerId'=>$ol->id(),'message'=>($candidate?->fullName() ?? 'Kandidat') . ' meminta diskusi / negosiasi penawaran.']);
             return;
         }
 
@@ -300,11 +317,21 @@ final class OfferingLetterUseCases
         if ($applicant !== null) {
             if ($action === 'accept') {
                 $applicant->acceptOffer();
+                $this->workflows->find('vacancies',$applicant->vacancyId(),true);
+                $vacancy = $this->vacancies->find($applicant->vacancyId());
+                if (!$vacancy) throw new NotFound('Lowongan tidak ditemukan.');
+                $vacancy->closeAfterOfferAcceptance();
+                $this->vacancies->save($vacancy);
+                $this->notifications->toRoles(['hr','super_admin'],'offer_accepted','Kandidat menerima penawaran',[
+                    'offerId'=>$ol->id(),'applicantId'=>$applicant->id(),'vacancyId'=>$vacancy->id(),
+                    'message'=>$applicant->fullName() . ' menerima OL. Pendaftaran lowongan ditutup; HR dapat memulai onboarding dari kandidat ini.',
+                ]);
             } elseif ($action === 'decline') {
                 $applicant->declineOffer();
             }
             $this->applicants->save($applicant);
         }
+            });
     }
 
     // ──
@@ -331,16 +358,23 @@ final class OfferingLetterUseCases
      */
     private function resolveSignaturePaths(OfferingLetter $ol): array
     {
-        $hrUser  = $this->users->findById($ol->draftedBy());
-        $hrPath  = $hrUser?->signaturePath ?? null;
+        $snapshot = $this->workflows->find('offering_letters',(int)$ol->id());
+        return [$snapshot['hr_signature_path'] ?? null, $snapshot['ceo_signature_path'] ?? null];
+    }
 
-        $ceoPath = null;
-        if ($ol->approvedBy() !== null) {
-            $ceoUser = $this->users->findById($ol->approvedBy());
-            $ceoPath = $ceoUser?->signaturePath ?? null;
-        }
-
-        return [$hrPath, $ceoPath];
+    public function pdf(User $actor, int $id): string
+    {
+        $view = $this->get($actor,$id);
+        return $this->renderPdf($view);
+    }
+    public function publicPdf(string $token): string { return $this->renderPdf($this->getPublic($token)); }
+    private function renderPdf(array $view): string
+    {
+        $a=$this->applicants->find((int)$view['applicantId']);
+        $ol=$this->ols->find((int)$view['id']);
+        if (!$a || !$ol) throw new NotFound('Offering Letter tidak ditemukan.');
+        [$hr,$ceo]=$this->resolveSignaturePaths($ol);
+        return $this->documents->offering($view,$a->fullName(),$hr?$this->storage->absolutePath($hr):null,$ceo?$this->storage->absolutePath($ceo):null);
     }
 
     private function buildOfferingEmail(
@@ -351,12 +385,13 @@ final class OfferingLetterUseCases
     ): string {
         $deadline = $respondBefore->format('d/m/Y') . ' WITA';
 
-        return "Yth. {$name},\n\n"
-            . "Kami dengan senang hati menyampaikan Offering Letter untuk posisi {$position} "
-            . "di Gaharu Sempana Group.\n\n"
-            . "Silakan buka tautan berikut untuk melihat detail penawaran dan memberikan respons sebelum {$deadline}:\n\n"
-            . "{$olUrl}\n\n"
-            . "Jika ada pertanyaan, silakan hubungi tim HR kami.\n\n"
-            . "Salam,\nTim HR Gaharu Sempana Group";
+        $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $position = htmlspecialchars($position, ENT_QUOTES, 'UTF-8');
+        $url = htmlspecialchars($olUrl, ENT_QUOTES, 'UTF-8');
+        return "<p>Yth. {$name},</p><p>Berikut penawaran untuk posisi {$position}. Batas respons {$deadline}.</p>"
+            . "<p><a href=\"{$url}\">Lihat penawaran dan unduh PDF resmi</a></p>"
+            . "<p><a href=\"{$url}?action=accept\">Terima</a> | <a href=\"{$url}?action=decline\">Tolak</a> | <a href=\"{$url}?action=contact\">Hubungi HR / Negosiasi</a></p>"
+            . '<p>Anda akan diminta mengonfirmasi pilihan di halaman penawaran.</p>';
+
     }
 }

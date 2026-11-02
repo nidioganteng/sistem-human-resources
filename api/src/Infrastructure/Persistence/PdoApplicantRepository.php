@@ -80,6 +80,7 @@ final class PdoApplicantRepository implements ApplicantRepository
 
     public function delete(int $id): void
     {
+        $this->pdo->prepare('DELETE FROM applicant_selections WHERE applicant_id = ?')->execute([$id]);
         $this->pdo->prepare('DELETE FROM applicant_forms WHERE applicant_id = ?')->execute([$id]);
         $this->pdo->prepare('DELETE FROM offering_letters WHERE applicant_id = ?')->execute([$id]);
         $this->pdo->prepare('DELETE FROM applicants WHERE id = ?')->execute([$id]);

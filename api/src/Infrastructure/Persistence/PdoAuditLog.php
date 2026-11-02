@@ -6,12 +6,13 @@ namespace App\Infrastructure\Persistence;
 use App\Application\Ports\AuditLog;
 use DateTimeImmutable;
 use PDO;
+use App\Infrastructure\Security\DataCipher;
 
 final class PdoAuditLog implements AuditLog
 {
     private const FMT = 'Y-m-d H:i:s';
 
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo, private DataCipher $cipher) {}
 
     public function log(
         int $actorId,
@@ -30,8 +31,8 @@ final class PdoAuditLog implements AuditLog
             $entity,
             $entityId,
             $action,
-            json_encode($oldValues, JSON_UNESCAPED_UNICODE),
-            json_encode($newValues, JSON_UNESCAPED_UNICODE),
+            json_encode(['encrypted' => $this->cipher->encrypt($oldValues)], JSON_THROW_ON_ERROR),
+            json_encode(['encrypted' => $this->cipher->encrypt($newValues)], JSON_THROW_ON_ERROR),
             (new DateTimeImmutable())->format(self::FMT),
         ]);
     }

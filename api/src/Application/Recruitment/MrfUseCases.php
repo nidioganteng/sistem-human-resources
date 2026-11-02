@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Application\Recruitment;
 
 use App\Domain\Identity\User;
+use App\Application\Workforce\Notifications;
+use App\Application\Ports\WorkforceStore;
 use App\Domain\Recruitment\Mrf;
 use App\Domain\Recruitment\MrfRepository;
 use App\Domain\Recruitment\MrfSpec;
@@ -15,7 +17,7 @@ use App\Domain\Shared\NotFound;
  */
 final class MrfUseCases
 {
-    public function __construct(private MrfRepository $mrfs) {}
+    public function __construct(private MrfRepository $mrfs, private Notifications $notifications, private WorkforceStore $store) {}
 
     /** @return array<int,array<string,mixed>> */
     public function list(User $actor, ?string $status = null): array
@@ -46,15 +48,18 @@ final class MrfUseCases
      */
     public function create(User $actor, array $input, bool $submitNow): array
     {
+        return $this->store->transaction(function () use ($actor,$input,$submitNow): array {
         $mrf = Mrf::create($actor, MrfSpec::fromInput($input));
         $this->mrfs->save($mrf);
 
         if ($submitNow) {
             $mrf->submit($actor);
             $this->mrfs->save($mrf);
+            $this->notifyStatus($mrf);
         }
 
         return MrfView::from($this->load($actor, (int) $mrf->id()), $actor, true);
+        });
     }
 
     /**
@@ -63,14 +68,18 @@ final class MrfUseCases
      */
     public function update(User $actor, int $id, array $input, bool $submitNow): array
     {
+        return $this->store->transaction(function () use ($actor,$id,$input,$submitNow): array {
+        $this->store->find('mrfs',$id,true);
         $mrf = $this->load($actor, $id);
         $mrf->updateSpec($actor, MrfSpec::fromInput($input));
         if ($submitNow) {
             $mrf->submit($actor);
         }
         $this->mrfs->save($mrf);
+        if ($submitNow) $this->notifyStatus($mrf);
 
         return MrfView::from($this->load($actor, $id), $actor, true);
+        });
     }
 
     /** @return array<string,mixed> */
@@ -119,10 +128,25 @@ final class MrfUseCases
     /** @return array<string,mixed> */
     private function act(User $actor, int $id, callable $change): array
     {
+        return $this->store->transaction(function () use ($actor,$id,$change): array {
+        $this->store->find('mrfs',$id,true);
         $mrf = $this->load($actor, $id);
         $change($mrf);
         $this->mrfs->save($mrf);
-
+        $this->notifyStatus($mrf);
         return MrfView::from($this->load($actor, $id), $actor, true);
+        });
     }
+    private function notifyStatus(Mrf $mrf): void
+    {
+        $id = (int) $mrf->id();
+        if ($mrf->status()->value==='revision') {
+            $history=$mrf->history(); $entry=end($history);
+            $this->notifications->toUser($mrf->requesterId(),'mrf_revision','MRF perlu revisi',['mrfId'=>$id,'message'=>$entry ? $entry->comment : '']);
+        }
+        elseif ($mrf->status()->value==='approved') $this->notifications->toRoles(['hr'],'mrf_approved','MRF disetujui CEO',['mrfId'=>$id,'message'=>$mrf->spec()->position]);
+        elseif ($mrf->status()->value==='pending_ceo') $this->notifications->toRoles(['super_admin'],'mrf_approval','MRF menunggu persetujuan',['mrfId'=>$id,'message'=>$mrf->spec()->position]);
+        elseif ($mrf->status()->value==='pending_manager') $this->notifications->toRoles(['manajer'],'mrf_approval','MRF menunggu persetujuan',['mrfId'=>$id,'message'=>$mrf->spec()->position],$mrf->division());
+    }
+
 }

@@ -11,6 +11,13 @@ final class PublicOlController
 {
     public function __construct(private OfferingLetterUseCases $ols) {}
 
+    public function pdf(Request $req, array $p): Response
+    {
+        $pdf = $this->ols->publicPdf($p['token']);
+        header('Content-Type: application/pdf'); header('Content-Disposition: attachment; filename="offering-letter.pdf"');
+        header('Cache-Control: private, no-store'); echo $pdf; exit();
+    }
+
     /** GET /ol/{token} - lihat Offering Letter tanpa autentikasi */
     /** @param array<string,string> $p */
     public function show(Request $req, array $p): Response
