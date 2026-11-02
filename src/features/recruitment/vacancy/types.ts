@@ -18,6 +18,8 @@ export type ApplicantStatus =
 export interface Vacancy {
   id: number;
   mrfId: number;
+  archiveId?: number;
+  archiveChecksum?: string;
   mrfCode: string | null;
   position: string;
   division: string;
@@ -38,6 +40,7 @@ export interface Applicant {
   status: ApplicantStatus;
   hasCv: boolean;
   hasPortfolio: boolean;
+  hasCertificate?: boolean;
   message: string | null;
   createdAt: string;
   selectionTrack?: 'fast' | 'normal' | null;
