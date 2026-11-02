@@ -170,6 +170,8 @@ export default function ApplyPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [cv, setCv] = useState<File | null>(null);
+  const [certificate, setCertificate] = useState<File | null>(null);
+  const certRef = useRef<HTMLInputElement>(null);
   const [portfolio, setPortfolio] = useState<File | null>(null);
   const [message, setMessage] = useState('');
   const [consent, setConsent] = useState(false);
@@ -214,6 +216,7 @@ export default function ApplyPage() {
     if (cvErr) errs.cv = cvErr;
     const portErr = validateFile(portfolio, 'Portofolio', false);
     if (portErr) errs.portfolio = portErr;
+    const certErr=validateFile(certificate,'Sertifikat',false); if(certErr)errs.certificate=certErr;
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -243,6 +246,7 @@ export default function ApplyPage() {
     fd.append('consent', '1');
     fd.append('cv', cv as File);
     if (portfolio) fd.append('portfolio', portfolio);
+    if (certificate) fd.append('certificate',certificate);
     if (message.trim()) fd.append('message', message.trim());
 
     try {
@@ -419,6 +423,7 @@ export default function ApplyPage() {
                       </div>
                       <FileUploadBox label="CV / Daftar Riwayat Hidup" required file={cv} onChange={setCv} error={fieldErrors.cv} inputRef={cvRef} />
                       <FileUploadBox label="Portofolio" file={portfolio} onChange={setPortfolio} error={fieldErrors.portfolio} inputRef={portRef} hint="Opsional" />
+                      <FileUploadBox label="Sertifikat" file={certificate} onChange={setCertificate} error={fieldErrors.certificate} inputRef={certRef} hint="Opsional, gabungkan sertifikat dalam satu PDF" />
                       <div>
                         <label className="apply-label">Pesan untuk HR</label>
                         <textarea
@@ -452,6 +457,7 @@ export default function ApplyPage() {
                             { k: 'Nomor HP', v: phone },
                             { k: 'CV', v: cv?.name ?? '-' },
                             { k: 'Portofolio', v: portfolio?.name ?? 'Tidak dilampirkan' },
+                            { k: 'Sertifikat', v: certificate?.name ?? 'Tidak dilampirkan' },
                           ].map(({ k, v }) => (
                             <div key={k} className="flex items-start justify-between gap-4 px-5 py-2.5">
                               <span className="text-xs text-caption shrink-0">{k}</span>
