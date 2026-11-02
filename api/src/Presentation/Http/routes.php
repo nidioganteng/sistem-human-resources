@@ -20,6 +20,7 @@ use App\Presentation\Http\Router;
 return static function (Router $r, Container $c): void {
     $auth = $c->get(Authenticate::class);
 
+    $r->add('GET','/integrations/payroll/employees',[$c->get(\App\Presentation\Http\Controllers\PayrollController::class),'index']);
     $r->add('GET', '/ping', static fn () => Response::json(['status' => 'ok']));
 
     $r->add('POST', '/auth/login', [$c->get(AuthController::class), 'login']);
@@ -50,6 +51,7 @@ return static function (Router $r, Container $c): void {
     $r->add('GET',  '/vacancies/{id}/applicants',      [$app, 'index'],     [$auth]);
     $r->add('GET',  '/applicants/{id}',                [$app, 'show'],      [$auth]);
     $r->add('GET',  '/applicants/{id}/file/{type}',    [$app, 'serveFile'],    [$auth]);
+    $r->add('GET', '/applicants/{id}/pdf', [$app,'pdf'], [$auth]);
     $r->add('GET',  '/applicants/{id}/form-data',      [$app, 'showFormData'], [$auth]);
     $r->add('POST', '/applicants/{id}/approve',        [$app, 'approve'],      [$auth]);
     $r->add('POST', '/applicants/{id}/reject',         [$app, 'reject'],       [$auth]);
@@ -60,6 +62,7 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/applicants/{id}/hire',           [$app, 'hire'],            [$auth]);
 
     $ol = $c->get(OfferingLetterController::class);
+    $r->add('GET','/offering-letters/{id}/pdf',[$ol,'pdf'],[$auth]);
     $r->add('GET',  '/offering-letters',                  [$ol, 'list'],    [$auth]);
     $r->add('POST', '/offering-letters',                  [$ol, 'store'],   [$auth]);
     $r->add('GET',  '/offering-letters/{id}',             [$ol, 'show'],    [$auth]);
@@ -79,6 +82,20 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/employees/{id}/validate',             [$emp, 'validate'],       [$auth]);
     $r->add('GET',  '/employees/{id}/documents/{docType}',  [$emp, 'serveDocument'],  [$auth]);
 
+    $workforce = $c->get(\App\Presentation\Http\Controllers\WorkforceController::class);
+    $r->add('GET','/vacancy-archives/{id}/download',[$workforce,'downloadArchive'],[$auth]);
+    $r->add('POST','/vacancy-archives/{id}/purge',[$workforce,'purgeArchive'],[$auth]);
+    $r->add('GET', '/workforce/{module}', [$workforce,'index'], [$auth]);
+    $r->add('POST', '/workforce/{module}', [$workforce,'record'], [$auth]);
+    $r->add('POST', '/employee-records/{id}/complete', [$workforce,'complete'], [$auth]);
+    $r->add('GET', '/employee-records/{id}/file', [$workforce,'file'], [$auth]);
+    $r->add('POST', '/employee-changes/{id}/decide', [$workforce,'decide'], [$auth]);
+    $r->add('GET', '/talent-pool/{id}/file/{type}', [$workforce,'talentFile'], [$auth]);
+    $r->add('POST', '/talent-pool', [$workforce,'talent'], [$auth]);
+    $r->add('GET', '/notifications', [$workforce,'notifications'], [$auth]);
+    $r->add('POST', '/notifications/{id}/read', [$workforce,'read'], [$auth]);
+    $r->add('POST', '/profile/signature', [$workforce,'signature'], [$auth]);
+
     // Endpoint publik (tanpa middleware auth): pendaftaran pelamar
     $pub = $c->get(PublicApplyController::class);
     $r->add('GET',  '/apply/{token}', [$pub, 'show']);
@@ -91,6 +108,7 @@ return static function (Router $r, Container $c): void {
 
     // Endpoint publik (tanpa middleware auth): Offering Letter kandidat
     $pubOl = $c->get(PublicOlController::class);
+    $r->add('GET','/ol/{token}/pdf',[$pubOl,'pdf']);
     $r->add('GET',  '/ol/{token}',         [$pubOl, 'show']);
     $r->add('POST', '/ol/{token}/respond', [$pubOl, 'respond']);
 
