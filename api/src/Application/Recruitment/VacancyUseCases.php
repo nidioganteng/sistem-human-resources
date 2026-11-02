@@ -28,6 +28,7 @@ final class VacancyUseCases
         private MrfRepository $mrfs,
         private ApplicantRepository $applicants,
         private FileStorage $storage,
+        private ArchiveUseCases $archives,
     ) {}
 
     /** @return array<int,array<string,mixed>> */
@@ -46,7 +47,7 @@ final class VacancyUseCases
     /** @return array<string,mixed> */
     public function get(User $actor, int $id): array
     {
-        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer)) {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer, Role::Pic)) {
             throw new NotAllowed('Anda tidak memiliki akses melihat lowongan.');
         }
 
@@ -55,7 +56,7 @@ final class VacancyUseCases
             throw new NotFound('Lowongan tidak ditemukan.');
         }
 
-        if ($actor->role === Role::Manajer && $row['vacancy']->division() !== $actor->division) {
+        if ($actor->hasRole(Role::Manajer, Role::Pic) && $row['vacancy']->division() !== $actor->division) {
             throw new NotFound('Lowongan tidak ditemukan.');
         }
 
@@ -141,102 +142,15 @@ final class VacancyUseCases
     }
 
     /**
-     * HR mengunduh arsip ZIP semua data pelamar lowongan yang sudah diarsipkan,
-     * lalu server menghapus semua data pelamar dan lowongan setelah streaming selesai.
+     * HR mengunduh arsip ZIP lengkap. Pembersihan dilakukan melalui endpoint
+     * terpisah setelah verifikasi arsip dan penyelesaian proses kandidat.
      *
      * Method ini langsung menulis ke output PHP (header + readfile) lalu exit().
      * Tidak mengembalikan Response karena streaming binary tidak bisa dibungkus Response JSON.
      */
     public function streamArchiveAndDelete(User $actor, int $id): void
     {
-        if ($actor->role !== Role::Hr) {
-            throw new NotAllowed('Hanya HR yang dapat mengunduh arsip lowongan.');
-        }
-
-        $row = $this->vacancies->findWithCounts($id);
-        if ($row === null) {
-            throw new NotFound('Lowongan tidak ditemukan.');
-        }
-
-        $vacancy = $row['vacancy'];
-        if ($vacancy->status() !== VacancyStatus::Archived) {
-            throw new DomainRuleViolation('Hanya lowongan yang sudah diarsipkan yang dapat diunduh.');
-        }
-
-        $applicantList = $this->applicants->findByVacancy($id);
-
-        // Buat file ZIP sementara
-        $tmpZip = tempnam(sys_get_temp_dir(), 'hr_arsip_');
-        if ($tmpZip === false) {
-            throw new \RuntimeException('Gagal membuat file sementara.');
-        }
-
-        $zip = new ZipArchive();
-        if ($zip->open($tmpZip, ZipArchive::OVERWRITE) !== true) {
-            throw new \RuntimeException('Gagal membuat arsip ZIP.');
-        }
-
-        // Buat CSV pelamar
-        $csvLines = ['Nama,Email,Nomor HP,Status,Tanggal Daftar'];
-        foreach ($applicantList as $applicant) {
-            $csvLines[] = implode(',', [
-                '"' . str_replace('"', '""', $applicant->fullName()) . '"',
-                '"' . str_replace('"', '""', $applicant->email()) . '"',
-                '"' . str_replace('"', '""', $applicant->phone()) . '"',
-                '"' . str_replace('"', '""', $applicant->status()->value) . '"',
-                '"' . $applicant->createdAt()->format('Y-m-d H:i:s') . '"',
-            ]);
-        }
-        $zip->addFromString('pelamar.csv', implode("\n", $csvLines));
-
-        // Tambah berkas CV dan portofolio
-        $storagePath = rtrim(STORAGE_PATH, '/');
-        foreach ($applicantList as $applicant) {
-            $cvRelative = $applicant->cvPath();
-            $cvFull     = $storagePath . '/' . $cvRelative;
-            if ($cvRelative !== '' && is_file($cvFull)) {
-                $zip->addFile($cvFull, 'cv/' . basename($cvFull));
-            }
-
-            $portfolioRelative = $applicant->portfolioPath();
-            if ($portfolioRelative !== null && $portfolioRelative !== '') {
-                $portfolioFull = $storagePath . '/' . $portfolioRelative;
-                if (is_file($portfolioFull)) {
-                    $zip->addFile($portfolioFull, 'portfolio/' . basename($portfolioFull));
-                }
-            }
-        }
-
-        $zip->close();
-
-        // Nama file ZIP: arsip-<posisi>-<tanggal>.zip
-        $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $vacancy->position()) ?? 'lowongan';
-        $date     = (new \DateTimeImmutable())->format('Ymd');
-        $filename = 'arsip-' . $safeName . '-' . $date . '.zip';
-
-        // Stream ZIP ke browser
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . (string) filesize($tmpZip));
-        header('Cache-Control: no-store');
-        readfile($tmpZip);
-        @unlink($tmpZip);
-
-        // Hapus semua data pelamar dan berkas fisik
-        foreach ($applicantList as $applicant) {
-            $this->storage->delete($applicant->cvPath());
-            if ($applicant->portfolioPath() !== null) {
-                $this->storage->delete($applicant->portfolioPath());
-            }
-            $this->applicants->delete((int) $applicant->id());
-        }
-
-        // Hapus lowongan dan MRF terkait
-        $mrfId = $vacancy->mrfId();
-        $this->vacancies->delete($id);
-        $this->mrfs->delete($mrfId);
-
-        exit();
+$this->archives->downloadForVacancy($actor,$id);
     }
 
     /** HR menutup lowongan secara manual. */
@@ -252,8 +166,11 @@ final class VacancyUseCases
         }
 
         $vacancy = $row['vacancy'];
-        $vacancy->close($actor);
-        $this->vacancies->save($vacancy);
+        if ($vacancy->status() === VacancyStatus::Open) {
+            $vacancy->close($actor);
+            $this->vacancies->save($vacancy);
+        }
+        $archive=$this->archives->prepare($actor,$id);
 
         $updated = $this->vacancies->findWithCounts($id);
 
@@ -261,7 +178,7 @@ final class VacancyUseCases
             $updated !== null ? $updated['vacancy'] : $vacancy,
             $updated['counts'] ?? [],
             $updated['mrfCode'] ?? $row['mrfCode'],
-        );
+        ) + ['archiveId'=>(int)$archive['id'],'archiveChecksum'=>$archive['checksum']];
     }
 
     /**
