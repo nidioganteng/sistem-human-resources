@@ -26,4 +26,6 @@ if (!is_file($envFile)) {
 }
 require $envFile;
 
+if (is_file(dirname(__DIR__) . '/vendor/autoload.php')) { require dirname(__DIR__) . '/vendor/autoload.php'; }
+
 date_default_timezone_set('Asia/Makassar');
