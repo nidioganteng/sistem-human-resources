@@ -75,6 +75,14 @@ final class Vacancy
         $this->closedAt = new DateTimeImmutable();
     }
 
+    /** Stop public registration after a candidate accepts an approved offering. */
+    public function closeAfterOfferAcceptance(): void
+    {
+        if ($this->status !== VacancyStatus::Open) return;
+        $this->status = VacancyStatus::Closed;
+        $this->closedAt = new DateTimeImmutable();
+    }
+
     public function reopen(User $actor): void
     {
         if ($actor->role !== Role::Hr) {
