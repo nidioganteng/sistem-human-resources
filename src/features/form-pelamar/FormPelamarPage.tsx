@@ -559,18 +559,19 @@ export default function FormPelamarPage() {
 
           {/* Header kartu */}
           <div
-            className="flex items-center justify-between gap-4 px-8 py-6"
+            className="flex flex-col items-center gap-4 px-8 py-6 text-center"
             style={{ background: 'var(--primary)' }}
           >
+            <BrandLogo onDark
+              alt="GSG"
+              className="h-10 w-auto shrink-0 object-contain opacity-80"
+            />
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-white/50">Form Pelamar Digital</p>
               <p className="mt-1 text-xl font-bold leading-tight text-white">{info?.vacancyPosition}</p>
               <p className="mt-0.5 text-sm text-white/70">Divisi {info?.vacancyDivision} &middot; {info?.applicantName}</p>
             </div>
-            <BrandLogo onDark
-              alt="GSG"
-              className="h-10 w-auto shrink-0 object-contain opacity-80"
-            />
+
           </div>
 
           {/* Step indicator */}
