@@ -5,7 +5,7 @@ import { Badge } from '@/shared/ui/Badge';
 import { Alert } from '@/shared/ui/Alert';
 import { Modal } from '@/shared/ui/Modal';
 import { useAuth } from '@/auth/AuthContext';
-import { ApiError } from '@/services/api';
+import { apiFetchBlob, ApiError } from '@/services/api';
 import { getOl, updateOl, submitOl, approveOl, reviseOl, sendOl, resendOl } from './olService';
 import { OL_STATUS_LABELS } from './types';
 import type { OfferingLetter, OlStatus } from './types';
@@ -172,7 +172,7 @@ export default function OlDetailPage() {
     try {
       const updated = await sendOl(ol.id, window.location.origin);
       setOl(updated);
-      setActionMsg({ type: 'ok', text: 'Offering Letter berhasil dikirim ke kandidat via email.' });
+      setActionMsg({ type: 'ok', text: 'Offering Letter masuk antrean pengiriman email ke kandidat.' });
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal mengirim email.' });
     } finally {
@@ -186,7 +186,7 @@ export default function OlDetailPage() {
     setActionMsg(null);
     try {
       await resendOl(ol.id, window.location.origin);
-      setActionMsg({ type: 'ok', text: 'Email Offering Letter berhasil dikirim ulang.' });
+      setActionMsg({ type: 'ok', text: 'Email Offering Letter masuk antrean pengiriman ulang.' });
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal mengirim ulang email.' });
     } finally {
@@ -264,6 +264,7 @@ export default function OlDetailPage() {
           </div>
         </div>
 
+        <button className="btn-secondary" onClick={()=>void apiFetchBlob(`/offering-letters/${ol.id}/pdf`).then(blob=>{const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='offering-letter.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}).catch(()=>setActionMsg({type:'err',text:'Gagal mengunduh PDF.'}))}>Unduh PDF resmi</button>
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-caption">
             Isi Surat
@@ -447,7 +448,7 @@ export default function OlDetailPage() {
       <Modal open={showConfirmSend} onClose={() => setShowConfirmSend(false)} title="Kirim ke Kandidat?" size="sm">
         <div className="space-y-4">
           <p className="text-sm text-caption">
-            Email Offering Letter akan dikirim ke kandidat. Kandidat punya waktu 5 hari kerja untuk merespons.
+            Email Offering Letter akan dikirim ke kandidat. Batas respons kandidat akan tercantum pada email penawaran.
           </p>
           <div className="flex justify-end gap-2">
             <button className="btn-secondary" onClick={() => setShowConfirmSend(false)}>Batal</button>
