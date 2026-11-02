@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ClipboardList, Copy, Download, FileText, ListChecks, Users } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Copy, FileText, ListChecks, Users } from 'lucide-react';
 import { Badge } from '@/shared/ui/Badge';
 import { Alert } from '@/shared/ui/Alert';
 import { EmptyState } from '@/shared/ui/EmptyState';
@@ -12,6 +12,7 @@ import {
   callToSelection,
   closeVacancy,
   downloadAndDeleteVacancy,
+  downloadArchiveAndClear,
   getApplicantFormData,
   getSelectionRecords,
   getVacancy,
@@ -26,8 +27,9 @@ import { APPLICANT_STATUS_LABELS } from './types';
 import type { Applicant, ApplicantFormDetail, SelectionRecord, Vacancy } from './types';
 import { ApiError, apiFetchBlob } from '@/services/api';
 import { RupiahInput } from '@/shared/ui/RupiahInput';
+import { ApplicantReviewPanel } from './ApplicantReviewPanel';
 import { FormPelamarModal } from './FormPelamarModal';
-import { exportFormPelamarDocx } from './exportFormPelamar';
+import { JobQrCode } from '@/shared/ui/JobQrCode';
 import { useAuth } from '@/auth/AuthContext';
 import { createOl, listOls } from '@/features/recruitment/ol/olService';
 import type { OfferingLetter } from '@/features/recruitment/ol/types';
@@ -72,9 +74,7 @@ export default function VacancyDetailPage() {
   const [confirmReject, setConfirmReject] = useState<Applicant | null>(null);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Applicant | null>(null);
-  const [fileLoading, setFileLoading] = useState<'cv' | 'portfolio' | null>(null);
-  const [viewer, setViewer] = useState<{ blobUrl: string; title: string; filename: string } | null>(null);
-  const blobUrlRef = useRef<string | null>(null);
+
 
   // State untuk modal Form Pelamar
   const [formApplicant, setFormApplicant] = useState<Applicant | null>(null);
@@ -87,7 +87,7 @@ export default function VacancyDetailPage() {
   const signatureUrlRef = useRef<string | null>(null);
   const [formViewer, setFormViewer] = useState<{ blobUrl: string; title: string; filename: string } | null>(null);
   const formViewerRef = useRef<string | null>(null);
-  const [exportingDocx, setExportingDocx] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [shortlisting, setShortlisting] = useState(false);
 
   // State untuk OL
@@ -157,7 +157,7 @@ export default function VacancyDetailPage() {
     setActionMsg(null);
     try {
       await approveApplicant(applicant.id, window.location.origin);
-      setActionMsg({ type: 'ok', text: `Email tautan Form Pelamar telah dikirim ke ${applicant.email}.` });
+      setActionMsg({ type: 'ok', text: `Email tautan Form Pelamar masuk antrean pengiriman ke ${applicant.email}.` });
       setSelected(null);
       await load();
     } catch (e) {
@@ -173,21 +173,13 @@ export default function VacancyDetailPage() {
     setActionMsg(null);
     try {
       await rejectApplicant(applicant.id);
-      setActionMsg({ type: 'ok', text: `Lamaran ${applicant.fullName} ditolak. Email penolakan dikirim.` });
+      setActionMsg({ type: 'ok', text: `Lamaran ${applicant.fullName} ditolak. Email penolakan masuk antrean pengiriman.` });
       setSelected(null);
       await load();
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal menolak.' });
     } finally {
       setBusy(null);
-    }
-  };
-
-  const closeViewer = () => {
-    setViewer(null);
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
     }
   };
 
@@ -256,15 +248,16 @@ export default function VacancyDetailPage() {
     }
   };
 
-  const handleExportDocx = async () => {
+  const handleExportPdf = async () => {
     if (!formApplicant || !formDetail) return;
-    setExportingDocx(true);
+    setExportingPdf(true);
     try {
-      await exportFormPelamarDocx(formApplicant, formDetail, photoUrl, signatureUrl);
+      const blob = await apiFetchBlob(`/applicants/${formApplicant.id}/pdf`);
+      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`form-pelamar-${formApplicant.id}.pdf`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
     } catch (e) {
       setActionMsg({ type: 'err', text: 'Gagal mengekspor dokumen.' });
     } finally {
-      setExportingDocx(false);
+      setExportingPdf(false);
     }
   };
 
@@ -307,7 +300,7 @@ export default function VacancyDetailPage() {
       await load();
       navigate(`/karyawan/${employee.id}`);
     } catch (e) {
-      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal menjadikan karyawan.' });
+      setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal memulai onboarding.' });
     } finally {
       setBusyHire(null);
     }
@@ -348,7 +341,7 @@ export default function VacancyDetailPage() {
     setSelectionApplicant(applicant);
     setSelectionRecords([]);
     setSelectionError('');
-    setSelectionStage('competency_test');
+    setSelectionStage(currentUser?.role === 'pic' || currentUser?.role === 'manajer' ? 'competency_test' : 'interview');
     setSelectionResult('pass');
     setSelectionNotes('');
     setSelectionLoading(true);
@@ -395,34 +388,14 @@ export default function VacancyDetailPage() {
     }
   };
 
-  const handleOpenFile = async (type: 'cv' | 'portfolio') => {
-    if (!selected) return;
-    setFileLoading(type);
-    try {
-      const blob    = await apiFetchBlob(`/applicants/${selected.id}/file/${type}`);
-      const url     = URL.createObjectURL(blob);
-      blobUrlRef.current = url;
-      const label   = type === 'cv' ? 'CV' : 'Portofolio';
-      const ext     = blob.type === 'application/pdf' ? 'pdf' : 'bin';
-      setViewer({
-        blobUrl:  url,
-        title:    `${label} - ${selected.fullName}`,
-        filename: `${type}-${selected.fullName.replace(/\s+/g, '_')}.${ext}`,
-      });
-    } catch {
-      setActionMsg({ type: 'err', text: 'Gagal membuka berkas. Coba lagi.' });
-    } finally {
-      setFileLoading(null);
-    }
-  };
-
   const handleClose = async () => {
     setBusy('close');
     setConfirmClose(false);
     try {
       const updated = await closeVacancy(vacancyId);
       setVacancy(updated);
-      setActionMsg({ type: 'ok', text: 'Lowongan berhasil ditutup.' });
+      if(updated.archiveId&&updated.archiveChecksum){await downloadArchiveAndClear(updated.archiveId,updated.archiveChecksum);await load();}
+      setActionMsg({ type: 'ok', text: 'Lowongan ditutup, arsip lengkap diunduh, dan data aktif dibersihkan. Salinan tersedia di Arsip Lowongan.' });
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal menutup lowongan.' });
     } finally {
@@ -449,7 +422,7 @@ export default function VacancyDetailPage() {
     try {
       const updated = await archiveVacancy(vacancyId);
       setVacancy(updated);
-      setActionMsg({ type: 'ok', text: 'Lowongan berhasil diarsipkan. Gunakan tombol "Unduh & Hapus" di halaman Arsip untuk mengunduh data pelamar.' });
+      setActionMsg({ type: 'ok', text: 'Lowongan berhasil diarsipkan. Gunakan tombol "Unduh Arsip" di halaman Arsip untuk mengunduh data pelamar.' });
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal mengarsipkan lowongan.' });
     } finally {
@@ -465,7 +438,7 @@ export default function VacancyDetailPage() {
       const safeName = vacancy.position.replace(/\s+/g, '_');
       const date     = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       await downloadAndDeleteVacancy(vacancyId, `arsip-${safeName}-${date}.zip`);
-      setActionMsg({ type: 'ok', text: 'Arsip berhasil diunduh. Data lowongan dan pelamar telah dihapus dari server.' });
+      setActionMsg({ type: 'ok', text: 'Arsip berhasil diunduh. Salinan tetap tersedia di Arsip Lowongan.' });
       setTimeout(() => { window.location.href = '/lowongan'; }, 2000);
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal mengunduh arsip.' });
@@ -552,7 +525,7 @@ export default function VacancyDetailPage() {
                 disabled={busy === 'download'}
                 onClick={() => setConfirmDownload(true)}
               >
-                {busy === 'download' ? 'Mengunduh...' : 'Unduh & Hapus'}
+                {busy === 'download' ? 'Mengunduh...' : 'Unduh Arsip'}
               </button>
             )}
           </div>
@@ -569,6 +542,8 @@ export default function VacancyDetailPage() {
         )}
       </div>
 
+      {vacancy.status === 'open' && currentUser?.role === 'hr' && <JobQrCode url={applyUrl} />}
+      {vacancy.status === 'closed' && <Alert variant="info">Pendaftaran lowongan sudah ditutup. Kandidat yang menerima OL dapat dilanjutkan melalui Mulai Onboarding. Data dan penawaran kandidat lain tetap tersimpan sampai proses diselesaikan.</Alert>}
       {actionMsg && (
         <Alert variant={actionMsg.type === 'ok' ? 'success' : 'error'}>
           {actionMsg.text}
@@ -600,8 +575,7 @@ export default function VacancyDetailPage() {
                   {newApplicants.map((a) => (
                     <tr
                       key={a.id}
-                      className="cursor-pointer transition-colors hover:bg-subtle"
-                      onClick={() => setSelected(a)}
+                      className={`transition-colors hover:bg-subtle ${selected?.id === a.id ? 'bg-accent-soft' : ''}`}
                     >
                       <td className="td font-medium text-ink">{a.fullName}</td>
                       <td className="td text-caption">{a.email}</td>
@@ -612,9 +586,9 @@ export default function VacancyDetailPage() {
                         })}
                       </td>
                       <td className="td text-right">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400">
-                          <FileText size={13} /> Lihat Berkas
-                        </span>
+                        <button type="button" aria-expanded={selected?.id === a.id} disabled={typeof busy === 'number'} onClick={() => setSelected(selected?.id === a.id ? null : a)} className="inline-flex min-h-9 items-center gap-1 text-xs font-medium text-accent hover:underline disabled:opacity-50">
+                          <FileText size={13} /> {selected?.id === a.id ? 'Tutup Detail' : 'Lihat Berkas'}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -624,6 +598,18 @@ export default function VacancyDetailPage() {
           )}
         </div>
       </div>
+
+      {selected && (
+        <ApplicantReviewPanel
+          key={selected.id}
+          applicant={selected}
+          canScreen={currentUser?.role === 'hr'}
+          busy={busy === selected.id}
+          onClose={() => setSelected(null)}
+          onApprove={() => void handleApprove(selected)}
+          onReject={() => setConfirmReject(selected)}
+        />
+      )}
 
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-body">
@@ -682,7 +668,7 @@ export default function VacancyDetailPage() {
             <EmptyState
               icon={<ListChecks size={22} />}
               title="Belum ada kandidat"
-              description="Kandidat yang di-shortlist oleh CEO akan muncul di sini."
+              description="Kandidat yang di-shortlist oleh tim penilai akan muncul di sini."
             />
           ) : (
             <div className="overflow-x-auto">
@@ -721,7 +707,7 @@ export default function VacancyDetailPage() {
                             {busyCall === a.id ? 'Memproses...' : 'Panggil ke Seleksi'}
                           </button>
                         )}
-                        {a.status === 'selection' && (currentUser?.role === 'hr' || currentUser?.role === 'super_admin') && (
+                        {a.status === 'selection' && (['hr','super_admin','manajer','pic'].includes(currentUser?.role ?? '')) && (
                           <button
                             className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
                             onClick={() => void handleOpenSelectionModal(a)}
@@ -760,7 +746,7 @@ export default function VacancyDetailPage() {
                             disabled={busyHire === a.id}
                             onClick={() => void handleHire(a)}
                           >
-                            {busyHire === a.id ? 'Memproses...' : 'Jadikan Karyawan'}
+                            {busyHire === a.id ? 'Memproses...' : 'Mulai Onboarding'}
                           </button>
                         )}
                         {a.status === 'not_selected' && (
@@ -808,121 +794,6 @@ export default function VacancyDetailPage() {
         </div>
       )}
 
-      {/* Modal detail pelamar */}
-      <Modal
-        open={selected !== null}
-        onClose={() => setSelected(null)}
-        title="Detail Pelamar"
-        size="md"
-      >
-        {selected && (
-          <div className="space-y-5">
-            {/* Info dasar */}
-            <div className="grid grid-cols-2 gap-4 rounded-xl bg-subtle p-4">
-              <div>
-                <p className="text-xs text-caption">Nama Lengkap</p>
-                <p className="mt-0.5 font-semibold text-ink">{selected.fullName}</p>
-              </div>
-              <div>
-                <p className="text-xs text-caption">Tanggal Daftar</p>
-                <p className="mt-0.5 font-semibold text-ink">
-                  {new Date(selected.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-caption">Email</p>
-                <p className="mt-0.5 text-sm text-body">{selected.email}</p>
-              </div>
-              <div>
-                <p className="text-xs text-caption">Nomor HP</p>
-                <p className="mt-0.5 text-sm text-body">{selected.phone}</p>
-              </div>
-            </div>
-
-            {/* Pesan dari pelamar */}
-            {selected.message && (
-              <div className="rounded-xl border border-line bg-subtle px-4 py-3">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-caption">Pesan dari Pelamar</p>
-                <p className="whitespace-pre-wrap text-sm text-body">{selected.message}</p>
-              </div>
-            )}
-
-            {/* Berkas */}
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-caption">Berkas Lamaran</p>
-              <div className="flex flex-col gap-2">
-                {selected.hasCv && (
-                  <button
-                    onClick={() => void handleOpenFile('cv')}
-                    disabled={fileLoading === 'cv'}
-                    className="flex items-center gap-3 rounded-xl border border-line bg-panel px-4 py-3 text-sm font-medium text-body transition-colors hover:bg-subtle disabled:opacity-60"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500 dark:bg-red-900/20">
-                      <FileText size={18} />
-                    </span>
-                    <span className="flex-1 text-left">
-                      <span className="block">Curriculum Vitae (CV)</span>
-                      <span className="text-xs text-caption">PDF</span>
-                    </span>
-                    <Download size={15} className="text-caption" />
-                    {fileLoading === 'cv' && <span className="text-xs text-caption">Membuka...</span>}
-                  </button>
-                )}
-                {selected.hasPortfolio && (
-                  <button
-                    onClick={() => void handleOpenFile('portfolio')}
-                    disabled={fileLoading === 'portfolio'}
-                    className="flex items-center gap-3 rounded-xl border border-line bg-panel px-4 py-3 text-sm font-medium text-body transition-colors hover:bg-subtle disabled:opacity-60"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500 dark:bg-blue-900/20">
-                      <FileText size={18} />
-                    </span>
-                    <span className="flex-1 text-left">
-                      <span className="block">Portofolio</span>
-                      <span className="text-xs text-caption">PDF</span>
-                    </span>
-                    <Download size={15} className="text-caption" />
-                    {fileLoading === 'portfolio' && <span className="text-xs text-caption">Membuka...</span>}
-                  </button>
-                )}
-                {!selected.hasCv && !selected.hasPortfolio && (
-                  <p className="text-sm text-caption">Tidak ada berkas tersedia.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Tombol aksi - hanya HR */}
-            {selected.status === 'new' && currentUser?.role === 'hr' && (
-              <div className="flex gap-2 border-t border-line pt-4">
-                <button
-                  className="btn-danger flex-1"
-                  disabled={busy === selected.id}
-                  onClick={() => setConfirmReject(selected)}
-                >
-                  {busy === selected.id ? '...' : 'Tolak Lamaran'}
-                </button>
-                <button
-                  className="btn-primary flex-1"
-                  disabled={busy === selected.id}
-                  onClick={() => void handleApprove(selected)}
-                >
-                  {busy === selected.id ? '...' : 'Setujui & Kirim Form'}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
-
-      <FileViewerModal
-        open={viewer !== null}
-        onClose={closeViewer}
-        blobUrl={viewer?.blobUrl ?? null}
-        title={viewer?.title ?? ''}
-        filename={viewer?.filename}
-        loading={false}
-      />
-
       <FormPelamarModal
         open={formApplicant !== null}
         applicant={formApplicant}
@@ -932,8 +803,8 @@ export default function VacancyDetailPage() {
         photoUrl={photoUrl}
         signatureUrl={signatureUrl}
         onClose={closeFormModal}
-        onExportDocx={() => void handleExportDocx()}
-        exportingDocx={exportingDocx}
+        onExportPdf={() => void handleExportPdf()}
+        exportingPdf={exportingPdf}
         userRole={currentUser?.role}
         onShortlist={() => void handleShortlist()}
         shortlisting={shortlisting}
@@ -1011,8 +882,7 @@ export default function VacancyDetailPage() {
                       value={selectionStage}
                       onChange={(e) => setSelectionStage(e.target.value as 'competency_test' | 'interview')}
                     >
-                      <option value="competency_test">Tes Kompetensi</option>
-                      <option value="interview">Wawancara</option>
+                      {(currentUser?.role === 'pic' || currentUser?.role === 'manajer') ? <option value="competency_test">Tes Kompetensi</option> : <option value="interview">Wawancara</option>}
                     </select>
                   </div>
                   <div>
@@ -1075,7 +945,7 @@ export default function VacancyDetailPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-caption">
-            Tautan pendaftaran akan langsung tidak aktif. Lowongan masih bisa dibuka kembali nanti.
+            Pendaftaran akan ditutup. Sistem menyiapkan dan mengunduh arsip lengkap, lalu membersihkan data pelamar aktif setelah checksum arsip terverifikasi. Data karyawan, talent pool, riwayat MRF, dan salinan arsip server tetap disimpan.
           </p>
           <div className="flex justify-end gap-2">
             <button className="btn-secondary" onClick={() => setConfirmClose(false)}>Batal</button>
@@ -1093,7 +963,7 @@ export default function VacancyDetailPage() {
         <div className="space-y-4">
           <p className="text-sm text-caption">
             Lowongan akan diarsipkan. Status berubah ke <strong className="text-body">Diarsipkan</strong>{' '}
-            dan tidak bisa dibuka kembali. Data pelamar masih tersimpan hingga Anda mengunduh arsip.
+            dan tidak bisa dibuka kembali. Data pelamar dibersihkan melalui menu Arsip Lowongan setelah arsip berhasil diunduh.
           </p>
           <div className="flex justify-end gap-2">
             <button className="btn-secondary" onClick={() => setConfirmArchive(false)}>Batal</button>
@@ -1114,7 +984,7 @@ export default function VacancyDetailPage() {
           <p className="text-sm text-caption">
             Lamaran dari <strong className="text-body">{confirmReject?.fullName}</strong> akan ditolak
             dan email penolakan akan dikirim secara otomatis.
-            Data pelamar akan <strong className="text-body">dihapus permanen</strong> dari server.
+            Riwayat lamaran tetap tersimpan sampai pembersihan melalui arsip lowongan.
           </p>
           <p className="text-xs text-red-500">Tindakan ini tidak dapat dibatalkan.</p>
           <div className="flex justify-end gap-2">
@@ -1189,18 +1059,15 @@ export default function VacancyDetailPage() {
       <Modal
         open={confirmDownload}
         onClose={() => setConfirmDownload(false)}
-        title="Unduh & Hapus Data?"
+        title="Unduh Arsip Data?"
         size="sm"
       >
         <div className="space-y-4">
           <p className="text-sm text-caption">
-            Semua data pelamar (CSV + berkas CV dan portofolio) akan dikemas dalam satu file ZIP dan diunduh.
-            Setelah unduhan selesai, <strong className="text-body">seluruh data pelamar dan lowongan ini akan dihapus permanen dari server</strong>.
-            Pastikan file ZIP berhasil tersimpan sebelum melanjutkan.
+            Unduh arsip lengkap berisi rekap pelamar, formulir PDF, Offering Letter, dan berkas pendukung.
+            Salinan arsip tetap tersedia pada menu Arsip Lowongan.
           </p>
-          <p className="text-xs text-amber-600">
-            Tindakan ini tidak dapat dibatalkan.
-          </p>
+
           <div className="flex justify-end gap-2">
             <button className="btn-secondary" onClick={() => setConfirmDownload(false)}>Batal</button>
             <button
@@ -1208,7 +1075,7 @@ export default function VacancyDetailPage() {
               disabled={busy === 'download'}
               onClick={() => void handleDownloadAndDelete()}
             >
-              {busy === 'download' ? 'Mengunduh...' : 'Ya, Unduh & Hapus'}
+              {busy === 'download' ? 'Mengunduh...' : 'Ya, Unduh Arsip'}
             </button>
           </div>
         </div>
