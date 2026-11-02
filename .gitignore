@@ -8,3 +8,5 @@ api/config/env.php
 uploads/
 *.tsbuildinfo
 *.tar.gz
+
+/api/vendor/
