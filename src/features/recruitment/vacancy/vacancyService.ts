@@ -74,3 +74,13 @@ export const listCandidates = (): Promise<{ items: CandidateItem[] }> =>
 
 export const hireApplicant = (id: number): Promise<Employee> =>
   post(`/applicants/${id}/hire`);
+
+/** Verify the complete archive before authorizing cleanup. A server backup is retained. */
+export async function downloadArchiveAndClear(id: number, expectedChecksum: string): Promise<void> {
+  const blob=await apiFetchBlob(`/vacancy-archives/${id}/download`);
+  const digest=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());
+  const checksum=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  if(checksum!==expectedChecksum)throw new Error('Checksum arsip berbeda. Data aktif belum dibersihkan.');
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`arsip-lowongan-${id}.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
+  await post(`/vacancy-archives/${id}/purge`,{checksum});
+}
