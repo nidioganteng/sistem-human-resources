@@ -61,28 +61,22 @@ final class PublicApplyController
             throw new HttpException(422, 'Persetujuan penyimpanan data wajib diberikan.');
         }
 
-        // Validasi dan simpan CV (wajib)
+        // Validate every input before persisting any upload.
         $cvTmp = $this->validateUploadedFile($req->files['cv'] ?? [], 'CV', true);
-        $cvPath = $this->storage->storeUpload($cvTmp, 'cv', 'pdf');
-
-        // Validasi dan simpan portofolio (opsional)
-        $portfolioPath = null;
-        $portFile = $req->files['portfolio'] ?? [];
-        if (!empty($portFile['tmp_name']) && ($portFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-            $portTmp       = $this->validateUploadedFile($portFile, 'portofolio', false);
-            $portfolioPath = $this->storage->storeUpload($portTmp, 'portfolio', 'pdf');
+        $portTmp = $this->validateUploadedFile($req->files['portfolio'] ?? [], 'portofolio', false);
+        $certTmp = $this->validateUploadedFile($req->files['certificate'] ?? [], 'sertifikat', false);
+        $stored = [];
+        try {
+            $cvPath = $this->storage->storeUpload($cvTmp,'cv','pdf'); $stored[] = $cvPath;
+            $portfolioPath = $portTmp !== '' ? $this->storage->storeUpload($portTmp,'portfolio','pdf') : null;
+            if ($portfolioPath) $stored[] = $portfolioPath;
+            $certificatePath = $certTmp !== '' ? $this->storage->storeUpload($certTmp,'certificate','pdf') : null;
+            if ($certificatePath) $stored[] = $certificatePath;
+            $result = $this->applicants->register($p['token'],$fullName,strtolower($email),$phone,$cvPath,$portfolioPath,$message,$certificatePath);
+        } catch (\Throwable $e) {
+            foreach ($stored as $path) $this->storage->delete($path);
+            throw $e;
         }
-
-        $result = $this->applicants->register(
-            $p['token'],
-            $fullName,
-            strtolower($email),
-            $phone,
-            $cvPath,
-            $portfolioPath,
-            $message,
-        );
-
         return Response::json(['success' => true, 'applicant' => $result], 201);
     }
 
