@@ -119,7 +119,7 @@ final class Employee
         $this->updatedAt    = new DateTimeImmutable();
     }
 
-    public function validate(User $actor): void
+    public function validate(User $actor, array $documentTypes = []): void
     {
         if ($actor->role !== Role::Hr) {
             throw new NotAllowed('Hanya HR yang dapat memvalidasi karyawan.');
@@ -128,6 +128,17 @@ final class Employee
             throw new DomainRuleViolation('Karyawan ini sudah dalam status aktif atau tidak aktif.');
         }
 
+        if ($this->nik === null || !preg_match('/^[0-9]{16}$/D', $this->nik)
+            || !$this->email || !filter_var($this->email, FILTER_VALIDATE_EMAIL) || !$this->phone) {
+            throw new DomainRuleViolation('NIK 16 digit, email, dan nomor HP harus lengkap sebelum validasi.');
+        }
+        foreach (['birth_date', 'birth_place', 'address'] as $field) {
+            if (trim((string) ($this->personalData[$field] ?? '')) === '') {
+                throw new DomainRuleViolation('Data onboarding belum lengkap: ' . $field);
+            }
+        }
+        $missing = array_diff(['ktp', 'kk', 'npwp', 'bpjs', 'ijazah', 'foto'], $documentTypes);
+        if ($missing !== []) throw new DomainRuleViolation('Dokumen belum lengkap: ' . implode(', ', $missing));
         $this->status      = EmployeeStatus::Active;
         $this->validatedAt = new DateTimeImmutable();
         $this->validatedBy = $actor->id;
@@ -174,6 +185,8 @@ final class Employee
             throw new DomainRuleViolation('Hanya karyawan aktif yang dapat dinonaktifkan.');
         }
 
+        $this->onboardingToken = null;
+        $this->tokenExpiresAt = null;
         $this->status    = EmployeeStatus::Inactive;
         $this->updatedAt = new DateTimeImmutable();
     }
