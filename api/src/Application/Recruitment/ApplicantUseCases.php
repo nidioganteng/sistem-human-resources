@@ -6,11 +6,16 @@ namespace App\Application\Recruitment;
 use App\Application\Employee\EmployeeView;
 use App\Application\Ports\FileStorage;
 use App\Application\Ports\Mailer;
+use App\Application\Ports\WorkforceStore;
+use App\Application\Ports\DocumentRenderer;
+use App\Application\Workforce\Notifications;
 use App\Domain\Employee\Employee;
 use App\Domain\Employee\EmployeeRepository;
 use App\Domain\Identity\Role;
 use App\Domain\Identity\User;
 use App\Domain\Recruitment\Applicant;
+use App\Domain\Recruitment\ApplicantStatus;
+use App\Domain\Recruitment\SelectionPolicy;
 use App\Domain\Recruitment\ApplicantRepository;
 use App\Domain\Recruitment\MrfRepository;
 use App\Domain\Recruitment\OfferingLetterRepository;
@@ -34,14 +39,17 @@ final class ApplicantUseCases
         private Mailer $mailer,
         private ?EmployeeRepository $employees = null,
         private ?OfferingLetterRepository $ols = null,
+        private ?WorkforceStore $workflows = null,
+        private ?Notifications $notifications = null,
+        private ?DocumentRenderer $documents = null,
     ) {}
 
     /** @return array<string,mixed> */
     public function getForHr(User $actor, int $id): array
     {
-        $applicant = $this->load($actor, $id);
+        $applicant = $this->loadVisible($actor, $id);
 
-        return ApplicantView::from($applicant);
+        return ApplicantView::from($applicant, $this->resolveSelectionTrack($applicant)) + ['hasCertificate'=>!empty($this->workflows?->list('applicant_documents',['applicant_id'=>$id,'doc_type'=>'certificate']) ?? [])];
     }
 
     /**
@@ -50,14 +58,7 @@ final class ApplicantUseCases
      */
     public function resolveFilePath(User $actor, int $id, string $type): string
     {
-        if ($actor->role !== Role::Hr) {
-            throw new NotAllowed('Hanya HR yang dapat mengakses berkas pelamar.');
-        }
-
-        $applicant = $this->applicants->find($id);
-        if ($applicant === null) {
-            throw new NotFound('Pelamar tidak ditemukan.');
-        }
+        $applicant = $this->loadVisible($actor, $id);
 
         if ($type === 'photo' || $type === 'signature') {
             $formData = $this->applicants->findFormData($id);
@@ -82,6 +83,11 @@ final class ApplicantUseCases
             return $fullPath;
         }
 
+        if ($type === 'certificate') {
+            $docs = $this->workflows?->list('applicant_documents',['applicant_id'=>$id,'doc_type'=>'certificate']) ?? [];
+            if (!$docs) throw new NotFound('Sertifikat tidak tersedia.');
+            return $this->storage->absolutePath($docs[0]['file_path']);
+        }
         $relativePath = match ($type) {
             'cv'        => $applicant->cvPath(),
             'portfolio' => $applicant->portfolioPath() ?? '',
@@ -109,15 +115,7 @@ final class ApplicantUseCases
      */
     public function getFormData(User $actor, int $id): array
     {
-        $allowed = [Role::Hr, Role::SuperAdmin, Role::Manajer];
-        if (!in_array($actor->role, $allowed, true)) {
-            throw new NotAllowed('Anda tidak memiliki akses untuk melihat Form Pelamar.');
-        }
-
-        $applicant = $this->applicants->find($id);
-        if ($applicant === null) {
-            throw new NotFound('Pelamar tidak ditemukan.');
-        }
+        $applicant = $this->loadVisible($actor, $id);
 
         $formData = $this->applicants->findFormData($id);
         if ($formData === null) {
@@ -138,7 +136,7 @@ final class ApplicantUseCases
     /** @return array<int,array<string,mixed>> */
     public function listByVacancy(User $actor, int $vacancyId): array
     {
-        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer)) {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer, Role::Pic)) {
             throw new NotAllowed('Anda tidak memiliki akses melihat daftar pelamar.');
         }
 
@@ -147,12 +145,12 @@ final class ApplicantUseCases
             throw new NotFound('Lowongan tidak ditemukan.');
         }
 
-        if ($actor->role === Role::Manajer && $vacancy->division() !== $actor->division) {
+        if ($actor->hasRole(Role::Manajer, Role::Pic) && $vacancy->division() !== $actor->division) {
             throw new NotFound('Lowongan tidak ditemukan.');
         }
 
         return array_map(
-            static fn (Applicant $a) => ApplicantView::from($a),
+            fn (Applicant $a) => ApplicantView::from($a, $this->resolveSelectionTrack($a)) + ['hasCertificate'=>!empty($this->workflows?->list('applicant_documents',['applicant_id'=>$a->id(),'doc_type'=>'certificate']) ?? [])],
             $this->applicants->findByVacancy($vacancyId),
         );
     }
@@ -165,17 +163,17 @@ final class ApplicantUseCases
      */
     public function listCandidates(User $actor): array
     {
-        $allowed = [Role::Hr, Role::SuperAdmin, Role::Manajer];
+        $allowed = [Role::Hr, Role::SuperAdmin, Role::Manajer, Role::Pic];
         if (!in_array($actor->role, $allowed, true)) {
             throw new NotAllowed('Anda tidak memiliki akses melihat daftar kandidat.');
         }
 
         $statuses = [
-            'shortlisted', 'selection', 'offer_pending',
+            'form_submitted', 'shortlisted', 'selection', 'offer_pending',
             'offered', 'accepted', 'declined', 'hired', 'not_selected',
         ];
 
-        $division = ($actor->role === Role::Manajer) ? $actor->division : null;
+        $division = $actor->hasRole(Role::Manajer, Role::Pic) ? $actor->division : null;
 
         $rows = $this->applicants->findByStatuses($statuses, $division);
 
@@ -205,8 +203,14 @@ final class ApplicantUseCases
         string $cvPath,
         ?string $portfolioPath,
         ?string $message = null,
+        ?string $certificatePath = null,
     ): array {
+        $work = function () use ($token,$fullName,$email,$phone,$cvPath,$portfolioPath,$message,$certificatePath): array {
         $vacancy = $this->vacancies->findByToken($token);
+        if ($vacancy && $this->workflows) {
+            $this->workflows->find('vacancies',(int)$vacancy->id(),true);
+            $vacancy = $this->vacancies->find((int)$vacancy->id());
+        }
         if ($vacancy === null || !$vacancy->isOpen()) {
             // Hapus berkas yang sudah tersimpan bila validasi gagal
             $this->storage->delete($cvPath);
@@ -234,8 +238,22 @@ final class ApplicantUseCases
             $message,
         );
         $this->applicants->save($applicant);
-
+        if ($certificatePath !== null) $this->workflows?->insert('applicant_documents',[
+            'applicant_id'=>$applicant->id(),'doc_type'=>'certificate','file_path'=>$certificatePath,'created_at'=>date('Y-m-d H:i:s'),
+        ]);
         return ApplicantView::from($applicant);
+        };
+        return $this->workflows ? $this->workflows->transaction($work) : $work();
+    }
+
+    public function formPdf(User $actor, int $id): string
+    {
+        $a = $this->loadVisible($actor,$id);
+        $form = $this->applicants->findFormData($id);
+        if (!$form || !$this->documents) throw new NotFound('Form Pelamar belum tersedia.');
+        $photo = !empty($form['photo_path']) ? $this->storage->absolutePath($form['photo_path']) : null;
+        $signature = !empty($form['signature_path']) ? $this->storage->absolutePath($form['signature_path']) : null;
+        return $this->documents->applicant(ApplicantView::from($a)+['position'=>$this->vacancies->find($a->vacancyId())?->position()??'-'],$form,$photo,$signature);
     }
 
     /**
@@ -244,6 +262,8 @@ final class ApplicantUseCases
      */
     public function approve(User $actor, int $id, string $appBaseUrl): void
     {
+        $work = function () use ($actor,$id,$appBaseUrl): void {
+        $this->workflows?->find('applicants',$id,true);
         $applicant = $this->load($actor, $id);
         $applicant->approvePending($actor);
         $this->applicants->save($applicant);
@@ -257,45 +277,22 @@ final class ApplicantUseCases
         $formUrl = rtrim($appBaseUrl, '/') . '/form-pelamar/' . $formToken;
         $body    = $this->buildApproveEmail($applicant->fullName(), $applicant->email(), $formUrl, $expiresAt);
 
-        try {
-            $this->mailer->send(
-                $applicant->email(),
-                'Lamaran Anda Diterima - Lengkapi Form Pelamar',
-                $body,
-            );
-        } catch (\Throwable $e) {
-            error_log('[sistem-hr] Gagal mengirim email persetujuan ke ' . $applicant->email() . ': ' . $e->getMessage());
-        }
+        $this->mailer->send($applicant->email(),'Lamaran Anda Diterima - Lengkapi Form Pelamar',$body);
+        };
+        if ($this->workflows) $this->workflows->transaction($work); else $work();
     }
 
-    /**
-     * HR menolak pelamar: mengirim email penolakan, menghapus berkas, menghapus record.
-     * Setelah method ini selesai, record pelamar tidak ada lagi di database.
-     */
+    /** Penolakan dan email disimpan bersama; riwayat dibersihkan melalui arsip lowongan. */
     public function reject(User $actor, int $id): void
     {
-        $applicant = $this->load($actor, $id);
-        // Panggil domain untuk validasi status; tidak disimpan karena record akan dihapus.
-        $applicant->reject($actor);
-
-        $cvPath        = $applicant->cvPath();
-        $portfolioPath = $applicant->portfolioPath();
-
-        try {
-            $this->mailer->send(
-                $applicant->email(),
-                'Informasi Lamaran Anda',
-                $this->buildRejectEmail($applicant->fullName()),
-            );
-        } catch (\Throwable $e) {
-            error_log('[sistem-hr] Gagal mengirim email penolakan ke ' . $applicant->email() . ': ' . $e->getMessage());
-        }
-
-        $this->applicants->delete((int) $applicant->id());
-        $this->storage->delete($cvPath);
-        if ($portfolioPath !== null) {
-            $this->storage->delete($portfolioPath);
-        }
+        $work = function () use ($actor,$id): void {
+            $this->workflows?->find('applicants',$id,true);
+            $applicant = $this->load($actor,$id);
+            $applicant->reject($actor);
+            $this->applicants->save($applicant);
+            $this->mailer->send($applicant->email(),'Informasi Lamaran Anda',$this->buildRejectEmail($applicant->fullName()));
+        };
+        if ($this->workflows) $this->workflows->transaction($work); else $work();
     }
 
     /** @return array<string,mixed> */
@@ -313,7 +310,14 @@ final class ApplicantUseCases
     {
         $applicant = $this->loadForSelectionAction($actor, $id);
         $applicant->callToSelection($actor);
-        $this->applicants->save($applicant);
+        $track = $this->resolveSelectionTrack($applicant);
+        $save = function () use ($applicant,$track) {
+            $this->applicants->save($applicant);
+            $stage = $track === 'fast' ? 'wawancara' : 'tes kompetensi';
+            $this->mailer->send($applicant->email(),'Undangan seleksi - Gaharu Sempana Group',
+                "Yth. {$applicant->fullName()},\nAnda diundang untuk tahap {$stage}. Tim HR akan mengonfirmasi jadwal dan lokasi. Silakan hubungi HR untuk informasi selanjutnya.");
+        };
+        if ($this->workflows) $this->workflows->transaction($save); else $save();
 
         return ApplicantView::from($applicant, $this->resolveSelectionTrack($applicant));
     }
@@ -324,7 +328,15 @@ final class ApplicantUseCases
      *
      * @return array<string,mixed>
      */
-    public function recordSelectionResult(
+    public function recordSelectionResult(User $actor, int $id, string $stage, string $result, ?string $notes): array
+    {
+        $work=function() use ($actor,$id,$stage,$result,$notes) {
+            $this->workflows?->find('applicants',$id,true);
+            return $this->recordSelection($actor,$id,$stage,$result,$notes);
+        };
+        return $this->workflows ? $this->workflows->transaction($work) : $work();
+    }
+    private function recordSelection(
         User $actor,
         int $id,
         string $stage,
@@ -340,6 +352,8 @@ final class ApplicantUseCases
 
         $applicant = $this->loadForSelectionAction($actor, $id);
 
+        SelectionPolicy::assertCanRecord($actor, $this->resolveSelectionTrack($applicant) ?? '', $stage,
+            $this->applicants->findSelectionRecords($id));
         // Panggil domain method (set not_selected jika fail)
         $applicant->recordSelectionResult($actor, $stage, $result);
 
@@ -368,6 +382,11 @@ final class ApplicantUseCases
             $actor->id,
         );
 
+        if ($stage === 'competency_test') {
+            $this->notifications?->toRoles(['hr','super_admin'],'selection_result','Hasil tes kompetensi tersedia', ['message'=>$applicant->fullName() . ': ' . $result,'applicantId'=>$id]);
+            if ($result === 'pass') $this->mailer->send($applicant->email(),'Undangan wawancara - Gaharu Sempana Group',
+                "Yth. {$applicant->fullName()},\nAnda lulus tes kompetensi dan diundang ke wawancara. Tim HR akan mengonfirmasi jadwal dan lokasi.");
+        }
         return ApplicantView::from($applicant, $this->resolveSelectionTrack($applicant));
     }
 
@@ -378,14 +397,7 @@ final class ApplicantUseCases
      */
     public function getSelectionRecords(User $actor, int $id): array
     {
-        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer)) {
-            throw new NotAllowed('Anda tidak memiliki akses melihat riwayat seleksi.');
-        }
-
-        $applicant = $this->applicants->find($id);
-        if ($applicant === null) {
-            throw new NotFound('Pelamar tidak ditemukan.');
-        }
+        $applicant = $this->loadVisible($actor, $id);
 
         return $this->applicants->findSelectionRecords((int) $applicant->id());
     }
@@ -408,15 +420,22 @@ final class ApplicantUseCases
     /** Muat pelamar untuk aksi shortlist / seleksi (boleh HR atau CEO). */
     private function loadForSelectionAction(User $actor, int $id): Applicant
     {
-        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin)) {
-            throw new NotAllowed('Hanya HR atau CEO yang dapat mengakses aksi seleksi.');
-        }
+        return $this->loadVisible($actor, $id);
+    }
 
+    private function loadVisible(User $actor, int $id): Applicant
+    {
+        if (!$actor->hasRole(Role::Hr, Role::SuperAdmin, Role::Manajer, Role::Pic)) {
+            throw new NotAllowed('Anda tidak memiliki akses pelamar.');
+        }
         $applicant = $this->applicants->find($id);
-        if ($applicant === null) {
-            throw new NotFound('Pelamar tidak ditemukan.');
+        if ($applicant === null) throw new NotFound('Pelamar tidak ditemukan.');
+        if ($actor->hasRole(Role::Manajer, Role::Pic)) {
+            $vacancy = $this->vacancies->find($applicant->vacancyId());
+            if ($actor->division === null || $vacancy === null || $vacancy->division() !== $actor->division) {
+                throw new NotFound('Pelamar tidak ditemukan.');
+            }
         }
-
         return $applicant;
     }
 
@@ -457,6 +476,14 @@ final class ApplicantUseCases
     /** @return array<string,mixed> */
     public function hire(User $actor, int $applicantId): array
     {
+        $work=function() use($actor,$applicantId) {
+            $this->workflows?->find('applicants',$applicantId,true);
+            return $this->hireCandidate($actor,$applicantId);
+        };
+        return $this->workflows ? $this->workflows->transaction($work) : $work();
+    }
+    private function hireCandidate(User $actor, int $applicantId): array
+    {
         if ($actor->role !== Role::Hr) {
             throw new NotAllowed('Hanya HR yang dapat menjadikan kandidat sebagai karyawan.');
         }
@@ -471,6 +498,14 @@ final class ApplicantUseCases
             throw new NotFound('Data lowongan tidak ditemukan.');
         }
 
+        if ($applicant->status() !== ApplicantStatus::Accepted) {
+            throw new DomainRuleViolation('Hanya kandidat yang menerima OL dapat dijadikan karyawan.');
+        }
+        if ($this->employees?->findByApplicant($applicantId) !== null) {
+            throw new DomainRuleViolation('Kandidat sudah tercatat sebagai karyawan.');
+        }
+        $mrf = $this->mrfs->find($vacancy->mrfId());
+        if ($mrf === null) throw new NotFound('MRF tidak ditemukan.');
         $salary = null;
         if ($this->ols !== null) {
             $ol = $this->ols->findByApplicant($applicantId);
@@ -482,7 +517,7 @@ final class ApplicantUseCases
             $applicant->fullName(),
             $vacancy->position(),
             $vacancy->division(),
-            'PKWT',
+            $mrf->spec()->employmentStatus->value,
             $salary,
             $applicant->id(),
         );
@@ -491,6 +526,18 @@ final class ApplicantUseCases
             throw new DomainRuleViolation('Fitur hire tidak tersedia.');
         }
 
+        // Carry existing candidate data into onboarding; HR still verifies documents.
+        $form = $this->applicants->findFormData($applicantId);
+        $data = $form ? json_decode((string)$form['data'],true,512,JSON_THROW_ON_ERROR) : [];
+        $identity = is_array($data['identitas'] ?? null) ? $data['identitas'] : [];
+        $personal = [];
+        foreach (['tanggal_lahir'=>'birth_date','tempat_lahir'=>'birth_place','alamat_tinggal'=>'address','agama'=>'religion','status_perkawinan'=>'marital_status'] as $source=>$target) {
+            if (!empty($identity[$source])) $personal[$target] = (string)$identity[$source];
+        }
+        $nik = (string)($identity['no_identitas'] ?? '');
+        $employee->updatePersonalData($actor,preg_match('/^[0-9]{16}$/D',$nik) ? $nik : '',$applicant->email(),$applicant->phone(),$personal);
+        $startDate = isset($ol) ? $ol?->startDate()?->format('Y-m-d') : null;
+        $employee->updateContractInfo($vacancy->position(),$vacancy->division(),$mrf->spec()->employmentStatus->value,$salary,$startDate,null);
         $this->employees->save($employee);
 
         $applicant->markHired();
