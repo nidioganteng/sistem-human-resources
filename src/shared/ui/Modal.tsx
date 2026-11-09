@@ -50,12 +50,12 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} aria-hidden="true" />
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className={`card glow-panel relative max-h-[90dvh] w-full ${SIZE[size]} overflow-y-auto !p-0 shadow-modal outline-none`}>
-        <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-5">
+        className={`card glow-panel relative flex max-h-[90dvh] w-full ${SIZE[size]} flex-col overflow-hidden !bg-panel !p-0 shadow-modal outline-none`}>
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line px-6 py-5">
           <h2 id={titleId} className="text-lg font-bold tracking-tight text-ink">{title}</h2>
           <button type="button" onClick={onClose} className="icon-button !h-8 !w-8" aria-label="Tutup dialog"><X size={17} /></button>
         </div>
-        <div className="px-6 py-6">{children}</div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain px-6 py-6">{children}</div>
       </div>
     </div>, document.body
   );

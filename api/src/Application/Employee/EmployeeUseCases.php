@@ -45,9 +45,12 @@ final class EmployeeUseCases
             $all = array_filter($all, fn (Employee $e) => $e->division() === $actor->division);
         }
 
+        $canSeeDiscipline = $actor->hasRole(Role::Hr, Role::SuperAdmin);
+        $disciplineCounts = $canSeeDiscipline ? $this->workflows->employeeDisciplineCounts() : [];
         return [
             'items' => array_values(array_map(
-                fn (Employee $e) => EmployeeView::from($e, $this->employees->findDocuments((int) $e->id())),
+                fn (Employee $e) => EmployeeView::from($e, $this->employees->findDocuments((int) $e->id()))
+                    + ($canSeeDiscipline ? ['disciplineCount' => $disciplineCounts[(int) $e->id()] ?? 0] : []),
                 $all,
             )),
         ];
@@ -57,8 +60,17 @@ final class EmployeeUseCases
     public function get(User $actor, int $id): array
     {
         $e = $this->loadVisible($actor, $id);
-
-        return EmployeeView::from($e, $this->employees->findDocuments($id));
+        $view = EmployeeView::from($e, $this->employees->findDocuments($id));
+        if ($actor->hasRole(Role::Hr, Role::SuperAdmin)) {
+            $view['discipline'] = array_map(static fn (array $record): array => [
+                'id' => (int) $record['id'],
+                'kind' => $record['kind'],
+                'date' => $record['payload']['date'],
+                'notes' => $record['payload']['notes'],
+                'hasAttachment' => !empty($record['payload']['filePath']),
+            ], $this->workflows->list('employee_records', ['employee_id' => $id, 'category' => 'discipline'], 5000));
+        }
+        return $view;
     }
 
     /** @return array<string,mixed> */

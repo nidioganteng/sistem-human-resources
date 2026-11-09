@@ -1,4 +1,12 @@
 export interface Employee {
+  disciplineCount?: number;
+  discipline?: {
+    id: number;
+    kind: 'verbal' | 'written' | 'SP1' | 'SP2' | 'SP3';
+    date: string;
+    notes: string;
+    hasAttachment: boolean;
+  }[];
   id: number;
   changePending?: boolean;
   applicantId: number | null;

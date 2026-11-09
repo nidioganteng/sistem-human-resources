@@ -872,12 +872,13 @@ export default function VacancyDetailPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-caption">
                   Tambah Catatan Baru
                 </p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-body">
+                    <label htmlFor="selection-stage" className="field-label">
                       Tahap
                     </label>
                     <select
+                      id="selection-stage"
                       className="field-input"
                       value={selectionStage}
                       onChange={(e) => setSelectionStage(e.target.value as 'competency_test' | 'interview')}
@@ -886,10 +887,11 @@ export default function VacancyDetailPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-body">
+                    <label htmlFor="selection-result" className="field-label">
                       Hasil
                     </label>
                     <select
+                      id="selection-result"
                       className="field-input"
                       value={selectionResult}
                       onChange={(e) => setSelectionResult(e.target.value as 'pass' | 'fail')}

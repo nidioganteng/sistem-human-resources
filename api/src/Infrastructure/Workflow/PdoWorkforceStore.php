@@ -75,6 +75,13 @@ final class PdoWorkforceStore implements WorkforceStore
         $this->pdo->prepare($sql)->execute(array_values($values));
         return (int) $this->pdo->lastInsertId();
     }
+    public function employeeDisciplineCounts(): array
+    {
+        $rows = $this->pdo->query("SELECT employee_id, COUNT(*) AS total FROM employee_records WHERE category='discipline' GROUP BY employee_id");
+        $counts = [];
+        foreach ($rows as $row) $counts[(int) $row['employee_id']] = (int) $row['total'];
+        return $counts;
+    }
     public function update(string $collection, int $id, array $values): void
     {
         $values = $this->columns($collection, $values);

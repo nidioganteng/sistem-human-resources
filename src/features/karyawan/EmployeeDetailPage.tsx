@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Copy, X } from 'lucide-react';
+import { ChevronLeft, Copy, Download, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
-import { ApiError } from '@/services/api';
+import { ApiError, apiFetchBlob } from '@/services/api';
 import {
   generateOnboardingLink,
   getEmployee,
@@ -17,12 +17,15 @@ import {
   PERSONAL_DATA_LABELS,
 } from './types';
 import { formatRupiah, RupiahInput } from '@/shared/ui/RupiahInput';
+import { Modal } from '@/shared/ui/Modal';
 
 const STATUS_LABELS: Record<string, string> = {
   onboarding: 'Onboarding',
   active: 'Aktif',
   inactive: 'Tidak Aktif',
 };
+
+const DISCIPLINE_LABELS = { verbal: 'Teguran lisan', written: 'Teguran tertulis', SP1: 'SP 1', SP2: 'SP 2', SP3: 'SP 3' };
 
 function statusBadge(status: string): string {
   if (status === 'active') return 'rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-400';
@@ -110,6 +113,7 @@ export default function EmployeeDetailPage() {
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [editError, setEditError] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
+  const [downloadingRecord, setDownloadingRecord] = useState<number | null>(null);
 
   const employeeId = Number(id);
   const isHr = user?.role === 'hr';
@@ -159,7 +163,7 @@ export default function EmployeeDetailPage() {
     setActionMsg(null);
     try {
       const updated = await validateEmployee(employee.id);
-      setEmployee(updated);
+      setEmployee({ ...employee, ...updated });
       setActionMsg({ type: 'ok', text: 'Karyawan berhasil divalidasi dan sekarang berstatus aktif.' });
     } catch (e) {
       setActionMsg({ type: 'err', text: e instanceof ApiError ? e.message : 'Gagal memvalidasi.' });
@@ -210,7 +214,7 @@ export default function EmployeeDetailPage() {
           emergency_contact: editForm.emergency_contact,
         },
       });
-      setEmployee(updated);
+      setEmployee({ ...employee, ...updated });
       setShowEdit(false);
       setActionMsg({ type: 'ok', text: updated.changePending ? 'Perubahan diajukan. Data aktif menunggu persetujuan CEO.' : 'Data karyawan berhasil diperbarui.' });
     } catch (e) {
@@ -225,6 +229,23 @@ export default function EmployeeDetailPage() {
       await openDocument(employeeId, docType);
     } catch {
       setActionMsg({ type: 'err', text: 'Gagal membuka dokumen.' });
+    }
+  };
+
+  const downloadWarning = async (recordId: number) => {
+    setDownloadingRecord(recordId);
+    try {
+      const blob = await apiFetchBlob(`/employee-records/${recordId}/file`);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `surat-peringatan-${recordId}.pdf`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setActionMsg({ type: 'err', text: 'Gagal mengunduh lampiran teguran. Silakan coba lagi.' });
+    } finally {
+      setDownloadingRecord(null);
     }
   };
 
@@ -336,6 +357,31 @@ export default function EmployeeDetailPage() {
         )}
       </div>
 
+      {employee.discipline !== undefined && (
+        <section className="card space-y-5" aria-labelledby="discipline-heading">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ShieldAlert size={19} className="text-amber-700 dark:text-amber-400" aria-hidden="true" />
+              <h2 id="discipline-heading" className="text-sm font-semibold text-ink">Riwayat Kedisiplinan</h2>
+              <span className="rounded-full bg-subtle px-2.5 py-1 text-xs font-semibold text-body">{employee.discipline.length} catatan</span>
+            </div>
+            <button className="btn-secondary !text-xs" onClick={() => navigate('/kedisiplinan')}>Kelola Kedisiplinan</button>
+          </div>
+          {!employee.discipline.length ? <p className="text-sm text-caption">Belum ada catatan teguran atau surat peringatan untuk karyawan ini.</p> : (
+            <ol className="divide-y divide-line">
+              {employee.discipline.map(record => <li key={record.id} className="space-y-3 py-4 first:pt-0 last:pb-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${record.kind.startsWith('SP') ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}`}>{DISCIPLINE_LABELS[record.kind]}</span>
+                  <time dateTime={record.date} className="text-xs text-caption">{formatDate(record.date)}</time>
+                </div>
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-body">{record.notes}</p>
+                {record.hasAttachment && <button className="btn-secondary !text-xs" disabled={downloadingRecord !== null} onClick={() => void downloadWarning(record.id)}><Download size={14} aria-hidden="true" />{downloadingRecord === record.id ? 'Mengunduh...' : 'Unduh Lampiran'}</button>}
+              </li>)}
+            </ol>
+          )}
+        </section>
+      )}
+
       {employee.personalData != null && (
         <div className="card space-y-3">
           <h2 className="text-sm font-semibold text-body">Data Pribadi</h2>
@@ -387,119 +433,101 @@ export default function EmployeeDetailPage() {
         </div>
       </div>
 
-      {confirmValidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-sm space-y-4 dark:!bg-canvas">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-ink">Validasi Karyawan?</h2>
-              <button
-                onClick={() => setConfirmValidate(false)}
-                className="rounded-lg p-1.5 text-caption hover:bg-subtle hover:text-body dark:hover:bg-white/5"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <p className="text-sm text-caption">
-              Karyawan akan berpindah ke status Aktif dan datanya dapat dibaca oleh Simatra.
-              Tindakan ini tidak dapat dibatalkan lewat sistem.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button className="btn-secondary" onClick={() => setConfirmValidate(false)}>Batal</button>
-              <button className="btn-primary" onClick={() => void handleValidate()}>Ya, Validasi</button>
-            </div>
+      <Modal open={confirmValidate} onClose={() => setConfirmValidate(false)} title="Validasi Karyawan?" size="sm">
+        <div className="space-y-5">
+          <p className="text-sm leading-relaxed text-body">
+            Validasi <strong className="font-semibold text-ink">{employee.fullName}</strong> untuk mengubah statusnya menjadi <strong className="font-semibold text-ink">Aktif</strong>.
+          </p>
+          <div className="rounded-xl border border-line bg-subtle p-4 text-sm leading-relaxed text-body">
+            Pastikan biodata dan keenam dokumen wajib sudah diperiksa sebelum melanjutkan.
+          </div>
+          <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:justify-end">
+            <button type="button" className="btn-secondary" onClick={() => setConfirmValidate(false)}>Batal</button>
+            <button type="button" className="btn-primary" disabled={validating} onClick={() => void handleValidate()}>{validating ? 'Memvalidasi...' : 'Ya, Validasi'}</button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {showEdit && editForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 dark:!bg-canvas">
-            <div className="flex items-center justify-between sticky top-0 bg-panel z-10 pb-2">
-              <h2 className="text-base font-bold text-ink">Edit Data Karyawan</h2>
-              <button
-                onClick={() => setShowEdit(false)}
-                className="rounded-lg p-1.5 text-caption hover:bg-subtle hover:text-body dark:hover:bg-white/5"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
+        <Modal open={showEdit} onClose={() => { if (!editSubmitting) setShowEdit(false); }} title="Edit Data Karyawan" size="lg">
+          <p className="mb-6 text-sm leading-relaxed text-caption">Perbarui data {employee.fullName}. Pastikan informasi sudah benar sebelum menyimpan.</p>
             {employee.validatedAt != null && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400">
-                Perubahan data karyawan yang sudah aktif akan dicatat sebagai audit log dan CEO akan mendapat notifikasi.
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400">
+                Perubahan data tervalidasi akan diajukan kepada CEO. Data aktif diperbarui setelah disetujui.
               </div>
             )}
 
             <form onSubmit={(e) => void handleEditSubmit(e)} className="space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-caption">Data Kontrak</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-caption">Identitas &amp; Kepegawaian</h3>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="field-label">NIK</label>
-                  <input className="field-input" value={editForm.nik} onChange={(e) => setEditForm((f) => f ? { ...f, nik: e.target.value } : f)} />
+                  <label htmlFor="edit-nik" className="field-label">NIK</label>
+                  <input id="edit-nik" className="field-input" value={editForm.nik} onChange={(e) => setEditForm((f) => f ? { ...f, nik: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Email</label>
-                  <input className="field-input" type="email" value={editForm.email} onChange={(e) => setEditForm((f) => f ? { ...f, email: e.target.value } : f)} />
+                  <label htmlFor="edit-email" className="field-label">Email</label>
+                  <input id="edit-email" className="field-input" type="email" value={editForm.email} onChange={(e) => setEditForm((f) => f ? { ...f, email: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Nomor HP</label>
-                  <input className="field-input" type="tel" value={editForm.phone} onChange={(e) => setEditForm((f) => f ? { ...f, phone: e.target.value } : f)} />
+                  <label htmlFor="edit-phone" className="field-label">Nomor HP</label>
+                  <input id="edit-phone" className="field-input" type="tel" value={editForm.phone} onChange={(e) => setEditForm((f) => f ? { ...f, phone: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Posisi <span className="text-red-500">*</span></label>
-                  <input className="field-input" value={editForm.position} onChange={(e) => setEditForm((f) => f ? { ...f, position: e.target.value } : f)} />
+                  <label htmlFor="edit-position" className="field-label">Posisi <span className="text-red-500">*</span></label>
+                  <input id="edit-position" required className="field-input" value={editForm.position} onChange={(e) => setEditForm((f) => f ? { ...f, position: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Divisi</label>
-                  <input className="field-input" value={editForm.division} onChange={(e) => setEditForm((f) => f ? { ...f, division: e.target.value } : f)} />
+                  <label htmlFor="edit-division" className="field-label">Divisi</label>
+                  <input id="edit-division" className="field-input" value={editForm.division} onChange={(e) => setEditForm((f) => f ? { ...f, division: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Status Kepegawaian</label>
-                  <select className="field-input" value={editForm.employmentStatus} onChange={(e) => setEditForm((f) => f ? { ...f, employmentStatus: e.target.value as 'PKWT' | 'PKWTT' | 'FREELANCE' } : f)}>
+                  <label htmlFor="edit-employmentStatus" className="field-label">Status Kepegawaian</label>
+                  <select id="edit-employmentStatus" className="field-input" value={editForm.employmentStatus} onChange={(e) => setEditForm((f) => f ? { ...f, employmentStatus: e.target.value as 'PKWT' | 'PKWTT' | 'FREELANCE' } : f)}>
                     <option value="PKWT">Kontrak (PKWT)</option>
                     <option value="PKWTT">Tetap (PKWTT)</option><option value="FREELANCE">Tenaga ahli / Freelance</option>
                   </select>
                 </div>
                 <div>
-                  <label className="field-label">Gaji</label>
+                  <label htmlFor="edit-salary" className="field-label">Gaji</label>
                   <RupiahInput
+                    id="edit-salary"
                     value={editForm.salary}
                     onChange={(raw) => setEditForm((f) => f ? { ...f, salary: raw } : f)}
                   />
                 </div>
                 <div>
-                  <label className="field-label">Mulai Kontrak</label>
-                  <input className="field-input" type="date" value={editForm.contractStart} onChange={(e) => setEditForm((f) => f ? { ...f, contractStart: e.target.value } : f)} />
+                  <label htmlFor="edit-contractStart" className="field-label">Mulai Kontrak</label>
+                  <input id="edit-contractStart" className="field-input" type="date" value={editForm.contractStart} onChange={(e) => setEditForm((f) => f ? { ...f, contractStart: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Selesai Kontrak</label>
-                  <input className="field-input" type="date" value={editForm.contractEnd} onChange={(e) => setEditForm((f) => f ? { ...f, contractEnd: e.target.value } : f)} />
+                  <label htmlFor="edit-contractEnd" className="field-label">Selesai Kontrak</label>
+                  <input id="edit-contractEnd" className="field-input" type="date" value={editForm.contractEnd} onChange={(e) => setEditForm((f) => f ? { ...f, contractEnd: e.target.value } : f)} />
                 </div>
               </div>
 
               <h3 className="text-xs font-semibold uppercase tracking-wider text-caption pt-2">Data Payroll</h3>
               <div className="grid gap-3 sm:grid-cols-2">{(['ptkp_status','bank_name','bank_account','bank_account_name','payment_hold_note'] as const).map(key=><div key={key}><label htmlFor={`edit-${key}`} className="field-label">{PERSONAL_DATA_LABELS[key]}</label><input id={`edit-${key}`} className="field-input" value={editForm[key]} onChange={e=>setEditForm(f=>f?{...f,[key]:e.target.value}:f)}/></div>)}</div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-caption pt-2">Data Pribadi</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="field-label">Tanggal Lahir</label>
-                  <input className="field-input" type="date" value={editForm.birth_date} onChange={(e) => setEditForm((f) => f ? { ...f, birth_date: e.target.value } : f)} />
+                  <label htmlFor="edit-birth_date" className="field-label">Tanggal Lahir</label>
+                  <input id="edit-birth_date" className="field-input" type="date" value={editForm.birth_date} onChange={(e) => setEditForm((f) => f ? { ...f, birth_date: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Tempat Lahir</label>
-                  <input className="field-input" value={editForm.birth_place} onChange={(e) => setEditForm((f) => f ? { ...f, birth_place: e.target.value } : f)} />
+                  <label htmlFor="edit-birth_place" className="field-label">Tempat Lahir</label>
+                  <input id="edit-birth_place" className="field-input" value={editForm.birth_place} onChange={(e) => setEditForm((f) => f ? { ...f, birth_place: e.target.value } : f)} />
                 </div>
-                <div className="col-span-2">
-                  <label className="field-label">Alamat</label>
-                  <textarea className="field-input resize-none" rows={2} value={editForm.address} onChange={(e) => setEditForm((f) => f ? { ...f, address: e.target.value } : f)} />
-                </div>
-                <div>
-                  <label className="field-label">Agama</label>
-                  <input className="field-input" value={editForm.religion} onChange={(e) => setEditForm((f) => f ? { ...f, religion: e.target.value } : f)} />
+                <div className="sm:col-span-2">
+                  <label htmlFor="edit-address" className="field-label">Alamat</label>
+                  <textarea id="edit-address" className="field-input resize-none" rows={2} value={editForm.address} onChange={(e) => setEditForm((f) => f ? { ...f, address: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Status Pernikahan</label>
-                  <select className="field-input" value={editForm.marital_status} onChange={(e) => setEditForm((f) => f ? { ...f, marital_status: e.target.value } : f)}>
+                  <label htmlFor="edit-religion" className="field-label">Agama</label>
+                  <input id="edit-religion" className="field-input" value={editForm.religion} onChange={(e) => setEditForm((f) => f ? { ...f, religion: e.target.value } : f)} />
+                </div>
+                <div>
+                  <label htmlFor="edit-marital_status" className="field-label">Status Pernikahan</label>
+                  <select id="edit-marital_status" className="field-input" value={editForm.marital_status} onChange={(e) => setEditForm((f) => f ? { ...f, marital_status: e.target.value } : f)}>
                     <option value="">-- Pilih --</option>
                     <option value="Belum Menikah">Belum Menikah</option>
                     <option value="Menikah">Menikah</option>
@@ -507,34 +535,33 @@ export default function EmployeeDetailPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="field-label">Nomor NPWP</label>
-                  <input className="field-input" value={editForm.npwp_number} onChange={(e) => setEditForm((f) => f ? { ...f, npwp_number: e.target.value } : f)} />
+                  <label htmlFor="edit-npwp_number" className="field-label">Nomor NPWP</label>
+                  <input id="edit-npwp_number" className="field-input" value={editForm.npwp_number} onChange={(e) => setEditForm((f) => f ? { ...f, npwp_number: e.target.value } : f)} />
                 </div>
                 <div>
-                  <label className="field-label">Nomor BPJS</label>
-                  <input className="field-input" value={editForm.bpjs_number} onChange={(e) => setEditForm((f) => f ? { ...f, bpjs_number: e.target.value } : f)} />
+                  <label htmlFor="edit-bpjs_number" className="field-label">Nomor BPJS</label>
+                  <input id="edit-bpjs_number" className="field-input" value={editForm.bpjs_number} onChange={(e) => setEditForm((f) => f ? { ...f, bpjs_number: e.target.value } : f)} />
                 </div>
-                <div className="col-span-2">
-                  <label className="field-label">Kontak Darurat</label>
-                  <input className="field-input" value={editForm.emergency_contact} onChange={(e) => setEditForm((f) => f ? { ...f, emergency_contact: e.target.value } : f)} />
+                <div className="sm:col-span-2">
+                  <label htmlFor="edit-emergency_contact" className="field-label">Kontak Darurat</label>
+                  <input id="edit-emergency_contact" className="field-input" value={editForm.emergency_contact} onChange={(e) => setEditForm((f) => f ? { ...f, emergency_contact: e.target.value } : f)} />
                 </div>
               </div>
 
               {editError && (
-                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
+                <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
                   {editError}
                 </p>
               )}
 
-              <div className="flex justify-end gap-2 pt-1">
-                <button type="button" className="btn-secondary" onClick={() => setShowEdit(false)}>Batal</button>
+              <div className="flex flex-wrap justify-end gap-3 border-t border-line pt-5">
+                <button type="button" className="btn-secondary" disabled={editSubmitting} onClick={() => setShowEdit(false)}>Batal</button>
                 <button type="submit" className="btn-primary" disabled={editSubmitting}>
                   {editSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
