@@ -46,6 +46,12 @@ export const generateOnboardingLink = (
 export const validateEmployee = (id: number): Promise<Employee> =>
   post(`/employees/${id}/validate`);
 
+export const uploadEmployeeDocument = (id: number, docType: string, file: File): Promise<Employee> => {
+  const body = new FormData();
+  body.append('file', file);
+  return apiFetch(`/employees/${id}/documents/${docType}`, { method: 'POST', body });
+};
+
 export const openDocument = async (id: number, docType: string): Promise<void> => {
   const blob = await apiFetchBlob(`/employees/${id}/documents/${docType}`);
   const url = URL.createObjectURL(blob);

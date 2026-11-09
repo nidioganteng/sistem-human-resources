@@ -8,6 +8,7 @@ import {
   getEmployee,
   openDocument,
   updateEmployee,
+  uploadEmployeeDocument,
   validateEmployee,
 } from './karyawanService';
 import type { Employee } from './types';
@@ -114,6 +115,10 @@ export default function EmployeeDetailPage() {
   const [editError, setEditError] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [downloadingRecord, setDownloadingRecord] = useState<number | null>(null);
+  const [uploadType, setUploadType] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const employeeId = Number(id);
   const isHr = user?.role === 'hr';
@@ -249,12 +254,38 @@ export default function EmployeeDetailPage() {
     }
   };
 
+  const handleDocumentUpload = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!employee || !uploadType || uploading) return;
+    if (!uploadFile) { setUploadError('Pilih berkas terlebih dahulu.'); return; }
+    const photo = uploadType === 'foto';
+    const allowed = photo ? ['image/jpeg', 'image/png'] : ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!allowed.includes(uploadFile.type)) { setUploadError(photo ? 'Pasfoto harus JPEG atau PNG.' : 'Dokumen harus PDF, JPEG, atau PNG.'); return; }
+    if (uploadFile.size === 0 || uploadFile.size > (photo ? 500 * 1024 : 2 * 1024 * 1024)) {
+      setUploadError(photo ? 'Pasfoto maksimal 500 KB dan tidak boleh kosong.' : 'Dokumen maksimal 2 MB dan tidak boleh kosong.');
+      return;
+    }
+    setUploading(true);
+    setUploadError('');
+    try {
+      const updated = await uploadEmployeeDocument(employee.id, uploadType, uploadFile);
+      setEmployee(updated);
+      setUploadType(null);
+      setUploadFile(null);
+      setActionMsg({ type: 'ok', text: `${DOC_TYPE_LABELS[uploadType]} berhasil diperbarui. Penggantian tercatat dalam audit.` });
+    } catch (error) {
+      setUploadError(error instanceof ApiError ? error.message : 'Gagal mengunggah dokumen. Silakan coba lagi.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) return <p className="text-sm text-caption">Memuat...</p>;
   if (error) return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>;
   if (!employee) return null;
 
   const hasSubmittedData = Boolean(employee.nik?.trim() && employee.email?.trim());
-  const allDocTypes = ['ktp', 'npwp', 'bpjs', 'ijazah', 'foto', 'lainnya'];
+  const allDocTypes = Object.keys(DOC_TYPE_LABELS);
   const uploadedDocTypes = new Set(employee.documents.map((d) => d.docType));
 
   return (
@@ -401,15 +432,18 @@ export default function EmployeeDetailPage() {
       )}
 
       <div className="card space-y-3">
-        <h2 className="text-sm font-semibold text-body">Dokumen</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-body">Dokumen</h2>
+          {isHr && <button type="button" className="btn-secondary !py-1.5 text-xs" onClick={() => { setUploadType('ktp'); setUploadFile(null); setUploadError(''); }}>Edit Dokumen</button>}
+        </div>
         {employee.status === 'onboarding' && <p className="text-xs text-caption">{['ktp','kk','npwp','bpjs','ijazah','foto'].filter(type=>uploadedDocTypes.has(type)).length} dari 6 dokumen wajib tersedia. Status tetap Onboarding sampai HR memeriksa dan memvalidasi kelengkapannya.</p>}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {allDocTypes.map((dt) => {
             const has = uploadedDocTypes.has(dt);
             return (
               <div
                 key={dt}
-                className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5 dark:border-white/10"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line px-3 py-2.5 dark:border-white/10"
               >
                 <div>
                   <p className="text-sm font-medium text-ink">
@@ -421,7 +455,7 @@ export default function EmployeeDetailPage() {
                 </div>
                 {has && (user?.role === 'hr' || user?.role === 'super_admin') && (
                   <button
-                    className="text-xs text-sky-700 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
+                    className="btn-ghost !px-3 !text-xs"
                     onClick={() => void handleOpenDoc(dt)}
                   >
                     Lihat
@@ -432,6 +466,28 @@ export default function EmployeeDetailPage() {
           })}
         </div>
       </div>
+
+      <Modal open={uploadType !== null} onClose={() => { if (!uploading) setUploadType(null); }} title="Edit Dokumen Karyawan" size="sm">
+        <form onSubmit={event => void handleDocumentUpload(event)} className="space-y-5">
+          <p className="text-sm leading-relaxed text-body">Unggah dokumen terbaru untuk <strong className="font-semibold text-ink">{employee.fullName}</strong>. Penggantian dicatat dalam audit dan berkas sebelumnya tetap disimpan.</p>
+          <div>
+            <label htmlFor="employee-document-type" className="field-label">Dokumen yang ingin diperbarui</label>
+            <select id="employee-document-type" className="field-input" disabled={uploading} value={uploadType ?? 'ktp'} onChange={event => { setUploadType(event.target.value); setUploadFile(null); setUploadError(''); }}>
+              {allDocTypes.map(type => <option key={type} value={type}>{DOC_TYPE_LABELS[type]} — {uploadedDocTypes.has(type) ? 'Sudah tersedia' : 'Belum diunggah'}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="employee-document-file" className="field-label">Berkas {DOC_TYPE_LABELS[uploadType ?? '']}</label>
+            <input key={uploadType} id="employee-document-file" type="file" required disabled={uploading} accept={uploadType === 'foto' ? 'image/jpeg,image/png' : 'application/pdf,image/jpeg,image/png'} className="field-input file:mr-3 file:rounded-lg file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-xs file:font-semibold file:text-accent" aria-describedby="employee-document-hint employee-document-error" aria-invalid={Boolean(uploadError)} onChange={event => { setUploadFile(event.target.files?.[0] ?? null); setUploadError(''); }} />
+            <p id="employee-document-hint" className="mt-2 text-xs text-caption">{uploadType === 'foto' ? 'JPEG atau PNG, maksimal 500 KB.' : 'PDF, JPEG, atau PNG, maksimal 2 MB.'}</p>
+          </div>
+          <p id="employee-document-error" role={uploadError ? 'alert' : undefined} className={uploadError ? 'text-sm text-red-700 dark:text-red-300' : 'hidden'}>{uploadError}</p>
+          <div className="flex flex-wrap justify-end gap-3 border-t border-line pt-5">
+            <button type="button" disabled={uploading} className="btn-secondary" onClick={() => setUploadType(null)}>Batal</button>
+            <button type="submit" disabled={uploading || !uploadFile} className="btn-primary">{uploading ? 'Menyimpan...' : 'Simpan Dokumen'}</button>
+          </div>
+        </form>
+      </Modal>
 
       <Modal open={confirmValidate} onClose={() => setConfirmValidate(false)} title="Validasi Karyawan?" size="sm">
         <div className="space-y-5">

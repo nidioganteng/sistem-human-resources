@@ -119,6 +119,25 @@ try{
   foreach(['ktp','kk','npwp','bpjs','ijazah','foto'] as $type){$f=$storage->storeContent('employee-docs',$type==='foto'?'png':'pdf',$type==='foto'?$png:$doc);$employeeActions->uploadDocument($token,$type,$f);}
   $employeeActions->validate($hr,$employee['id']);ok($emps->find($employee['id'])->status()->value==='active','Complete onboarding may be activated');
   fails(fn()=>$employeeActions->generateOnboardingLink($hr,$employee['id'],'http://localhost:5174'),'Active employee cannot receive an editable onboarding link');
+  ok(method_exists($employeeActions,'replaceDocument'),'HR document replacement is available');
+  $oldDocument=$emps->findDocument($employee['id'],'ktp');
+  $replacement=$storage->storeContent('employee-docs','pdf',$doc);
+  fails(fn()=>$employeeActions->replaceDocument($manager,$employee['id'],'ktp',$replacement),'Manager cannot replace employee documents');
+  fails(fn()=>$employeeActions->replaceDocument($ceo,$employee['id'],'ktp',$replacement),'Document replacement is restricted to HR');
+  fails(fn()=>$employeeActions->replaceDocument($hr,$employee['id'],'invalid',$replacement),'Unknown employee document category is rejected');
+  fails(fn()=>$employeeActions->replaceDocument($hr,999999,'ktp',$replacement),'Document upload requires an existing employee');
+  $replaced=$employeeActions->replaceDocument($hr,$employee['id'],'ktp',$replacement);
+  ok($emps->findDocument($employee['id'],'ktp')['filePath']===$replacement&&$replaced['status']==='active','HR replaces active employee document without changing employment status');
+  ok(is_file($tmp.'/'.$oldDocument['filePath'])&&str_starts_with(file_get_contents($tmp.'/'.$replacement),'HRFILE1'),'Old document is retained and replacement is encrypted');
+  $audit=$pdo->query("SELECT * FROM audit_logs WHERE action='replace_document' ORDER BY id DESC LIMIT 1")->fetch();
+  $newAudit=$cipher->decrypt(json_decode($audit['new_values'],true)['encrypted']);
+  ok((int)$audit['actor_id']===$hr->id&&$newAudit['docType']==='ktp'&&$newAudit['filePath']===$replacement,'Document replacement records encrypted audit history and actor');
+  $brokenAudit=new class implements \App\Application\Ports\AuditLog { public function log(int $actorId,string $entity,int $entityId,string $action,array $oldValues,array $newValues):void { throw new RuntimeException('Audit unavailable'); } };
+  $brokenEmployeeActions=new EmployeeUseCases($emps,$storage,$brokenAudit,$store,$notifications,$mail);
+  $failedReplacement=$storage->storeContent('employee-docs','pdf',$doc);
+  try { $brokenEmployeeActions->replaceDocument($hr,$employee['id'],'ktp',$failedReplacement); throw new LogicException('Expected audit failure'); }
+  catch (RuntimeException $error) { ok($error->getMessage()==='Audit unavailable','Document replacement reports failed audit persistence'); }
+  ok($emps->findDocument($employee['id'],'ktp')['filePath']===$replacement&&is_file($tmp.'/'.$replacement),'Failed replacement preserves the current document');
   $changed=$employeeActions->update($hr,$employee['id'],'1234567890123456','candidate@example.test','0801','Engineer','Sipil','PKWTT',11000000,null,null,['birth_date'=>'1990-01-01','birth_place'=>'Denpasar','address'=>'Alamat uji']);
   ok($changed['changePending']===true&&$emps->find($employee['id'])->salary()===10000000.0,'HR sensitive edits remain pending until CEO approval');
   $request=$store->list('employee_change_requests')[0];$workforce->decideChange($ceo,(int)$request['id'],true,'Disetujui');ok($emps->find($employee['id'])->salary()===11000000.0,'CEO approval applies and audits the change');

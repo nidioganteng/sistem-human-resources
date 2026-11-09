@@ -130,7 +130,7 @@ final class Wiring
         $c->set(ApplicantFormController::class, static fn (Container $c) => new ApplicantFormController(
             $c->get(ApplicantRepository::class), $c->get(VacancyRepository::class), $c->get(FileStorage::class)
         ));
-        $c->set(EmployeeController::class, static fn (Container $c) => new EmployeeController($c->get(EmployeeUseCases::class)));
+        $c->set(EmployeeController::class, static fn (Container $c) => new EmployeeController($c->get(EmployeeUseCases::class), $c->get(FileStorage::class)));
         $c->set(PublicOnboardingController::class, static fn (Container $c) => new PublicOnboardingController(
             $c->get(EmployeeUseCases::class), $c->get(FileStorage::class)
         ));

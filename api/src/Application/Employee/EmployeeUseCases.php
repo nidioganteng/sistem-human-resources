@@ -228,6 +228,24 @@ final class EmployeeUseCases
         $this->employees->saveDocument((int) $e->id(), $docType, $filePath, new DateTimeImmutable());
     }
 
+    /** HR replaces the current document; previous encrypted files remain in audit history. */
+    public function replaceDocument(User $actor, int $id, string $docType, string $filePath): array
+    {
+        if ($actor->role !== Role::Hr) throw new NotAllowed('Hanya HR yang dapat mengganti dokumen karyawan.');
+        if (!in_array($docType, self::VALID_DOC_TYPES, true)) throw new DomainRuleViolation('Jenis dokumen tidak valid.');
+        return $this->workflows->transaction(function () use ($actor, $id, $docType, $filePath): array {
+            $this->workflows->find('employees', $id, true);
+            if (!$this->employees->find($id)) throw new NotFound('Karyawan tidak ditemukan.');
+            $old = $this->employees->findDocument($id, $docType);
+            $now = new DateTimeImmutable();
+            $this->employees->saveDocument($id, $docType, $filePath, $now);
+            $this->auditLog->log($actor->id, 'employee', $id, 'replace_document', $old ?? [], [
+                'docType' => $docType, 'filePath' => $filePath, 'uploadedAt' => $now->format('Y-m-d H:i:s'),
+            ]);
+            return $this->get($actor, $id);
+        });
+    }
+
     /** @return array<string,mixed> */
     public function validate(User $actor, int $id): array
     {

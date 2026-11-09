@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Presentation\Http\Controllers;
 
 use App\Application\Employee\EmployeeUseCases;
+use App\Application\Ports\FileStorage;
+use App\Domain\Identity\Role;
 use App\Presentation\Http\HttpException;
 use App\Presentation\Http\Request;
 use App\Presentation\Http\Response;
@@ -12,10 +14,10 @@ use finfo;
 final class EmployeeController
 {
     private const MAX_DOC_BYTES   = 2 * 1024 * 1024; // 2 MB
-    private const MAX_IMAGE_BYTES = 1 * 1024 * 1024; // 1 MB
+    private const MAX_IMAGE_BYTES = 500 * 1024; // 500 KB
     private const ALLOWED_MIMES   = ['application/pdf', 'image/jpeg', 'image/png'];
 
-    public function __construct(private EmployeeUseCases $employees) {}
+    public function __construct(private EmployeeUseCases $employees, private FileStorage $storage) {}
 
     /** GET /employees */
     public function index(Request $req, array $p): Response
@@ -117,6 +119,38 @@ final class EmployeeController
     public function validate(Request $req, array $p): Response
     {
         return Response::json($this->employees->validate($req->requireUser(), (int) $p['id']));
+    }
+
+    /** POST /employees/{id}/documents/{docType} */
+    public function uploadDocument(Request $req, array $p): Response
+    {
+        $actor = $req->requireUser();
+        if ($actor->role !== Role::Hr) throw new HttpException(403, 'Hanya HR yang dapat mengganti dokumen karyawan.');
+        $type = $p['docType'];
+        if (!in_array($type, ['ktp','kk','npwp','bpjs','ijazah','foto','lainnya'], true)) throw new HttpException(422, 'Jenis dokumen tidak valid.');
+        $this->employees->get($actor, (int) $p['id']);
+        $file = $req->files['file'] ?? [];
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'] ?? '')) {
+            throw new HttpException(422, 'Berkas gagal diunggah. Pilih berkas yang sesuai batas ukuran lalu coba lagi.');
+        }
+        $path = $file['tmp_name'];
+        $size = filesize($path);
+        $max = $type === 'foto' ? self::MAX_IMAGE_BYTES : self::MAX_DOC_BYTES;
+        if ($size === false || $size === 0 || $size > $max) throw new HttpException(422, $type === 'foto' ? 'Pasfoto maksimal 500 KB.' : 'Dokumen maksimal 2 MB.');
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($path);
+        if (!in_array($mime, self::ALLOWED_MIMES, true) || ($type === 'foto' && $mime === 'application/pdf')) {
+            throw new HttpException(422, $type === 'foto' ? 'Pasfoto harus JPEG atau PNG.' : 'Dokumen harus PDF, JPEG, atau PNG.');
+        }
+        if ($mime !== 'application/pdf' && !getimagesize($path)) throw new HttpException(422, 'Berkas gambar tidak valid.');
+        $extension = match ($mime) { 'image/jpeg' => 'jpg', 'image/png' => 'png', default => 'pdf' };
+        $stored = $this->storage->storeUpload($path, 'employee-docs', $extension);
+        try {
+            $result = $this->employees->replaceDocument($actor, (int) $p['id'], $type, $stored);
+        } catch (\Throwable $error) {
+            $this->storage->delete($stored);
+            throw $error;
+        }
+        return Response::json($result);
     }
 
     /** GET /employees/{id}/documents/{docType} */

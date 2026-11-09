@@ -81,6 +81,7 @@ return static function (Router $r, Container $c): void {
     $r->add('POST', '/employees/{id}/generate-link',        [$emp, 'generateLink'],   [$auth]);
     $r->add('POST', '/employees/{id}/validate',             [$emp, 'validate'],       [$auth]);
     $r->add('GET',  '/employees/{id}/documents/{docType}',  [$emp, 'serveDocument'],  [$auth]);
+    $r->add('POST', '/employees/{id}/documents/{docType}',  [$emp, 'uploadDocument'], [$auth]);
 
     $workforce = $c->get(\App\Presentation\Http\Controllers\WorkforceController::class);
     $r->add('GET','/vacancy-archives/{id}/download',[$workforce,'downloadArchive'],[$auth]);
