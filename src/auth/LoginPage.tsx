@@ -37,7 +37,7 @@ export default function LoginPage() {
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-6 sm:px-8">
         <div className="flex items-center gap-3">
           <BrandLogo alt="Logo Gaharu Sempana Group" className="h-10 w-10 object-contain" />
-          <div><h1 className="brand-wordmark">SIMANSA<span className="text-accent">.</span></h1><p className="text-[11px] text-caption">Gaharu Sempana Group</p></div>
+          <div><h1 className="brand-wordmark">MANAVA</h1><p className="text-[11px] text-caption">Gaharu Sempana Group</p></div>
         </div>
         <button onClick={toggle} className="icon-button" aria-label={theme === 'dark' ? 'Mode terang' : 'Mode gelap'}>
           {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}

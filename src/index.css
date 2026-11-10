@@ -232,19 +232,14 @@
 @media (prefers-reduced-transparency: reduce) { .workspace-sidebar { background: rgb(var(--panel)); backdrop-filter: none; } }
 
 /* Employee directory: compact card rhythm adapted from the supplied reference. */
-.employee-directory {
-  --directory-primary: 20 100 99;
-}
-.dark .employee-directory { --directory-primary: 94 234 212; }
 .employee-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
 .employee-filter { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border: 1px solid rgb(var(--line) / .6); border-radius: 9px; background: rgb(var(--panel)); color: rgb(var(--body)); font-size: 12px; font-weight: 500; transition: background .15s, border-color .15s; }
-.employee-filter:hover { border-color: rgb(var(--directory-primary) / .5); }
-.employee-filter.is-selected { border-color: transparent; background: rgb(var(--directory-primary)); color: white; }
-.dark .employee-filter.is-selected { color: rgb(var(--surface)); }
+.employee-filter:hover { border-color: rgb(var(--accent) / .5); }
+.employee-filter.is-selected { border-color: rgb(var(--accent) / .4); background: rgb(var(--accent-soft)); color: rgb(var(--accent)); }
 .employee-filter-count { opacity: .8; font-size: 11px; font-variant-numeric: tabular-nums; }
 .employee-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .employee-card { display: flex; min-width: 0; flex-direction: column; border: 1px solid rgb(var(--line) / .65); border-radius: 16px; padding: 20px; background: rgb(var(--panel)); box-shadow: 0 2px 8px rgb(15 23 42 / .025); }
-.employee-avatar { display: grid; width: 44px; height: 44px; flex-shrink: 0; overflow: hidden; place-items: center; border-radius: 11px; background: rgb(var(--directory-primary) / .1); color: rgb(var(--directory-primary)); }
+.employee-avatar { display: grid; width: 44px; height: 44px; flex-shrink: 0; overflow: hidden; place-items: center; border-radius: 11px; background: rgb(var(--accent-soft)); color: rgb(var(--accent)); }
 .employee-primary, .employee-profile-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 600; transition: background .15s, border-color .15s; }
 .employee-profile-button { width: 100%; justify-content: space-between; }
 @media (min-width: 700px) and (max-width: 1023px), (min-width: 1180px) { .employee-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

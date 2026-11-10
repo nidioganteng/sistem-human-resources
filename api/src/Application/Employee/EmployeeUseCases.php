@@ -69,6 +69,14 @@ final class EmployeeUseCases
                 'notes' => $record['payload']['notes'],
                 'hasAttachment' => !empty($record['payload']['filePath']),
             ], $this->workflows->list('employee_records', ['employee_id' => $id, 'category' => 'discipline'], 5000));
+            $view['career'] = array_map(static fn (array $record): array => [
+                'id' => (int) $record['id'],
+                'kind' => $record['kind'],
+                'date' => $record['payload']['date'],
+                'position' => $record['payload']['position'],
+                'notes' => $record['payload']['notes'],
+                'hasAttachment' => !empty($record['payload']['filePath']),
+            ], $this->workflows->list('employee_records', ['employee_id' => $id, 'category' => 'career'], 5000));
         }
         return $view;
     }

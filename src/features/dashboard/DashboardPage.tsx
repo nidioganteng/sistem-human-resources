@@ -91,7 +91,7 @@ export default function DashboardPage() {
                 ? `${action.length} MRF menunggu tindakan Anda.`
                 : !loading && !err
                 ? 'Semua MRF sudah ditindak lanjuti. Kerja bagus!'
-                : 'Sistem HR Gaharu Sempana Group'}
+                : 'Manava Gaharu Sempana Group'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 self-end">

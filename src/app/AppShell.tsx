@@ -33,9 +33,9 @@ function Sidebar({ compact = false, onCollapse, onClose }: {
   return (
     <div className={`workspace-sidebar ${compact ? 'is-compact' : ''}`}>
       <div className="sidebar-brand">
-        <NavLink to="/" onClick={onClose} aria-label="Sistem HR, Beranda" className="flex min-w-0 items-center gap-3">
+        <NavLink to="/" onClick={onClose} aria-label="Manava, Beranda" className="flex min-w-0 items-center gap-3">
           <span className="brand-mark"><BrandLogo alt="Logo GSG" className="h-8 w-8 object-contain" /></span>
-          {!compact && <div className="min-w-0"><div className="brand-wordmark">SISTEM HR<span className="text-accent">.</span></div><p className="mt-0.5 text-[10px] text-caption">Gaharu Sempana Group</p></div>}
+          {!compact && <div className="min-w-0"><div className="brand-wordmark">MANAVA</div><p className="mt-0.5 text-[10px] text-caption">Gaharu Sempana Group</p></div>}
         </NavLink>
         {onClose && <button type="button" className="icon-button !h-8 !w-8" onClick={onClose} aria-label="Tutup sidebar"><X size={17} /></button>}
       </div>

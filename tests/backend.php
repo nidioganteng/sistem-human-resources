@@ -162,6 +162,13 @@ try{
   $profile=$employeeActions->get($ceo,$employee['id']);
   ok($profile['discipline'][0]['id']===$sp['id']&&$profile['discipline'][0]['hasAttachment']===true&&!isset($profile['discipline'][0]['filePath']),'CEO sees latest warning with attachment availability and no storage path');
   $workforce->createRecord($hr,'career',['employeeId'=>$employee['id'],'kind'=>'promotion','date'=>date('Y-m-d'),'notes'=>'Promosi uji','position'=>'Senior Engineer'],null);
+  $careerProfile=$employeeActions->get($hr,$employee['id']);
+  ok(count($careerProfile['career']??[])===1&&$careerProfile['career'][0]['position']==='Senior Engineer'&&$careerProfile['career'][0]['notes']==='Promosi uji','Career record appears on the linked employee profile');
+  ok($employeeActions->get($hr,$otherEmployee['id'])['career']===[],'Employee profile excludes another employee career records');
+  ok(!array_key_exists('career',$employeeActions->get($manager,$employee['id'])),'Career history retains HR and CEO permissions');
+  $career=$workforce->createRecord($hr,'career',['employeeId'=>$employee['id'],'kind'=>'decree','date'=>date('Y-m-d'),'notes'=>'SK pengangkatan uji','position'=>'Lead Engineer'],$spFile);
+  $careerProfile=$employeeActions->get($ceo,$employee['id']);
+  ok($careerProfile['career'][0]['id']===$career['id']&&$careerProfile['career'][0]['hasAttachment']&&!isset($careerProfile['career'][0]['filePath']),'CEO sees latest career record and attachment availability without storage path');
   $directory=array_column($employeeActions->list($hr)['items'],null,'id');
   ok(($directory[$employee['id']]['disciplineCount']??null)===2&&($directory[$otherEmployee['id']]['disciplineCount']??null)===0,'Directory counts warnings per employee and excludes career records');
   $managerDirectory=$employeeActions->list($manager)['items'];

@@ -1,4 +1,12 @@
 export interface Employee {
+  career?: {
+    id: number;
+    kind: 'promotion' | 'demotion' | 'decree';
+    date: string;
+    position: string;
+    notes: string;
+    hasAttachment: boolean;
+  }[];
   disciplineCount?: number;
   discipline?: {
     id: number;

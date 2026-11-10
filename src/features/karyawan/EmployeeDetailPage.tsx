@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Copy, Download, ShieldAlert } from 'lucide-react';
+import { BriefcaseBusiness, ChevronLeft, Copy, Download, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { ApiError, apiFetchBlob } from '@/services/api';
 import {
@@ -27,6 +27,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const DISCIPLINE_LABELS = { verbal: 'Teguran lisan', written: 'Teguran tertulis', SP1: 'SP 1', SP2: 'SP 2', SP3: 'SP 3' };
+const CAREER_LABELS = { promotion: 'Promosi', demotion: 'Demosi', decree: 'Surat Keputusan' };
 
 function statusBadge(status: string): string {
   if (status === 'active') return 'rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-400';
@@ -237,18 +238,18 @@ export default function EmployeeDetailPage() {
     }
   };
 
-  const downloadWarning = async (recordId: number) => {
+  const downloadRecord = async (recordId: number) => {
     setDownloadingRecord(recordId);
     try {
       const blob = await apiFetchBlob(`/employee-records/${recordId}/file`);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `surat-peringatan-${recordId}.pdf`;
+      link.download = `dokumen-riwayat-${recordId}.pdf`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      setActionMsg({ type: 'err', text: 'Gagal mengunduh lampiran teguran. Silakan coba lagi.' });
+      setActionMsg({ type: 'err', text: 'Gagal mengunduh lampiran riwayat. Silakan coba lagi.' });
     } finally {
       setDownloadingRecord(null);
     }
@@ -388,31 +389,6 @@ export default function EmployeeDetailPage() {
         )}
       </div>
 
-      {employee.discipline !== undefined && (
-        <section className="card space-y-5" aria-labelledby="discipline-heading">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <ShieldAlert size={19} className="text-amber-700 dark:text-amber-400" aria-hidden="true" />
-              <h2 id="discipline-heading" className="text-sm font-semibold text-ink">Riwayat Kedisiplinan</h2>
-              <span className="rounded-full bg-subtle px-2.5 py-1 text-xs font-semibold text-body">{employee.discipline.length} catatan</span>
-            </div>
-            <button className="btn-secondary !text-xs" onClick={() => navigate('/kedisiplinan')}>Kelola Kedisiplinan</button>
-          </div>
-          {!employee.discipline.length ? <p className="text-sm text-caption">Belum ada catatan teguran atau surat peringatan untuk karyawan ini.</p> : (
-            <ol className="divide-y divide-line">
-              {employee.discipline.map(record => <li key={record.id} className="space-y-3 py-4 first:pt-0 last:pb-0">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${record.kind.startsWith('SP') ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}`}>{DISCIPLINE_LABELS[record.kind]}</span>
-                  <time dateTime={record.date} className="text-xs text-caption">{formatDate(record.date)}</time>
-                </div>
-                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-body">{record.notes}</p>
-                {record.hasAttachment && <button className="btn-secondary !text-xs" disabled={downloadingRecord !== null} onClick={() => void downloadWarning(record.id)}><Download size={14} aria-hidden="true" />{downloadingRecord === record.id ? 'Mengunduh...' : 'Unduh Lampiran'}</button>}
-              </li>)}
-            </ol>
-          )}
-        </section>
-      )}
-
       {employee.personalData != null && (
         <div className="card space-y-3">
           <h2 className="text-sm font-semibold text-body">Data Pribadi</h2>
@@ -466,6 +442,57 @@ export default function EmployeeDetailPage() {
           })}
         </div>
       </div>
+
+      {employee.discipline !== undefined && (
+        <section className="card space-y-5" aria-labelledby="discipline-heading">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ShieldAlert size={19} className="text-amber-700 dark:text-amber-400" aria-hidden="true" />
+              <h2 id="discipline-heading" className="text-sm font-semibold text-ink">Riwayat Kedisiplinan</h2>
+              <span className="rounded-full bg-subtle px-2.5 py-1 text-xs font-semibold text-body">{employee.discipline.length} catatan</span>
+            </div>
+            <button className="btn-secondary !text-xs" onClick={() => navigate('/kedisiplinan')}>Kelola Kedisiplinan</button>
+          </div>
+          {!employee.discipline.length ? <p className="text-sm text-caption">Belum ada catatan teguran atau surat peringatan untuk karyawan ini.</p> : (
+            <ol className="divide-y divide-line">
+              {employee.discipline.map(record => <li key={record.id} className="space-y-3 py-4 first:pt-0 last:pb-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${record.kind.startsWith('SP') ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}`}>{DISCIPLINE_LABELS[record.kind]}</span>
+                  <time dateTime={record.date} className="text-xs text-caption">{formatDate(record.date)}</time>
+                </div>
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-body">{record.notes}</p>
+                {record.hasAttachment && <button className="btn-secondary !text-xs" disabled={downloadingRecord !== null} onClick={() => void downloadRecord(record.id)}><Download size={14} aria-hidden="true" />{downloadingRecord === record.id ? 'Mengunduh...' : 'Unduh Lampiran'}</button>}
+              </li>)}
+            </ol>
+          )}
+        </section>
+      )}
+
+      {employee.career !== undefined && (
+        <section className="card space-y-5" aria-labelledby="career-heading">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <BriefcaseBusiness size={19} className="text-accent" aria-hidden="true" />
+              <h2 id="career-heading" className="text-sm font-semibold text-ink">Riwayat Karier</h2>
+              <span className="rounded-full bg-subtle px-2.5 py-1 text-xs font-semibold text-body">{employee.career.length} catatan</span>
+            </div>
+            <button className="btn-secondary !text-xs" onClick={() => navigate('/karier')}>Kelola Riwayat Karier</button>
+          </div>
+          {!employee.career.length ? <p className="text-sm text-caption">Belum ada catatan promosi, demosi, atau surat keputusan untuk karyawan ini.</p> : (
+            <ol className="divide-y divide-line">
+              {employee.career.map(record => <li key={record.id} className="space-y-3 py-4 first:pt-0 last:pb-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent">{CAREER_LABELS[record.kind]}</span>
+                  <time dateTime={record.date} className="text-xs text-caption">{formatDate(record.date)}</time>
+                </div>
+                <p className="break-words text-sm font-semibold text-ink">{record.position}</p>
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-body">{record.notes}</p>
+                {record.hasAttachment && <button className="btn-secondary !text-xs" disabled={downloadingRecord !== null} onClick={() => void downloadRecord(record.id)}><Download size={14} aria-hidden="true" />{downloadingRecord === record.id ? 'Mengunduh...' : 'Unduh Lampiran'}</button>}
+              </li>)}
+            </ol>
+          )}
+        </section>
+      )}
 
       <Modal open={uploadType !== null} onClose={() => { if (!uploading) setUploadType(null); }} title="Edit Dokumen Karyawan" size="sm">
         <form onSubmit={event => void handleDocumentUpload(event)} className="space-y-5">
